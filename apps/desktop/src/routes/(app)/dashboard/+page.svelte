@@ -181,9 +181,9 @@
       <div class="rounded-xl border border-border bg-card">
         <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
           <h3 class="text-sm font-semibold">{t('dashboard.recentActivity')}</h3>
-          <button class="text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground">
+          <Button variant="ghost" size="sm" class="text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground h-auto px-1">
             {t('dashboard.viewAll')}
-          </button>
+          </Button>
         </div>
         <div class="divide-y divide-border/50">
           {#each activities as act}
@@ -210,9 +210,10 @@
         <div class="p-3">
           <div class="grid grid-cols-2 gap-2">
             {#each actions as action}
-              <button
+              <Button
+                variant="ghost"
                 onclick={() => goto(action.href)}
-                class="group flex flex-col items-center gap-2 rounded-lg border border-transparent p-3.5 text-center transition-all hover:border-border hover:bg-muted/50"
+                class="group flex flex-col items-center gap-2 rounded-lg border border-transparent p-3.5 text-center transition-all hover:border-border hover:bg-muted/50 h-auto"
               >
                 <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors {action.color}">
                   <action.icon class="h-4 w-4" />
@@ -221,7 +222,7 @@
                   <p class="text-xs font-semibold">{action.label}</p>
                   <p class="text-[10px] text-muted-foreground/60">{action.desc}</p>
                 </div>
-              </button>
+              </Button>
             {/each}
           </div>
         </div>
@@ -285,10 +286,10 @@
         <Calendar class="h-4 w-4 text-primary" />
         {t('dashboard.todaysSchedule')}
       </h3>
-      <button onclick={() => goto('/exams')} class="flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground">
+      <Button variant="ghost" size="sm" onclick={() => goto('/exams')} class="flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground h-auto px-1">
         {t('dashboard.fullTimetable')}
         <ArrowUpRight class="h-3 w-3" />
-      </button>
+      </Button>
     </div>
     <div class="grid grid-cols-4 divide-x divide-border/50">
       {#each schedule as item}

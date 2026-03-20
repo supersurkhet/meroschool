@@ -66,13 +66,14 @@
 		<!-- Role tabs -->
 		<div class="flex flex-wrap justify-center gap-2 mb-10">
 			{#each tabs as tab}
-				<button
+				<Button
+					variant={activeTab === tab.key ? 'default' : 'secondary'}
 					onclick={() => activeTab = tab.key}
-					class="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer {activeTab === tab.key ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted text-muted-foreground hover:text-foreground'}"
+					class="flex items-center gap-2 px-5 py-2.5 {activeTab === tab.key ? 'shadow-md' : ''}"
 				>
 					<span>{tab.icon}</span>
 					{$t(tab.labelKey)}
-				</button>
+				</Button>
 			{/each}
 		</div>
 
@@ -189,9 +190,9 @@
 					<div class="grid grid-cols-6 sm:grid-cols-10 gap-2">
 						{#each Array.from({length: 42}, (_, i) => i + 1) as n}
 							{@const present = Math.random() > 0.08}
-							<button class="h-10 w-full rounded-lg text-xs font-medium transition-colors cursor-pointer {present ? 'bg-accent/10 text-accent border border-accent/20' : 'bg-destructive/10 text-destructive border border-destructive/20'}">
+							<Button variant="outline" class="h-10 w-full text-xs font-medium {present ? 'bg-accent/10 text-accent border-accent/20' : 'bg-destructive/10 text-destructive border-destructive/20'}">
 								{n}
-							</button>
+							</Button>
 						{/each}
 					</div>
 					<div class="flex gap-4 mt-4 text-xs text-muted-foreground">

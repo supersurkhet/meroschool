@@ -90,27 +90,27 @@
 
 		<!-- Right side -->
 		<div class="hidden md:flex items-center gap-2">
-			<button onclick={toggleLocale} class="px-2 py-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted cursor-pointer">
+			<Button variant="ghost" onclick={toggleLocale} class="px-2 py-1 text-sm font-medium text-muted-foreground hover:text-foreground">
 				{$locale === "en" ? "नेपाली" : "English"}
-			</button>
-			<button onclick={cycleTheme} class="h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted cursor-pointer" aria-label="Toggle theme">
+			</Button>
+			<Button variant="ghost" size="icon" onclick={cycleTheme} aria-label="Toggle theme">
 				{themeIcon[$theme]}
-			</button>
+			</Button>
 			{#if isDashboard}
 				<div class="relative">
-					<button onclick={() => bellOpen = !bellOpen} class="relative h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted cursor-pointer" aria-label="Notifications">
+					<Button variant="ghost" size="icon" onclick={() => bellOpen = !bellOpen} class="relative" aria-label="Notifications">
 						<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
 						</svg>
 						{#if unreadCount > 0}
 							<span class="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{unreadCount}</span>
 						{/if}
-					</button>
+					</Button>
 					{#if bellOpen}
 						<div class="absolute right-0 mt-2 w-80 rounded-xl border bg-card shadow-lg z-50">
 							<div class="flex items-center justify-between px-4 py-3 border-b">
 								<span class="text-sm font-semibold text-foreground">{$t("notifications.title")}</span>
-								<button onclick={markAllRead} class="text-xs text-primary hover:underline cursor-pointer">{$t("notifications.markAllRead")}</button>
+								<Button variant="link" size="sm" onclick={markAllRead}>{$t("notifications.markAllRead")}</Button>
 							</div>
 							<div class="max-h-64 overflow-y-auto">
 								{#each notifications as notif}
@@ -130,7 +130,7 @@
 		</div>
 
 		<!-- Mobile menu button -->
-		<button onclick={() => mobileOpen = !mobileOpen} class="md:hidden h-9 w-9 flex items-center justify-center text-muted-foreground cursor-pointer" aria-label="Toggle menu">
+		<Button variant="ghost" size="icon" onclick={() => mobileOpen = !mobileOpen} class="md:hidden" aria-label="Toggle menu">
 			<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 				{#if mobileOpen}
 					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -138,7 +138,7 @@
 					<path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
 				{/if}
 			</svg>
-		</button>
+		</Button>
 	</div>
 
 	<!-- Mobile menu -->
@@ -150,10 +150,10 @@
 				</a>
 			{/each}
 			<div class="flex items-center gap-2 mt-3 px-3">
-				<button onclick={toggleLocale} class="text-sm text-muted-foreground hover:text-foreground cursor-pointer">
+				<Button variant="ghost" onclick={toggleLocale} class="text-sm text-muted-foreground hover:text-foreground">
 					{$locale === "en" ? "नेपाली" : "English"}
-				</button>
-				<button onclick={cycleTheme} class="text-sm cursor-pointer">{themeIcon[$theme]}</button>
+				</Button>
+				<Button variant="ghost" size="icon" onclick={cycleTheme}>{themeIcon[$theme]}</Button>
 			</div>
 			<div class="mt-3 px-3">
 				<a href="/onboard">

@@ -314,7 +314,7 @@
           <!-- Logo upload -->
           <div class="space-y-2">
             <Label>School Logo <span class="text-muted-foreground text-xs">(optional)</span></Label>
-            <button
+            <Button
               type="button"
               class="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer w-full {isDraggingLogo ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}"
               ondrop={handleLogoDrop}
@@ -337,7 +337,7 @@
                   <p class="text-xs text-muted-foreground mt-1">PNG, JPG, SVG up to 2MB</p>
                 </div>
               {/if}
-            </button>
+            </Button>
             <input id="logo-input" type="file" accept="image/*" class="hidden" onchange={handleLogoInput} />
           </div>
 
@@ -454,13 +454,13 @@
               <Label>Select Academic Year (Bikram Sambat)</Label>
               <div class="flex flex-wrap gap-2">
                 {#each ACADEMIC_YEARS as year}
-                  <button
+                  <Button
                     type="button"
                     class="px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 {selectedYear === year ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background border-border text-foreground hover:border-primary/50 hover:bg-muted'}"
                     onclick={() => { selectedYear = year; }}
                   >
                     {year}
-                  </button>
+                  </Button>
                 {/each}
               </div>
             </div>
@@ -527,7 +527,7 @@
               <div class="flex flex-wrap gap-2">
                 {#each [1,2,3,4,5,6,7,8,9,10] as g}
                   {@const alreadyAdded = classes.some(c => c.grade === g)}
-                  <button
+                  <Button
                     type="button"
                     disabled={alreadyAdded}
                     class="px-3 py-1 rounded-md border text-xs font-medium transition-all {alreadyAdded ? 'opacity-40 cursor-not-allowed bg-muted' : 'hover:bg-primary hover:text-primary-foreground hover:border-primary border-border'}"
@@ -540,7 +540,7 @@
                     }}
                   >
                     Class {g}
-                  </button>
+                  </Button>
                 {/each}
               </div>
             </div>
@@ -630,7 +630,7 @@
                 {@const isOpen = expandedClasses.has(cls.id)}
                 <div class="border border-border rounded-xl overflow-hidden">
                   <!-- Class header -->
-                  <button
+                  <Button
                     type="button"
                     class="w-full flex items-center justify-between p-4 hover:bg-muted/40 transition-colors text-left"
                     onclick={() => toggleExpand(cls.id)}
@@ -652,7 +652,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
-                  </button>
+                  </Button>
 
                   <!-- Section content -->
                   {#if isOpen}
@@ -663,14 +663,14 @@
                         <div class="flex flex-wrap gap-2">
                           {#each ['A', 'B', 'C', 'D', 'E', 'F'] as letter}
                             {@const alreadyHas = classSections.some(s => s.name === letter)}
-                            <button
+                            <Button
                               type="button"
                               disabled={alreadyHas}
                               class="w-9 h-9 rounded-lg border text-sm font-semibold transition-all {alreadyHas ? 'opacity-40 cursor-not-allowed bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-primary hover:text-primary-foreground hover:border-primary'}"
                               onclick={() => addSection(cls.id, letter)}
                             >
                               {letter}
-                            </button>
+                            </Button>
                           {/each}
                         </div>
                       </div>
@@ -696,7 +696,7 @@
                           {#each classSections as sec}
                             <div class="flex items-center gap-1.5 px-3 py-1.5 bg-background rounded-lg border border-border shadow-sm">
                               <span class="text-sm font-medium">{cls.name} – {sec.name}</span>
-                              <button
+                              <Button
                                 type="button"
                                 class="text-muted-foreground hover:text-destructive transition-colors"
                                 onclick={() => deleteSection(sec.id)}
@@ -705,7 +705,7 @@
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
-                              </button>
+                              </Button>
                             </div>
                           {/each}
                         </div>
@@ -766,7 +766,7 @@
                 {@const isOpen = expandedSubjectClasses.has(cls.id)}
                 <div class="border border-border rounded-xl overflow-hidden">
                   <!-- Class header -->
-                  <button
+                  <Button
                     type="button"
                     class="w-full flex items-center justify-between p-4 hover:bg-muted/40 transition-colors text-left"
                     onclick={() => toggleSubjectExpand(cls.id)}
@@ -785,7 +785,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
-                  </button>
+                  </Button>
 
                   {#if isOpen}
                     <div class="border-t border-border p-4 bg-muted/20 space-y-4">
@@ -795,14 +795,14 @@
                         <div class="flex flex-wrap gap-2">
                           {#each COMMON_SUBJECTS as subj}
                             {@const added = subjectAlreadyAdded(cls.id, subj.name)}
-                            <button
+                            <Button
                               type="button"
                               disabled={added}
                               class="px-3 py-1.5 rounded-lg border text-xs font-medium transition-all {added ? 'opacity-40 cursor-not-allowed bg-primary/10 border-primary text-primary' : 'border-border hover:bg-primary hover:text-primary-foreground hover:border-primary'}"
                               onclick={() => addSubject(cls.id, subj.name, subj.code)}
                             >
                               {#if added}✓ {/if}{subj.name}
-                            </button>
+                            </Button>
                           {/each}
                         </div>
                       </div>
@@ -842,7 +842,7 @@
                                   <Badge variant="secondary" class="ml-2 text-xs">{subj.code}</Badge>
                                 {/if}
                               </div>
-                              <button
+                              <Button
                                 type="button"
                                 class="text-muted-foreground hover:text-destructive transition-colors"
                                 onclick={() => deleteSubject(subj.id)}
@@ -851,7 +851,7 @@
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
-                              </button>
+                              </Button>
                             </div>
                           {/each}
                         </div>

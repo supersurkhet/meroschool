@@ -166,9 +166,9 @@
 		<div class="space-y-4">
 			{#each assignments as assignment}
 				<Card class="overflow-hidden">
-					<button
+					<Button variant="ghost"
 						onclick={() => toggleExpand(assignment.id)}
-						class="w-full p-4 text-left hover:bg-muted/30 transition-colors cursor-pointer"
+						class="w-full p-4 text-left hover:bg-muted/30 h-auto rounded-none whitespace-normal"
 					>
 						<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 							<div class="flex-1 min-w-0">
@@ -191,7 +191,7 @@
 								</svg>
 							</div>
 						</div>
-					</button>
+					</Button>
 
 					{#if expandedId === assignment.id}
 						<div class="border-t px-4 pb-4">

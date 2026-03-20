@@ -109,24 +109,30 @@
 							<td class="px-4 py-3 text-sm text-foreground">{student.name}</td>
 							<td class="px-4 py-3">
 								<div class="flex items-center justify-center gap-1.5">
-									<button
+									<Button
+										variant="outline"
+										size="sm"
 										onclick={() => setStatus(student.id, 'present')}
-										class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer {student.status === 'present' ? 'bg-green-500 text-white' : 'bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20'}"
+										class="px-3 py-1.5 text-xs font-medium {student.status === 'present' ? 'bg-green-500 text-white border-green-500' : 'bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20 border-green-500/20'}"
 									>
 										&#10003;
-									</button>
-									<button
+									</Button>
+									<Button
+										variant="outline"
+										size="sm"
 										onclick={() => setStatus(student.id, 'absent')}
-										class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer {student.status === 'absent' ? 'bg-red-500 text-white' : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20'}"
+										class="px-3 py-1.5 text-xs font-medium {student.status === 'absent' ? 'bg-red-500 text-white border-red-500' : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 border-red-500/20'}"
 									>
 										&#10007;
-									</button>
-									<button
+									</Button>
+									<Button
+										variant="outline"
+										size="sm"
 										onclick={() => setStatus(student.id, 'late')}
-										class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer {student.status === 'late' ? 'bg-yellow-500 text-white' : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/20'}"
+										class="px-3 py-1.5 text-xs font-medium {student.status === 'late' ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/20 border-yellow-500/20'}"
 									>
 										&#9200;
-									</button>
+									</Button>
 								</div>
 							</td>
 						</tr>

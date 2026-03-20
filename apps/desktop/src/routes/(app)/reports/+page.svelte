@@ -1,6 +1,7 @@
 <script lang="ts">
   import { t } from '$lib/i18n/index.svelte';
   import { Button } from '$lib/components/ui/button';
+  import { Select } from '$lib/components/ui/select';
   import { Input } from '$lib/components/ui/input';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
@@ -277,14 +278,14 @@
   <!-- Tab Bar -->
   <div class="flex gap-1 rounded-lg border border-border bg-muted/40 p-1 w-fit">
     {#each ([['attendance', t('reports.attendance')], ['results', t('reports.examResults')], ['performance', t('reports.classPerformance')]] as const) as [key, label]}
-      <button
+      <Button
         onclick={() => (activeTab = key)}
         class="rounded-md px-4 py-1.5 text-sm font-medium transition-colors {activeTab === key
           ? 'bg-background text-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground'}"
       >
         {label}
-      </button>
+      </Button>
     {/each}
   </div>
 
@@ -304,7 +305,7 @@
           </div>
           <div class="flex flex-col gap-1.5">
             <Label for="att-class">Class / Section</Label>
-            <select
+            <Select
               id="att-class"
               bind:value={attendanceClass}
               class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -313,7 +314,7 @@
               <option value="Grade 8">Grade 8</option>
               <option value="Grade 9">Grade 9</option>
               <option value="Grade 10">Grade 10</option>
-            </select>
+            </Select>
           </div>
           <Button variant="outline" size="sm">{t('common.export')}</Button>
         </CardContent>
@@ -447,7 +448,7 @@
         <CardContent class="flex flex-wrap items-end gap-4 p-4">
           <div class="flex flex-col gap-1.5">
             <Label for="exam-sel">Exam</Label>
-            <select
+            <Select
               id="exam-sel"
               bind:value={selectedExam}
               class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -455,11 +456,11 @@
               <option value="midterm-2026">Midterm 2026</option>
               <option value="terminal-2025">Terminal 2025</option>
               <option value="final-2025">Final Exam 2025</option>
-            </select>
+            </Select>
           </div>
           <div class="flex flex-col gap-1.5">
             <Label for="res-class">Class</Label>
-            <select
+            <Select
               id="res-class"
               bind:value={resultsClass}
               class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -468,7 +469,7 @@
               <option value="Grade 8">Grade 8</option>
               <option value="Grade 9">Grade 9</option>
               <option value="Grade 10">Grade 10</option>
-            </select>
+            </Select>
           </div>
           <Button variant="outline" size="sm">{t('common.export')}</Button>
         </CardContent>
@@ -592,7 +593,7 @@
       <!-- Class cards grid -->
       <div class="grid grid-cols-3 gap-4 xl:grid-cols-5">
         {#each classPerformance as cls}
-          <button
+          <Button
             onclick={() => (selectedPerfClass = selectedPerfClass === cls.class ? null : cls.class)}
             class="rounded-xl border text-left transition-all {selectedPerfClass === cls.class
               ? 'border-primary bg-primary/5 shadow-md'
@@ -612,7 +613,7 @@
                 ></div>
               </div>
             </div>
-          </button>
+          </Button>
         {/each}
       </div>
 

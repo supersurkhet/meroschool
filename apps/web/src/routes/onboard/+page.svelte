@@ -335,13 +335,15 @@
 											{#each sections[cls] ?? [] as sec}
 												<Badge variant="secondary" class="flex items-center gap-1.5 px-3 py-1.5 text-sm">
 													{sec}
-													<button
+													<Button
+														variant="ghost"
+														size="icon"
 														type="button"
-														class="ml-1 text-muted-foreground hover:text-foreground cursor-pointer"
+														class="ml-1 h-4 w-4 text-muted-foreground hover:text-foreground"
 														onclick={() => removeSection(cls, sec)}
 													>
 														&times;
-													</button>
+													</Button>
 												</Badge>
 											{/each}
 										</div>

@@ -4,6 +4,7 @@
 	import { convexMutation, convexQuery, isConvexConfigured, api } from '$lib/convex'
 	import { getSchool } from '$lib/stores/school.svelte'
 	import { Button } from '$lib/components/ui/button'
+	import { Select } from '$lib/components/ui/select'
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
 	import { Badge } from '$lib/components/ui/badge'
 	import Papa from 'papaparse'
@@ -302,7 +303,7 @@
 						<label for="section-picker" class="text-sm font-medium text-muted-foreground whitespace-nowrap">
 							{t('students.assignSection')}:
 						</label>
-						<select
+						<Select
 							id="section-picker"
 							bind:value={selectedSectionId}
 							class="rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -310,7 +311,7 @@
 							{#each sections as sec}
 								<option value={sec.id}>{sec.label}</option>
 							{/each}
-						</select>
+						</Select>
 					</div>
 				{/if}
 				<Button variant="ghost" size="sm" onclick={clearFile} class="gap-1">

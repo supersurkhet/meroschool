@@ -403,7 +403,7 @@
             <p class="text-xs text-muted-foreground">{t('parents.selectStudents')}</p>
             <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {#each STUDENTS as student}
-                <button
+                <Button
                   type="button"
                   onclick={() => toggleFormChild(student.id)}
                   class={[
@@ -429,7 +429,7 @@
                     <p class="text-sm font-medium truncate">{student.name}</p>
                     <p class="text-xs text-muted-foreground">{student.class} {student.section} · Roll {student.rollNumber}</p>
                   </div>
-                </button>
+                </Button>
               {/each}
             </div>
           </div>
@@ -520,7 +520,7 @@
                               </div>
                               <span class="text-xs font-medium">{student.name}</span>
                               <span class="text-xs text-muted-foreground">{student.class} {student.section}</span>
-                              <button
+                              <Button
                                 type="button"
                                 onclick={() => unlinkStudent(parent.id, childId)}
                                 class="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/20 hover:text-destructive group-hover/chip:opacity-100"
@@ -529,7 +529,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                   <path d="M18 6 6 18M6 6l12 12"/>
                                 </svg>
-                              </button>
+                              </Button>
                             </div>
                           {/if}
                         {/each}

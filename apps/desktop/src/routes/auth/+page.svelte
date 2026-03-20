@@ -115,13 +115,16 @@
   <div class="flex flex-1 flex-col bg-background">
     <!-- Top bar -->
     <div class="flex items-center justify-end gap-2 p-5">
-      <button
+      <Button
+        variant="outline"
         onclick={toggleLocale}
         class="h-8 rounded-full border border-border bg-muted/50 px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted"
       >
         {locale === 'en' ? 'नेपाली' : 'English'}
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
         onclick={toggleTheme}
         class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted"
       >
@@ -130,7 +133,7 @@
         {:else}
           <Moon class="h-3.5 w-3.5" />
         {/if}
-      </button>
+      </Button>
     </div>
 
     <!-- Centered content -->

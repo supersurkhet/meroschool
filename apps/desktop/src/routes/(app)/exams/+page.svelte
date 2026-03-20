@@ -1,6 +1,7 @@
 <script lang="ts">
   import { t } from '$lib/i18n/index.svelte';
   import { Button } from '$lib/components/ui/button';
+  import { Select } from '$lib/components/ui/select';
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { Label } from '$lib/components/ui/label';
@@ -319,7 +320,7 @@
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="space-y-1.5">
               <Label for="cf-type">Exam Type</Label>
-              <select
+              <Select
                 id="cf-type"
                 bind:value={formExamType}
                 class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -327,11 +328,11 @@
                 {#each EXAM_TYPES as type}
                   <option value={type}>{type} Examination</option>
                 {/each}
-              </select>
+              </Select>
             </div>
             <div class="space-y-1.5">
               <Label for="cf-class">Class</Label>
-              <select
+              <Select
                 id="cf-class"
                 bind:value={formClass}
                 class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -339,7 +340,7 @@
                 {#each CLASSES as cls}
                   <option value={cls}>{cls}</option>
                 {/each}
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -425,7 +426,7 @@
   <div class="mb-6">
     <div class="flex gap-1 rounded-xl border border-border bg-muted/50 p-1 w-fit">
       {#each EXAM_TYPES as type}
-        <button
+        <Button
           type="button"
           onclick={() => { activeExamType = type; }}
           class={[
@@ -436,7 +437,7 @@
           ].join(' ')}
         >
           {type}
-        </button>
+        </Button>
       {/each}
     </div>
   </div>
@@ -447,7 +448,7 @@
     <div class="flex flex-wrap gap-2">
       {#each CLASSES as cls}
         {@const hasExams = exams.some(e => e.examType === activeExamType && e.className === cls)}
-        <button
+        <Button
           type="button"
           onclick={() => { selectedClass = cls; }}
           class={[
@@ -463,7 +464,7 @@
           {#if !hasExams}
             <span class="ml-1 text-[10px] opacity-60">–</span>
           {/if}
-        </button>
+        </Button>
       {/each}
     </div>
   </div>

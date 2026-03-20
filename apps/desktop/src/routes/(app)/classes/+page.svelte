@@ -288,12 +288,12 @@
 					<CardTitle class="text-base">
 						{editingClassId ? t('classes.editClass') : t('classes.addNewClass')}
 					</CardTitle>
-					<button
+					<Button
 						onclick={resetClassForm}
 						class="rounded-md p-1 text-muted-foreground hover:bg-muted"
 					>
 						<X class="h-4 w-4" />
-					</button>
+					</Button>
 				</div>
 			</CardHeader>
 			<CardContent>
@@ -343,7 +343,7 @@
 			<Card>
 				<div class="flex items-center gap-3 px-4 py-3">
 					<!-- Expand toggle -->
-					<button
+					<Button
 						onclick={() => toggleExpand(cls.id)}
 						class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted"
 					>
@@ -352,7 +352,7 @@
 						{:else}
 							<ChevronRight class="h-4 w-4" />
 						{/if}
-					</button>
+					</Button>
 
 					<!-- Class info -->
 					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
@@ -378,20 +378,20 @@
 						<Plus class="h-3 w-3" />
 						Section
 					</Button>
-					<button
+					<Button
 						onclick={() => openEditClass(cls)}
 						class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
 						title={t('common.edit')}
 					>
 						<Pencil class="h-3.5 w-3.5" />
-					</button>
-					<button
+					</Button>
+					<Button
 						onclick={() => deleteClass(cls.id)}
 						class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
 						title={t('common.delete')}
 					>
 						<Trash2 class="h-3.5 w-3.5" />
-					</button>
+					</Button>
 				</div>
 
 				<!-- Expanded: sections list -->
@@ -424,13 +424,13 @@
 													style:width="{Math.min(100, (section.studentCount / section.capacity) * 100)}%"
 												></div>
 											</div>
-											<button
+											<Button
 												onclick={() => deleteSection(cls.id, section.id)}
 												class="rounded-md p-1 text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
 												title="Remove section"
 											>
 												<Trash2 class="h-3 w-3" />
-											</button>
+											</Button>
 										</div>
 									</div>
 								{/each}

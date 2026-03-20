@@ -162,10 +162,11 @@
 
     <!-- Bottom section -->
     <div class="shrink-0 space-y-0.5 border-t border-border/40 px-1.5 py-2">
-      <button
+      <Button
+        variant="ghost"
         onclick={toggleTheme}
         title={isDark ? 'Light' : 'Dark'}
-        class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground h-auto justify-start"
       >
         {#if isDark}
           <Sun class="h-[15px] w-[15px] shrink-0" />
@@ -174,12 +175,13 @@
           <Moon class="h-[15px] w-[15px] shrink-0" />
           {#if !collapsed}<span class="truncate">Dark</span>{/if}
         {/if}
-      </button>
+      </Button>
 
-      <button
+      <Button
+        variant="ghost"
         onclick={toggleLocale}
         title="Switch language"
-        class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground h-auto justify-start"
       >
         <span class="flex h-[15px] w-[15px] shrink-0 items-center justify-center text-[10px] font-bold leading-none">
           {locale === 'en' ? 'ने' : 'EN'}
@@ -189,7 +191,7 @@
             {locale === 'en' ? 'नेपाली' : 'English'}
           </span>
         {/if}
-      </button>
+      </Button>
 
       <!-- User -->
       <div class="mt-1 flex items-center gap-2 rounded-lg px-2.5 py-2">
@@ -201,19 +203,23 @@
             <p class="truncate text-[12px] font-semibold">{user?.name ?? 'Admin'}</p>
             <p class="truncate text-[10px] text-muted-foreground/50">{user?.email ?? ''}</p>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onclick={handleLogout}
             title={t('auth.logout')}
-            class="shrink-0 rounded-md p-1 text-muted-foreground/30 transition-colors hover:bg-destructive/10 hover:text-destructive"
+            class="shrink-0 rounded-md p-1 text-muted-foreground/30 transition-colors hover:bg-destructive/10 hover:text-destructive h-auto w-auto"
           >
             <LogOut class="h-3.5 w-3.5" />
-          </button>
+          </Button>
         {/if}
       </div>
     </div>
 
     <!-- Collapse toggle -->
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       onclick={() => (collapsed = !collapsed)}
       aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       class="absolute -right-3 top-[3.25rem] z-20 flex h-6 w-6 items-center justify-center rounded-full border border-border/60 bg-card text-muted-foreground/40 shadow-sm transition-all hover:bg-muted hover:text-foreground"
@@ -223,7 +229,7 @@
       {:else}
         <PanelLeftClose class="h-3 w-3" />
       {/if}
-    </button>
+    </Button>
   </aside>
 
   <!-- Main content -->

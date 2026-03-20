@@ -207,13 +207,13 @@
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-3">
       {#if selectedClass}
-        <button
+        <Button
           onclick={goBack}
           class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronLeft class="h-4 w-4" />
           {t('qr.allClasses')}
-        </button>
+        </Button>
         <span class="text-muted-foreground">/</span>
         <h1 class="text-2xl font-bold tracking-tight">{selectedClass.name}</h1>
       {:else}
@@ -255,14 +255,14 @@
             {#if selectedClass.sections.length > 1}
               <div class="flex gap-1 rounded-lg border border-border bg-muted/40 p-1">
                 {#each selectedClass.sections as sec}
-                  <button
+                  <Button
                     onclick={() => (selectedSection = sec)}
                     class="rounded-md px-4 py-1.5 text-sm font-medium transition-colors {selectedSection?.id === sec.id
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'}"
                   >
                     {sec.name}
-                  </button>
+                  </Button>
                 {/each}
               </div>
             {/if}
@@ -303,7 +303,7 @@
           <CardContent class="flex flex-col gap-3">
             {#each selectedClass.sections as sec}
               {@const key = `thumb-${selectedClass.id}/${sec.id}`}
-              <button
+              <Button
                 onclick={() => (selectedSection = sec)}
                 class="flex items-center gap-3 rounded-lg border p-3 text-left transition-all {selectedSection?.id === sec.id
                   ? 'border-primary bg-primary/5'
@@ -320,7 +320,7 @@
                   <p class="font-medium">{sec.name}</p>
                   <p class="text-xs text-muted-foreground">{selectedClass.name}</p>
                 </div>
-              </button>
+              </Button>
             {/each}
           </CardContent>
         </Card>

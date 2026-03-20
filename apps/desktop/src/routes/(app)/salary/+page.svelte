@@ -1,6 +1,7 @@
 <script lang="ts">
   import { t } from '$lib/i18n/index.svelte';
   import { Button } from '$lib/components/ui/button';
+  import { Select } from '$lib/components/ui/select';
   import { Input } from '$lib/components/ui/input';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
@@ -265,7 +266,7 @@
     <div class="flex items-center gap-3">
       <div class="flex items-center gap-2">
         <Label for="month-select">{t('salary.month')}</Label>
-        <select
+        <Select
           id="month-select"
           bind:value={selectedMonth}
           class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -275,7 +276,7 @@
           <option value="2026-01">January 2026</option>
           <option value="2025-12">December 2025</option>
           <option value="2025-11">November 2025</option>
-        </select>
+        </Select>
       </div>
       <Button onclick={openAddForm} size="sm">
         <Plus />
@@ -345,20 +346,20 @@
       <CardHeader>
         <div class="flex items-center justify-between">
           <CardTitle>{editingId ? t('salary.editRecord') : t('salary.addRecord')}</CardTitle>
-          <button
+          <Button
             onclick={() => (showForm = false)}
             class="rounded-md p-1 hover:bg-accent"
             aria-label="Close"
           >
             <X class="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
         <div class="grid grid-cols-3 gap-4">
           <div class="col-span-3 flex flex-col gap-1.5">
             <Label for="f-teacher">Select Teacher</Label>
-            <select
+            <Select
               id="f-teacher"
               bind:value={formSelectedTeacherId}
               onchange={onTeacherSelected}
@@ -368,7 +369,7 @@
               {#each teacherOptions as teacher}
                 <option value={teacher.id}>{teacher.name} ({teacher.employeeId || 'No ID'})</option>
               {/each}
-            </select>
+            </Select>
           </div>
           {#if formName}
             <div class="flex flex-col gap-1.5">
@@ -462,7 +463,7 @@
                     <Button size="sm" variant="ghost" onclick={() => openEditForm(record)}>
                       {t('common.edit')}
                     </Button>
-                    <button
+                    <Button
                       onclick={() => toggleExpand(record.id)}
                       class="rounded p-1 hover:bg-accent"
                       aria-label="Expand"
@@ -472,7 +473,7 @@
                       {:else}
                         <ChevronDown class="h-4 w-4" />
                       {/if}
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { t } from '$lib/i18n/index.svelte';
   import { Button } from '$lib/components/ui/button';
+  import { Select } from '$lib/components/ui/select';
   import { Input } from '$lib/components/ui/input';
   import { Badge } from '$lib/components/ui/badge';
   import { Label } from '$lib/components/ui/label';
@@ -342,7 +343,7 @@
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="space-y-1.5">
               <Label for="f-dept">{t('teachers.department')}</Label>
-              <select
+              <Select
                 id="f-dept"
                 bind:value={formDepartment}
                 class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -351,7 +352,7 @@
                 {#each DEPARTMENTS as dept}
                   <option value={dept}>{dept}</option>
                 {/each}
-              </select>
+              </Select>
             </div>
             <div class="space-y-1.5">
               <Label for="f-joindate">{t('teachers.joinDate')} <span class="text-muted-foreground text-xs">(defaults to today)</span></Label>
@@ -366,7 +367,7 @@
             <Label>{t('teachers.assignSubjects')}</Label>
             <div class="flex flex-wrap gap-2">
               {#each ALL_SUBJECTS as subject}
-                <button
+                <Button
                   type="button"
                   onclick={() => toggleSubject(subject)}
                   class={[
@@ -377,7 +378,7 @@
                   ].join(' ')}
                 >
                   {subject}
-                </button>
+                </Button>
               {/each}
             </div>
           </div>
@@ -387,7 +388,7 @@
             <Label>{t('teachers.assignClasses')}</Label>
             <div class="flex flex-wrap gap-2">
               {#each ALL_CLASSES as cls}
-                <button
+                <Button
                   type="button"
                   onclick={() => toggleClass(cls)}
                   class={[
@@ -398,7 +399,7 @@
                   ].join(' ')}
                 >
                   {cls}
-                </button>
+                </Button>
               {/each}
             </div>
           </div>

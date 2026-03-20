@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
+  import { Select } from '$lib/components/ui/select';
   import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Label } from '$lib/components/ui/label';
@@ -283,7 +284,7 @@
             <div>
               <Label>Format</Label>
               <div class="grid grid-cols-2 gap-2 mt-1.5">
-                <button
+                <Button
                   class="flex items-center gap-2 p-3 rounded-lg border-2 transition-all {selectedFormat === 'csv' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
                   onclick={() => selectedFormat = 'csv'}
                 >
@@ -292,8 +293,8 @@
                     <div class="text-sm font-medium">CSV</div>
                     <div class="text-xs text-muted-foreground">Spreadsheet</div>
                   </div>
-                </button>
-                <button
+                </Button>
+                <Button
                   class="flex items-center gap-2 p-3 rounded-lg border-2 transition-all {selectedFormat === 'pdf' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
                   onclick={() => selectedFormat = 'pdf'}
                 >
@@ -302,7 +303,7 @@
                     <div class="text-sm font-medium">PDF</div>
                     <div class="text-xs text-muted-foreground">Printable</div>
                   </div>
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -311,20 +312,20 @@
             <div>
               <Label>Scope</Label>
               <div class="grid grid-cols-2 gap-2 mt-1.5">
-                <button
+                <Button
                   class="flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-sm {selectedScope === 'class' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
                   onclick={() => selectedScope = 'class'}
                 >
                   <Users class="h-4 w-4" />
                   Entire Class
-                </button>
-                <button
+                </Button>
+                <Button
                   class="flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-sm {selectedScope === 'student' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
                   onclick={() => selectedScope = 'student'}
                 >
                   <FileText class="h-4 w-4" />
                   Per Student
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -332,7 +333,7 @@
 
             <div>
               <Label>Class</Label>
-              <select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedClass} disabled={classes.length === 0}>
+              <Select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedClass} disabled={classes.length === 0}>
                 {#if classes.length === 0}
                   <option value="">No classes — set up school first</option>
                 {:else}
@@ -340,12 +341,12 @@
                     <option value={cls.id}>{cls.name}</option>
                   {/each}
                 {/if}
-              </select>
+              </Select>
             </div>
 
             <div>
               <Label>Examination</Label>
-              <select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedExam} disabled={exams.length === 0}>
+              <Select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedExam} disabled={exams.length === 0}>
                 {#if exams.length === 0}
                   <option value="">No exams found</option>
                 {:else}
@@ -353,7 +354,7 @@
                     <option value={exam.id}>{exam.name}</option>
                   {/each}
                 {/if}
-              </select>
+              </Select>
             </div>
 
             <Separator />

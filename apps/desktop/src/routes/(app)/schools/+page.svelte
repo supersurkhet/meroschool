@@ -206,12 +206,14 @@
 					<CardTitle class="text-base">
 						{editingId ? t('schools.editSchool') : t('schools.addNewSchool')}
 					</CardTitle>
-					<button
+					<Button
+						variant="ghost"
+						size="icon"
 						onclick={resetForm}
-						class="rounded-md p-1 text-muted-foreground hover:bg-muted"
+						class="rounded-md p-1 text-muted-foreground hover:bg-muted h-auto w-auto"
 					>
 						<X class="h-4 w-4" />
-					</button>
+					</Button>
 				</div>
 			</CardHeader>
 			<CardContent>
@@ -320,20 +322,20 @@
 									</td>
 									<td class="px-4 py-3 text-right">
 										<div class="flex items-center justify-end gap-1">
-											<button
+											<Button
 												onclick={() => openEdit(school)}
 												class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
 												title={t('common.edit')}
 											>
 												<Pencil class="h-3.5 w-3.5" />
-											</button>
-											<button
+											</Button>
+											<Button
 												onclick={() => handleDelete(school.id)}
 												class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
 												title={t('common.delete')}
 											>
 												<Trash2 class="h-3.5 w-3.5" />
-											</button>
+											</Button>
 										</div>
 									</td>
 								</tr>

@@ -2,6 +2,7 @@
   import { t } from '$lib/i18n/index.svelte';
   import Button from '$lib/components/ui/button/Button.svelte';
   import Input from '$lib/components/ui/input/Input.svelte';
+  import { Select } from '$lib/components/ui/select';
   import Card from '$lib/components/ui/card/Card.svelte';
   import CardHeader from '$lib/components/ui/card/CardHeader.svelte';
   import CardTitle from '$lib/components/ui/card/CardTitle.svelte';
@@ -425,7 +426,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
             </svg>
             {editingStudent ? 'Edit Student' : t('students.addStudent')}
           </div>
-          <button
+          <Button
             type="button"
             class="text-muted-foreground hover:text-foreground transition-colors"
             onclick={() => { showAddForm = false; editingStudent = null; }}
@@ -434,7 +435,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent class="space-y-5">
@@ -475,7 +476,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="space-y-1.5">
             <Label for="f-class">{t('students.assignClass')} <span class="text-destructive">*</span></Label>
-            <select
+            <Select
               id="f-class"
               bind:value={formClassId}
               onchange={() => { formSectionId = ''; }}
@@ -485,12 +486,12 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
               {#each CLASSES as cls}
                 <option value={cls.id}>{cls.name}</option>
               {/each}
-            </select>
+            </Select>
             {#if formErrors.classId}<p class="text-xs text-destructive">{formErrors.classId}</p>{/if}
           </div>
           <div class="space-y-1.5">
             <Label for="f-section">{t('students.assignSection')} <span class="text-destructive">*</span></Label>
-            <select
+            <Select
               id="f-section"
               bind:value={formSectionId}
               disabled={!formClassId}
@@ -500,7 +501,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
               {#each formSections as sec}
                 <option value={sec.id}>Section {sec.name}</option>
               {/each}
-            </select>
+            </Select>
             {#if formErrors.sectionId}<p class="text-xs text-destructive">{formErrors.sectionId}</p>{/if}
           </div>
         </div>
@@ -533,7 +534,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
             </svg>
             Import Students from CSV
           </div>
-          <button
+          <Button
             type="button"
             class="text-muted-foreground hover:text-foreground transition-colors"
             onclick={() => { showImport = false; csvPreviewRows = []; csvHeaders = []; csvFileName = ''; }}
@@ -542,7 +543,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent class="space-y-4">
@@ -561,7 +562,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
         </div>
 
         <!-- Drop zone -->
-        <button
+        <Button
           type="button"
           class="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer w-full {isDraggingCsv ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}"
           ondrop={handleCsvDrop}
@@ -586,7 +587,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
               <p class="text-xs text-muted-foreground">or click to browse</p>
             </div>
           {/if}
-        </button>
+        </Button>
         <input id="csv-input" type="file" accept=".csv" class="hidden" onchange={handleCsvInput} />
 
         {#if csvError}
@@ -651,14 +652,14 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <input
+          <Input
             type="text"
             placeholder="Search by name, email or roll no..."
             bind:value={searchQuery}
             class="flex h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
           {#if searchQuery}
-            <button
+            <Button
               type="button"
               class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               onclick={() => { searchQuery = ''; }}
@@ -667,12 +668,12 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
+            </Button>
           {/if}
         </div>
 
         <!-- Class filter -->
-        <select
+        <Select
           bind:value={filterClassId}
           onchange={() => { filterSectionId = ''; }}
           class="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[140px]"
@@ -681,10 +682,10 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
           {#each CLASSES as cls}
             <option value={cls.id}>{cls.name}</option>
           {/each}
-        </select>
+        </Select>
 
         <!-- Section filter -->
-        <select
+        <Select
           bind:value={filterSectionId}
           disabled={!filterClassId}
           class="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-w-[140px]"
@@ -693,7 +694,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
           {#each filteredSections as sec}
             <option value={sec.id}>Section {sec.name}</option>
           {/each}
-        </select>
+        </Select>
 
         <!-- Clear filters -->
         {#if filterClassId || filterSectionId || searchQuery}
@@ -717,7 +718,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
           <tr>
             <!-- Roll No -->
             <th class="px-4 py-3 text-left">
-              <button
+              <Button
                 type="button"
                 class="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
                 onclick={() => toggleSort('rollNumber')}
@@ -732,11 +733,11 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
                     <svg class="w-3 h-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
                   {/if}
                 </span>
-              </button>
+              </Button>
             </th>
             <!-- Name -->
             <th class="px-4 py-3 text-left">
-              <button
+              <Button
                 type="button"
                 class="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
                 onclick={() => toggleSort('name')}
@@ -751,7 +752,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
                     <svg class="w-3 h-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
                   {/if}
                 </span>
-              </button>
+              </Button>
             </th>
             <!-- Email -->
             <th class="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('common.email')}</th>
@@ -761,7 +762,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
             <th class="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('setup.sections')}</th>
             <!-- DOB -->
             <th class="px-4 py-3 text-left">
-              <button
+              <Button
                 type="button"
                 class="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
                 onclick={() => toggleSort('dateOfBirth')}
@@ -776,7 +777,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
                     <svg class="w-3 h-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
                   {/if}
                 </span>
-              </button>
+              </Button>
             </th>
             <!-- Actions -->
             <th class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('common.actions')}</th>

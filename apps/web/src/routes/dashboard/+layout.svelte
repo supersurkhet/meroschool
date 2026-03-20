@@ -117,7 +117,7 @@
 	<!-- Mobile sidebar overlay -->
 	{#if sidebarOpen}
 		<div class="fixed inset-0 z-40 lg:hidden">
-			<button class="absolute inset-0 bg-black/50" onclick={() => sidebarOpen = false} aria-label="Close sidebar"></button>
+			<Button variant="ghost" class="absolute inset-0 bg-black/50 rounded-none h-auto w-auto" onclick={() => sidebarOpen = false} aria-label="Close sidebar"></Button>
 			<aside class="relative w-64 h-full flex flex-col bg-card border-r">
 				<div class="flex h-16 items-center gap-2 border-b px-6">
 					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">M</div>
@@ -147,34 +147,34 @@
 	<div class="flex flex-1 flex-col">
 		<!-- Top bar -->
 		<header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/80 backdrop-blur-lg px-4 sm:px-6">
-			<button class="lg:hidden h-9 w-9 flex items-center justify-center text-muted-foreground cursor-pointer" onclick={() => sidebarOpen = !sidebarOpen} aria-label="Toggle sidebar">
+			<Button variant="ghost" size="icon" class="lg:hidden" onclick={() => sidebarOpen = !sidebarOpen} aria-label="Toggle sidebar">
 				<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
 				</svg>
-			</button>
+			</Button>
 			<div class="flex-1"></div>
 			<div class="flex items-center gap-2">
-				<button onclick={toggleLocale} class="px-2 py-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted cursor-pointer">
+				<Button variant="ghost" onclick={toggleLocale} class="px-2 py-1 text-sm font-medium text-muted-foreground hover:text-foreground">
 					{$locale === 'en' ? 'नेपाली' : 'English'}
-				</button>
-				<button onclick={cycleTheme} class="h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted cursor-pointer" aria-label="Toggle theme">
+				</Button>
+				<Button variant="ghost" size="icon" onclick={cycleTheme} aria-label="Toggle theme">
 					{themeIcon[$theme]}
-				</button>
+				</Button>
 				<!-- Notification Bell -->
 				<div class="relative">
-					<button onclick={() => bellOpen = !bellOpen} class="relative h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted cursor-pointer" aria-label="Notifications">
+					<Button variant="ghost" size="icon" onclick={() => bellOpen = !bellOpen} class="relative" aria-label="Notifications">
 						<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
 						</svg>
 						{#if unreadCount > 0}
 							<span class="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{unreadCount}</span>
 						{/if}
-					</button>
+					</Button>
 					{#if bellOpen}
 						<div class="absolute right-0 mt-2 w-80 rounded-xl border bg-card shadow-lg z-50">
 							<div class="flex items-center justify-between px-4 py-3 border-b">
 								<span class="text-sm font-semibold text-foreground">{$t('notifications.title')}</span>
-								<button onclick={markAllRead} class="text-xs text-primary hover:underline cursor-pointer">{$t('notifications.markAllRead')}</button>
+								<Button variant="link" size="sm" onclick={markAllRead}>{$t('notifications.markAllRead')}</Button>
 							</div>
 							<div class="max-h-64 overflow-y-auto">
 								{#each notifications as notif}
