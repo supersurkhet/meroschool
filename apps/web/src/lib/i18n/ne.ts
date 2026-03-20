@@ -380,6 +380,7 @@ export default {
 	"download.iosComingSoon": "App Store मा चाँडै आउँदैछ",
 	"download.getItOn": "यहाँबाट पाउनुहोस्",
 	"download.comingSoonTo": "चाँडै आउँदैछ",
+	"download.alsoAvailable": "अन्य प्लेटफर्ममा पनि उपलब्ध",
 	"download.allReleases": "GitHub मा सबै रिलिजहरू हेर्नुहोस्",
 	"download.whyDownload": "एप किन डाउनलोड गर्ने?",
 	"download.featureFast": "अत्यन्त छिटो",

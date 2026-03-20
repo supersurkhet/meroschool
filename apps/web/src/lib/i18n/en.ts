@@ -380,6 +380,7 @@ export default {
 	"download.iosComingSoon": "Coming soon on App Store",
 	"download.getItOn": "Get it on",
 	"download.comingSoonTo": "Coming soon to",
+	"download.alsoAvailable": "Also available for",
 	"download.allReleases": "View all releases on GitHub",
 	"download.whyDownload": "Why Download the App?",
 	"download.featureFast": "Lightning Fast",
