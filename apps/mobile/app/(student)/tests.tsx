@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react"
-import { View, Text, ScrollView, Pressable, Alert } from "react-native"
+import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/lib/convex/api"
+import { useAuth } from "@/lib/auth"
 import { useTheme } from "@/lib/theme"
 import { ScreenHeader } from "@/components/shared/ScreenHeader"
 import { Card } from "@/components/ui/Card"
@@ -12,81 +15,37 @@ type Tab = "available" | "results"
 type TestView = "list" | "info" | "taking" | "result"
 
 interface Question {
-	id: string
+	_id: string
 	text: string
 	options: string[]
 	correct: number
 }
 
 interface AvailableTest {
-	id: string
-	subject: string
+	_id: string
+	subject?: string
+	subjectName?: string
 	title: string
-	questions: Question[]
-	duration: number // minutes
+	duration: number
 	totalMarks: number
+	questionCount?: number
+	isPublished?: boolean
 }
 
 interface PastResult {
-	id: string
-	subject: string
-	title: string
+	_id: string
+	subject?: string
+	subjectName?: string
+	title?: string
+	testTitle?: string
 	score: number
-	total: number
-	date: string
-	percentage: number
-	answers: { question: string; selected: string; correct: string; isCorrect: boolean }[]
+	totalMarks?: number
+	total?: number
+	submittedAt?: string
+	date?: string
+	percentage?: number
+	answers?: { question: string; selected: string; correct: string; isCorrect: boolean }[]
 }
-
-const sampleQuestions: Question[] = [
-	{ id: "1", text: "What is the value of x in 2x + 4 = 10?", options: ["2", "3", "4", "5"], correct: 1 },
-	{ id: "2", text: "Which is the quadratic formula?", options: ["x = -b/2a", "x = (-b \u00B1 \u221A(b\u00B2-4ac))/2a", "x = b\u00B2 - 4ac", "x = a\u00B2 + b\u00B2"], correct: 1 },
-	{ id: "3", text: "Simplify: 3(x + 2) - 5", options: ["3x + 1", "3x - 1", "3x + 6", "3x - 3"], correct: 0 },
-	{ id: "4", text: "What is the slope of y = 3x + 7?", options: ["7", "3", "-3", "1/3"], correct: 1 },
-	{ id: "5", text: "Factor: x\u00B2 - 9", options: ["(x-3)(x+3)", "(x-9)(x+1)", "(x-3)\u00B2", "(x+3)\u00B2"], correct: 0 },
-]
-
-const scienceQuestions: Question[] = [
-	{ id: "s1", text: "What is Newton's first law about?", options: ["Inertia", "Force", "Energy", "Momentum"], correct: 0 },
-	{ id: "s2", text: "F = ma is which law?", options: ["First", "Second", "Third", "Zeroth"], correct: 1 },
-	{ id: "s3", text: "Unit of force is?", options: ["Joule", "Watt", "Newton", "Pascal"], correct: 2 },
-	{ id: "s4", text: "Acceleration due to gravity is?", options: ["8.9 m/s\u00B2", "9.8 m/s\u00B2", "10.8 m/s\u00B2", "9.0 m/s\u00B2"], correct: 1 },
-]
-
-const availableTests: AvailableTest[] = [
-	{ id: "1", subject: "Mathematics", title: "Algebra Quiz", questions: sampleQuestions, duration: 15, totalMarks: 50 },
-	{ id: "2", subject: "Science", title: "Physics - Motion", questions: scienceQuestions, duration: 10, totalMarks: 40 },
-]
-
-const pastResults: PastResult[] = [
-	{
-		id: "r1", subject: "Nepali", title: "Grammar Test", score: 85, total: 100, date: "Mar 15", percentage: 85,
-		answers: [
-			{ question: "What is a sarvanam?", selected: "Pronoun", correct: "Pronoun", isCorrect: true },
-			{ question: "Which is a visheshan?", selected: "Beautiful", correct: "Beautiful", isCorrect: true },
-			{ question: "Identify the kriya", selected: "Run", correct: "Eat", isCorrect: false },
-		],
-	},
-	{
-		id: "r2", subject: "Social Studies", title: "History Quiz", score: 72, total: 100, date: "Mar 12", percentage: 72,
-		answers: [
-			{ question: "When did Nepal become a republic?", selected: "2008", correct: "2008", isCorrect: true },
-			{ question: "First king of unified Nepal?", selected: "Prithvi Narayan Shah", correct: "Prithvi Narayan Shah", isCorrect: true },
-		],
-	},
-	{
-		id: "r3", subject: "English", title: "Vocabulary", score: 90, total: 100, date: "Mar 10", percentage: 90,
-		answers: [
-			{ question: "Synonym of 'happy'", selected: "Joyful", correct: "Joyful", isCorrect: true },
-		],
-	},
-	{
-		id: "r4", subject: "Mathematics", title: "Geometry Mid-term", score: 35, total: 100, date: "Feb 28", percentage: 35,
-		answers: [
-			{ question: "Sum of angles in triangle?", selected: "360", correct: "180", isCorrect: false },
-		],
-	},
-]
 
 function formatTime(seconds: number): string {
 	const m = Math.floor(seconds / 60)
@@ -97,6 +56,8 @@ function formatTime(seconds: number): string {
 export default function TestsScreen() {
 	const { t } = useTranslation()
 	const { colors } = useTheme()
+	const { user } = useAuth()
+
 	const [tab, setTab] = useState<Tab>("available")
 	const [view, setView] = useState<TestView>("list")
 	const [selectedTest, setSelectedTest] = useState<AvailableTest | null>(null)
@@ -104,12 +65,58 @@ export default function TestsScreen() {
 	const [currentQ, setCurrentQ] = useState(0)
 	const [answers, setAnswers] = useState<(number | null)[]>([])
 	const [timeLeft, setTimeLeft] = useState(0)
+	const [submittingResult, setSubmittingResult] = useState<any | null>(null)
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-	const handleSubmitTest = useCallback(() => {
+	// Queries
+	const availableTests = useQuery(
+		api.tests.listTestsBySubject,
+		user?.sectionId ? { subjectId: user.sectionId as any } : "skip"
+	)
+
+	const testQuestions = useQuery(
+		api.tests.listQuestionsForStudent,
+		selectedTest && view === "taking" ? { testId: selectedTest._id as any } : "skip"
+	)
+
+	const pastResults = useQuery(
+		api.tests.listAttemptsByStudent,
+		user?.studentId ? { studentId: user.studentId as any } : "skip"
+	)
+
+	const submitAttempt = useMutation(api.tests.submitAttempt)
+
+	// Normalize available tests: filter published ones
+	const publishedTests: AvailableTest[] = (availableTests ?? []).filter(
+		(t: any) => t.isPublished !== false
+	)
+
+	const questions: Question[] = testQuestions ?? []
+	const totalQuestions = questions.length
+
+	const handleSubmitTest = useCallback(async () => {
 		if (timerRef.current) clearInterval(timerRef.current)
+		if (!selectedTest || !user?.studentId) {
+			setView("result")
+			return
+		}
+
+		try {
+			const formattedAnswers = answers.map((ans, i) => ({
+				questionId: questions[i]?._id ?? `q${i}`,
+				selectedOption: ans ?? -1,
+			}))
+			const result = await submitAttempt({
+				testId: selectedTest._id as any,
+				studentId: user.studentId as any,
+				answers: formattedAnswers as any,
+			})
+			setSubmittingResult(result)
+		} catch (err) {
+			// Still show local result on error
+		}
 		setView("result")
-	}, [])
+	}, [selectedTest, user, answers, questions, submitAttempt])
 
 	// Timer countdown
 	useEffect(() => {
@@ -138,11 +145,18 @@ export default function TestsScreen() {
 
 	const handleStartTest = useCallback((test: AvailableTest) => {
 		setSelectedTest(test)
-		setAnswers(new Array(test.questions.length).fill(null))
+		setAnswers([])
 		setCurrentQ(0)
 		setTimeLeft(test.duration * 60)
 		setView("taking")
 	}, [])
+
+	// Once questions load, init answers array if needed
+	useEffect(() => {
+		if (view === "taking" && questions.length > 0 && answers.length !== questions.length) {
+			setAnswers(new Array(questions.length).fill(null))
+		}
+	}, [view, questions.length])
 
 	const handleAnswer = useCallback((optionIndex: number) => {
 		setAnswers((prev) => {
@@ -170,13 +184,15 @@ export default function TestsScreen() {
 		setCurrentQ(0)
 		setTimeLeft(0)
 		setSelectedResult(null)
+		setSubmittingResult(null)
 	}, [])
 
-	const score = selectedTest
-		? answers.reduce<number>((acc, ans, i) => acc + (ans === selectedTest.questions[i]?.correct ? 1 : 0), 0)
-		: 0
-	const totalQuestions = selectedTest?.questions.length ?? 0
-	const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0
+	const score = questions.length > 0
+		? answers.reduce<number>((acc, ans, i) => acc + (ans === questions[i]?.correct ? 1 : 0), 0)
+		: (submittingResult?.score ?? 0)
+	const percentage = totalQuestions > 0
+		? Math.round((score / totalQuestions) * 100)
+		: (submittingResult?.percentage ?? 0)
 
 	const scoreColor = (pct: number) => {
 		if (pct >= 70) return colors.success
@@ -192,7 +208,28 @@ export default function TestsScreen() {
 
 	// Test Taking View
 	if (view === "taking" && selectedTest) {
-		const q = selectedTest.questions[currentQ]
+		// Show loading while questions load
+		if (testQuestions === undefined) {
+			return (
+				<View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
+					<ActivityIndicator size="large" color={colors.primary} />
+					<Text style={{ fontSize: 14, color: colors.textSecondary, marginTop: 12 }}>
+						Loading questions...
+					</Text>
+				</View>
+			)
+		}
+
+		const q = questions[currentQ]
+		if (!q) {
+			return (
+				<View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
+					<Text style={{ fontSize: 16, color: colors.textSecondary }}>No questions found</Text>
+					<Button title="Back" onPress={resetTest} style={{ marginTop: 16 }} />
+				</View>
+			)
+		}
+
 		const answeredCount = answers.filter((a) => a !== null).length
 		const isTimeLow = timeLeft < 60
 
@@ -312,7 +349,7 @@ export default function TestsScreen() {
 				{/* Question navigation dots */}
 				<View style={{ paddingHorizontal: 20, paddingVertical: 8 }}>
 					<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-						{selectedTest.questions.map((_, i) => (
+						{questions.map((_, i) => (
 							<Pressable
 								key={i}
 								onPress={() => setCurrentQ(i)}
@@ -414,39 +451,43 @@ export default function TestsScreen() {
 					</View>
 
 					{/* Per-question review */}
-					<Text style={{ fontSize: 18, fontWeight: "700", color: colors.text, marginBottom: 12 }}>
-						Question Review
-					</Text>
-					{selectedTest.questions.map((q, i) => {
-						const userAns = answers[i]
-						const isCorrect = userAns === q.correct
-						return (
-							<Card key={q.id} style={{ marginBottom: 8 }}>
-								<View style={{ gap: 6 }}>
-									<View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-										<Ionicons
-											name={isCorrect ? "checkmark-circle" : "close-circle"}
-											size={20}
-											color={isCorrect ? colors.success : colors.danger}
-										/>
-										<Text style={{ fontSize: 14, fontWeight: "600", color: colors.text, flex: 1 }}>
-											Q{i + 1}: {q.text}
-										</Text>
-									</View>
-									{userAns !== null && (
-										<Text style={{ fontSize: 13, color: isCorrect ? colors.success : colors.danger, marginLeft: 28 }}>
-											Your answer: {q.options[userAns]}
-										</Text>
-									)}
-									{!isCorrect && (
-										<Text style={{ fontSize: 13, color: colors.success, marginLeft: 28 }}>
-											Correct: {q.options[q.correct]}
-										</Text>
-									)}
-								</View>
-							</Card>
-						)
-					})}
+					{questions.length > 0 && (
+						<>
+							<Text style={{ fontSize: 18, fontWeight: "700", color: colors.text, marginBottom: 12 }}>
+								Question Review
+							</Text>
+							{questions.map((q, i) => {
+								const userAns = answers[i]
+								const isCorrect = userAns === q.correct
+								return (
+									<Card key={q._id} style={{ marginBottom: 8 }}>
+										<View style={{ gap: 6 }}>
+											<View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+												<Ionicons
+													name={isCorrect ? "checkmark-circle" : "close-circle"}
+													size={20}
+													color={isCorrect ? colors.success : colors.danger}
+												/>
+												<Text style={{ fontSize: 14, fontWeight: "600", color: colors.text, flex: 1 }}>
+													Q{i + 1}: {q.text}
+												</Text>
+											</View>
+											{userAns !== null && (
+												<Text style={{ fontSize: 13, color: isCorrect ? colors.success : colors.danger, marginLeft: 28 }}>
+													Your answer: {q.options[userAns]}
+												</Text>
+											)}
+											{!isCorrect && (
+												<Text style={{ fontSize: 13, color: colors.success, marginLeft: 28 }}>
+													Correct: {q.options[q.correct]}
+												</Text>
+											)}
+										</View>
+									</Card>
+								)
+							})}
+						</>
+					)}
 
 					<Button
 						title="Done"
@@ -460,6 +501,7 @@ export default function TestsScreen() {
 
 	// Test Info Modal View
 	if (view === "info" && selectedTest) {
+		const qCount = selectedTest.questionCount ?? 0
 		return (
 			<View style={{ flex: 1, backgroundColor: colors.bg }}>
 				<ScreenHeader
@@ -487,11 +529,11 @@ export default function TestsScreen() {
 					<Text style={{ fontSize: 22, fontWeight: "700", color: colors.text }}>
 						{selectedTest.title}
 					</Text>
-					<Badge text={selectedTest.subject} variant="primary" />
+					<Badge text={selectedTest.subjectName ?? selectedTest.subject ?? ""} variant="primary" />
 					<View style={{ marginTop: 24, gap: 16, width: "100%" }}>
 						{[
 							{ icon: "time-outline" as const, label: "Duration", value: `${selectedTest.duration} minutes` },
-							{ icon: "help-circle-outline" as const, label: "Questions", value: `${selectedTest.questions.length}` },
+							{ icon: "help-circle-outline" as const, label: "Questions", value: `${qCount}` },
 							{ icon: "star-outline" as const, label: "Total Marks", value: `${selectedTest.totalMarks}` },
 						].map((item) => (
 							<View key={item.label} style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
@@ -528,11 +570,12 @@ export default function TestsScreen() {
 
 	// Past result detail view
 	if (view === "info" && selectedResult) {
+		const pct = selectedResult.percentage ?? Math.round(((selectedResult.score ?? 0) / (selectedResult.totalMarks ?? selectedResult.total ?? 100)) * 100)
 		return (
 			<View style={{ flex: 1, backgroundColor: colors.bg }}>
 				<ScreenHeader
-					title={selectedResult.title}
-					subtitle={`${selectedResult.subject} — ${selectedResult.date}`}
+					title={selectedResult.testTitle ?? selectedResult.title ?? "Result"}
+					subtitle={`${selectedResult.subjectName ?? selectedResult.subject ?? ""} — ${selectedResult.submittedAt ?? selectedResult.date ?? ""}`}
 					right={
 						<Pressable onPress={() => { setView("list"); setSelectedResult(null) }}>
 							<Ionicons name="close" size={24} color={colors.textSecondary} />
@@ -546,20 +589,20 @@ export default function TestsScreen() {
 								width: 80,
 								height: 80,
 								borderRadius: 40,
-								backgroundColor: scoreBg(selectedResult.percentage),
+								backgroundColor: scoreBg(pct),
 								alignItems: "center",
 								justifyContent: "center",
 							}}
 						>
-							<Text style={{ fontSize: 24, fontWeight: "800", color: scoreColor(selectedResult.percentage) }}>
-								{selectedResult.percentage}%
+							<Text style={{ fontSize: 24, fontWeight: "800", color: scoreColor(pct) }}>
+								{pct}%
 							</Text>
 						</View>
 						<Text style={{ fontSize: 15, color: colors.textSecondary, marginTop: 8 }}>
-							{selectedResult.score}/{selectedResult.total}
+							{selectedResult.score}/{selectedResult.totalMarks ?? selectedResult.total}
 						</Text>
 					</View>
-					{selectedResult.answers.map((a, i) => (
+					{(selectedResult.answers ?? []).map((a, i) => (
 						<Card key={i}>
 							<View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
 								<Ionicons
@@ -614,19 +657,35 @@ export default function TestsScreen() {
 			</View>
 
 			<ScrollView contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 40 }}>
+				{/* Available Tests Tab */}
+				{tab === "available" && availableTests === undefined && (
+					<View style={{ alignItems: "center", paddingVertical: 40 }}>
+						<ActivityIndicator size="large" color={colors.primary} />
+					</View>
+				)}
+
+				{tab === "available" && availableTests !== undefined && publishedTests.length === 0 && (
+					<View style={{ alignItems: "center", paddingVertical: 40 }}>
+						<Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
+						<Text style={{ fontSize: 16, color: colors.textSecondary, marginTop: 12 }}>
+							No tests available right now
+						</Text>
+					</View>
+				)}
+
 				{tab === "available" &&
-					availableTests.map((test) => (
-						<Card key={test.id}>
+					publishedTests.map((test) => (
+						<Card key={test._id}>
 							<View style={{ gap: 8 }}>
 								<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-									<Badge text={test.subject} variant="primary" />
+									<Badge text={test.subjectName ?? test.subject ?? "—"} variant="primary" />
 									<Badge text={`${test.duration} min`} variant="warning" />
 								</View>
 								<Text style={{ fontSize: 16, fontWeight: "600", color: colors.text }}>
 									{test.title}
 								</Text>
 								<Text style={{ fontSize: 13, color: colors.textSecondary }}>
-									{test.questions.length} questions · {test.totalMarks} marks
+									{test.questionCount ? `${test.questionCount} questions · ` : ""}{test.totalMarks} marks
 								</Text>
 								<Button
 									title={t("student.takeTest")}
@@ -640,42 +699,61 @@ export default function TestsScreen() {
 						</Card>
 					))}
 
+				{/* Results Tab */}
+				{tab === "results" && pastResults === undefined && (
+					<View style={{ alignItems: "center", paddingVertical: 40 }}>
+						<ActivityIndicator size="large" color={colors.primary} />
+					</View>
+				)}
+
+				{tab === "results" && pastResults !== undefined && (pastResults as any[]).length === 0 && (
+					<View style={{ alignItems: "center", paddingVertical: 40 }}>
+						<Ionicons name="trophy-outline" size={48} color={colors.textMuted} />
+						<Text style={{ fontSize: 16, color: colors.textSecondary, marginTop: 12 }}>
+							No test results yet
+						</Text>
+					</View>
+				)}
+
 				{tab === "results" &&
-					pastResults.map((r) => (
-						<Card
-							key={r.id}
-							onPress={() => {
-								setSelectedResult(r)
-								setSelectedTest(null)
-								setView("info")
-							}}
-						>
-							<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-								<View style={{ flex: 1 }}>
-									<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>
-										{r.title}
-									</Text>
-									<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
-										{r.subject} · {r.date} · {r.score}/{r.total}
-									</Text>
+					(pastResults ?? []).map((r: any) => {
+						const pct = r.percentage ?? Math.round(((r.score ?? 0) / (r.totalMarks ?? r.total ?? 100)) * 100)
+						return (
+							<Card
+								key={r._id}
+								onPress={() => {
+									setSelectedResult(r)
+									setSelectedTest(null)
+									setView("info")
+								}}
+							>
+								<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+									<View style={{ flex: 1 }}>
+										<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>
+											{r.testTitle ?? r.title ?? "Test"}
+										</Text>
+										<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
+											{r.subjectName ?? r.subject ?? "—"} · {r.submittedAt ?? r.date ?? ""} · {r.score}/{r.totalMarks ?? r.total}
+										</Text>
+									</View>
+									<View
+										style={{
+											width: 44,
+											height: 44,
+											borderRadius: 22,
+											backgroundColor: scoreBg(pct),
+											alignItems: "center",
+											justifyContent: "center",
+										}}
+									>
+										<Text style={{ fontSize: 13, fontWeight: "700", color: scoreColor(pct) }}>
+											{pct}%
+										</Text>
+									</View>
 								</View>
-								<View
-									style={{
-										width: 44,
-										height: 44,
-										borderRadius: 22,
-										backgroundColor: scoreBg(r.percentage),
-										alignItems: "center",
-										justifyContent: "center",
-									}}
-								>
-									<Text style={{ fontSize: 13, fontWeight: "700", color: scoreColor(r.percentage) }}>
-										{r.percentage}%
-									</Text>
-								</View>
-							</View>
-						</Card>
-					))}
+							</Card>
+						)
+					})}
 			</ScrollView>
 		</View>
 	)

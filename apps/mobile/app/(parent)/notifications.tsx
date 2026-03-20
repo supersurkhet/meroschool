@@ -1,7 +1,10 @@
-import { useState, useCallback } from "react"
-import { View, Text, FlatList, Pressable, RefreshControl } from "react-native"
+import { useCallback, useState } from "react"
+import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/lib/convex/api"
+import { useAuth } from "@/lib/auth"
 import { useTheme } from "@/lib/theme"
 import { ScreenHeader } from "@/components/shared/ScreenHeader"
 import { Card } from "@/components/ui/Card"
@@ -9,118 +12,53 @@ import { EmptyState } from "@/components/ui/EmptyState"
 
 type NotificationType = "attendance_alert" | "test_result" | "assignment_graded" | "general"
 
-interface Notification {
-	id: string
-	title: string
-	body: string
-	type: NotificationType
-	time: string
-	read: boolean
-}
-
-const initialNotifications: Notification[] = [
-	{
-		id: "1",
-		title: "Absent Today",
-		body: "Aarav was marked absent in Class 10-A today. If this is incorrect, please contact the school.",
-		type: "attendance_alert",
-		time: "10 min ago",
-		read: false,
-	},
-	{
-		id: "2",
-		title: "Test Result: Algebra Quiz",
-		body: "Aarav scored 85/100 (85%) in Mathematics - Algebra Quiz. Grade: A",
-		type: "test_result",
-		time: "2 hours ago",
-		read: false,
-	},
-	{
-		id: "3",
-		title: "Assignment Graded",
-		body: "Nepal History Timeline has been graded. Score: 45/50. Grade: A. Feedback: Excellent work!",
-		type: "assignment_graded",
-		time: "5 hours ago",
-		read: false,
-	},
-	{
-		id: "4",
-		title: "Fee Payment Reminder",
-		body: "Monthly fee for March is due. Please pay before March 25, 2026.",
-		type: "general",
-		time: "Yesterday",
-		read: false,
-	},
-	{
-		id: "5",
-		title: "Parent-Teacher Meeting",
-		body: "PTM scheduled for March 28, 2026 at 2:00 PM. Please plan to attend.",
-		type: "general",
-		time: "Yesterday",
-		read: true,
-	},
-	{
-		id: "6",
-		title: "Late Arrival",
-		body: "Aarav was marked late on March 17, 2026. Arrival time: 10:15 AM.",
-		type: "attendance_alert",
-		time: "Mar 17",
-		read: true,
-	},
-	{
-		id: "7",
-		title: "Test Result: Grammar Test",
-		body: "Aarav scored 78/100 (78%) in Nepali - Grammar Test. Grade: B+",
-		type: "test_result",
-		time: "Mar 18",
-		read: true,
-	},
-	{
-		id: "8",
-		title: "Assignment Graded",
-		body: "Poem Analysis has been graded. Score: 38/50. Grade: B+. Feedback: Good analysis, work on vocabulary.",
-		type: "assignment_graded",
-		time: "Mar 15",
-		read: true,
-	},
-	{
-		id: "9",
-		title: "Holiday Notice",
-		body: "School will be closed on March 22, 2026 for Holi festival.",
-		type: "general",
-		time: "Mar 14",
-		read: true,
-	},
-	{
-		id: "10",
-		title: "Absent Notification",
-		body: "Aarav was marked absent on March 15, 2026. Please contact the school if this is incorrect.",
-		type: "attendance_alert",
-		time: "Mar 15",
-		read: true,
-	},
-]
-
 export default function ParentNotificationsScreen() {
 	const { t } = useTranslation()
+	const { user } = useAuth()
 	const { colors } = useTheme()
-	const [notifications, setNotifications] = useState(initialNotifications)
 	const [refreshing, setRefreshing] = useState(false)
 
-	const markAsRead = useCallback((id: string) => {
-		setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
-	}, [])
+	// Convex queries & mutations
+	const notifications = useQuery(
+		api.notifications.listAll,
+		user?.convexId ? { userId: user.convexId as any } : "skip",
+	)
 
-	const markAllRead = useCallback(() => {
-		setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-	}, [])
+	const unreadData = useQuery(
+		api.notifications.unreadCount,
+		user?.convexId ? { userId: user.convexId as any } : "skip",
+	)
+
+	const markReadMutation = useMutation(api.notifications.markRead)
+	const markAllReadMutation = useMutation(api.notifications.markAllRead)
+
+	const unreadCount = unreadData ?? 0
+
+	const markAsRead = useCallback(
+		async (id: string) => {
+			try {
+				await markReadMutation({ notificationId: id as any })
+			} catch {
+				// optimistic: ignore errors silently
+			}
+		},
+		[markReadMutation],
+	)
+
+	const markAllRead = useCallback(async () => {
+		if (!user?.convexId) return
+		try {
+			await markAllReadMutation({ userId: user.convexId as any })
+		} catch {
+			// ignore
+		}
+	}, [markAllReadMutation, user?.convexId])
 
 	const onRefresh = useCallback(() => {
+		// Convex subscriptions auto-update; just show brief spinner for UX
 		setRefreshing(true)
-		// Simulate refresh
-		setTimeout(() => {
-			setRefreshing(false)
-		}, 1000)
+		const timer = setTimeout(() => setRefreshing(false), 800)
+		return () => clearTimeout(timer)
 	}, [])
 
 	const typeConfig: Record<NotificationType, { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
@@ -130,20 +68,43 @@ export default function ParentNotificationsScreen() {
 		general: { icon: "information-circle", color: colors.textSecondary, bg: colors.surfaceAlt },
 	}
 
-	const unreadCount = notifications.filter((n) => !n.read).length
-
 	const renderNotification = useCallback(
-		({ item }: { item: Notification }) => {
-			const cfg = typeConfig[item.type]
+		({ item }: { item: any }) => {
+			const rawType: string = item.type ?? "general"
+			const notifType: NotificationType =
+				rawType === "attendance_alert" ||
+				rawType === "test_result" ||
+				rawType === "assignment_graded"
+					? (rawType as NotificationType)
+					: "general"
+			const cfg = typeConfig[notifType]
+			const isRead: boolean = item.read ?? item.isRead ?? false
+
+			// Relative time: prefer item.time string, fall back to formatting _creationTime
+			const timeDisplay: string = item.time ?? (
+				item._creationTime
+					? (() => {
+							const diff = Date.now() - item._creationTime
+							const minutes = Math.floor(diff / 60000)
+							if (minutes < 60) return `${minutes} min ago`
+							const hours = Math.floor(minutes / 60)
+							if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`
+							const days = Math.floor(hours / 24)
+							if (days === 1) return "Yesterday"
+							return `${days} days ago`
+						})()
+					: ""
+			)
+
 			return (
 				<Pressable
-					onPress={() => markAsRead(item.id)}
+					onPress={() => markAsRead(item._id ?? item.id)}
 					style={{ paddingHorizontal: 20, marginBottom: 8 }}
 				>
 					<Card
 						style={{
-							opacity: item.read ? 0.7 : 1,
-							borderLeftWidth: item.read ? 0 : 3,
+							opacity: isRead ? 0.7 : 1,
+							borderLeftWidth: isRead ? 0 : 3,
 							borderLeftColor: cfg.color,
 						}}
 					>
@@ -165,14 +126,14 @@ export default function ParentNotificationsScreen() {
 									<Text
 										style={{
 											fontSize: 14,
-											fontWeight: item.read ? "500" : "700",
+											fontWeight: isRead ? "500" : "700",
 											color: colors.text,
 											flex: 1,
 										}}
 									>
 										{item.title}
 									</Text>
-									{!item.read && (
+									{!isRead && (
 										<View
 											style={{
 												width: 8,
@@ -192,10 +153,10 @@ export default function ParentNotificationsScreen() {
 										lineHeight: 18,
 									}}
 								>
-									{item.body}
+									{item.body ?? item.message ?? ""}
 								</Text>
 								<Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 6 }}>
-									{item.time}
+									{timeDisplay}
 								</Text>
 							</View>
 						</View>
@@ -203,7 +164,7 @@ export default function ParentNotificationsScreen() {
 				</Pressable>
 			)
 		},
-		[colors, typeConfig, markAsRead]
+		[colors, typeConfig, markAsRead],
 	)
 
 	return (
@@ -229,27 +190,33 @@ export default function ParentNotificationsScreen() {
 					) : undefined
 				}
 			/>
-			<FlatList
-				data={notifications}
-				keyExtractor={(item) => item.id}
-				renderItem={renderNotification}
-				contentContainerStyle={{ paddingTop: 12, paddingBottom: 40 }}
-				showsVerticalScrollIndicator={false}
-				refreshControl={
-					<RefreshControl
-						refreshing={refreshing}
-						onRefresh={onRefresh}
-						tintColor={colors.primary}
-					/>
-				}
-				ListEmptyComponent={
-					<EmptyState
-						icon="notifications-off-outline"
-						title="No Notifications"
-						subtitle="You're all caught up! New notifications will appear here."
-					/>
-				}
-			/>
+			{notifications === undefined ? (
+				<View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+					<ActivityIndicator color={colors.primary} />
+				</View>
+			) : (
+				<FlatList
+					data={notifications}
+					keyExtractor={(item: any) => item._id ?? item.id}
+					renderItem={renderNotification}
+					contentContainerStyle={{ paddingTop: 12, paddingBottom: 40 }}
+					showsVerticalScrollIndicator={false}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={onRefresh}
+							tintColor={colors.primary}
+						/>
+					}
+					ListEmptyComponent={
+						<EmptyState
+							icon="notifications-off-outline"
+							title="No Notifications"
+							subtitle="You're all caught up! New notifications will appear here."
+						/>
+					}
+				/>
+			)}
 		</View>
 	)
 }

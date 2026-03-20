@@ -1,7 +1,10 @@
 import { useState, useCallback } from "react"
-import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native"
+import { View, Text, ScrollView, Pressable, RefreshControl, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/lib/convex/api"
+import { useAuth } from "@/lib/auth"
 import { useTheme } from "@/lib/theme"
 import { ScreenHeader } from "@/components/shared/ScreenHeader"
 import { Card } from "@/components/ui/Card"
@@ -9,37 +12,108 @@ import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { EmptyState } from "@/components/ui/EmptyState"
-
-const assignmentsList = [
-	{ id: "1", title: "Solve exercises 5.1-5.3", class: "Class 10-A", dueDate: "Mar 26", submissions: 18, total: 32, status: "active" },
-	{ id: "2", title: "Lab report - Photosynthesis", class: "Class 10-A", dueDate: "Mar 20", submissions: 30, total: 32, status: "grading" },
-	{ id: "3", title: "Nepal History Timeline", class: "Class 9-B", dueDate: "Mar 15", submissions: 28, total: 28, status: "graded" },
-]
-
-const submissions = [
-	{ id: "1", student: "Aarav Sharma", submittedDate: "Mar 19", grade: null as string | null },
-	{ id: "2", student: "Bina Gurung", submittedDate: "Mar 18", grade: "A" },
-	{ id: "3", student: "Chandan Thapa", submittedDate: "Mar 20", grade: null as string | null },
-]
+import { SkeletonList } from "@/components/ui/Skeleton"
 
 export default function TeacherAssignmentsScreen() {
 	const { t } = useTranslation()
+	const { user } = useAuth()
 	const { colors } = useTheme()
 	const [showCreate, setShowCreate] = useState(false)
+	const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null)
 	const [viewSubmissions, setViewSubmissions] = useState(false)
 	const [refreshing, setRefreshing] = useState(false)
+
+	// Create form state
+	const [assignTitle, setAssignTitle] = useState("")
+	const [assignDescription, setAssignDescription] = useState("")
+	const [assignClass, setAssignClass] = useState("")
+	const [assignDueDate, setAssignDueDate] = useState("")
+	const [creating, setCreating] = useState(false)
+
+	const sectionId = user?.sectionId as any
+
+	// Queries
+	const assignments = useQuery(
+		api.assignments.listBySection,
+		sectionId ? { sectionId } : "skip"
+	)
+
+	const submissions = useQuery(
+		api.assignments.listSubmissions,
+		selectedAssignmentId ? { assignmentId: selectedAssignmentId as any } : "skip"
+	)
+
+	// Mutations
+	const createAssignment = useMutation(api.assignments.create)
+	const gradeAssignment = useMutation(api.assignments.grade)
 
 	const onRefresh = useCallback(() => {
 		setRefreshing(true)
 		setTimeout(() => setRefreshing(false), 1000)
 	}, [])
 
-	if (viewSubmissions) {
+	const handleCreate = useCallback(async () => {
+		if (!assignTitle.trim()) {
+			Alert.alert("Missing Title", "Please enter an assignment title.")
+			return
+		}
+		setCreating(true)
+		try {
+			await createAssignment({
+				title: assignTitle,
+				description: assignDescription || undefined,
+				sectionId,
+				teacherId: user?.teacherId as any,
+				dueDate: assignDueDate || undefined,
+			} as any)
+			setShowCreate(false)
+			setAssignTitle("")
+			setAssignDescription("")
+			setAssignClass("")
+			setAssignDueDate("")
+		} catch (err: any) {
+			Alert.alert("Error", err?.message ?? "Failed to create assignment.")
+		} finally {
+			setCreating(false)
+		}
+	}, [assignTitle, assignDescription, assignDueDate, sectionId, user?.teacherId, createAssignment])
+
+	const handleGrade = useCallback(async (submissionId: string, grade: string) => {
+		try {
+			await gradeAssignment({ submissionId: submissionId as any, grade } as any)
+		} catch (err: any) {
+			Alert.alert("Error", err?.message ?? "Failed to save grade.")
+		}
+	}, [gradeAssignment])
+
+	const openGradeDialog = useCallback((submissionId: string, studentName: string) => {
+		Alert.prompt(
+			"Grade Submission",
+			`Enter grade for ${studentName}:`,
+			[
+				{ text: t("common.cancel"), style: "cancel" },
+				{
+					text: "Save",
+					onPress: (grade: string | undefined) => {
+						if (grade?.trim()) handleGrade(submissionId, grade.trim())
+					},
+				},
+			],
+			"plain-text"
+		)
+	}, [handleGrade, t])
+
+	const assignmentList: any[] = assignments ?? []
+	const submissionList: any[] = submissions ?? []
+
+	const selectedAssignment = assignmentList.find((a) => a._id === selectedAssignmentId)
+
+	if (viewSubmissions && selectedAssignmentId) {
 		return (
 			<View style={{ flex: 1, backgroundColor: colors.bg }}>
 				<ScreenHeader
 					title="Submissions"
-					subtitle="Lab report - Photosynthesis"
+					subtitle={selectedAssignment?.title ?? ""}
 					right={
 						<Pressable onPress={() => setViewSubmissions(false)}>
 							<Ionicons name="arrow-back" size={24} color={colors.primary} />
@@ -47,20 +121,35 @@ export default function TeacherAssignmentsScreen() {
 					}
 				/>
 				<ScrollView contentContainerStyle={{ padding: 20, gap: 10 }}>
-					{submissions.length === 0 ? (
-						<EmptyState icon="document-outline" title="No Submissions Yet" subtitle="Students haven't submitted this assignment yet" />
+					{submissions === undefined ? (
+						<SkeletonList count={4} />
+					) : submissionList.length === 0 ? (
+						<EmptyState
+							icon="document-outline"
+							title="No Submissions Yet"
+							subtitle="Students haven't submitted this assignment yet"
+						/>
 					) : (
-						submissions.map((sub) => (
-							<Card key={sub.id}>
+						submissionList.map((sub: any) => (
+							<Card key={sub._id}>
 								<View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
 									<View>
-										<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>{sub.student}</Text>
-										<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>Submitted: {sub.submittedDate}</Text>
+										<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>
+											{sub.studentName ?? sub.student ?? "Unknown"}
+										</Text>
+										<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+											Submitted: {sub.submittedAt ?? sub.submittedDate ?? "—"}
+										</Text>
 									</View>
 									{sub.grade ? (
 										<Badge text={sub.grade} variant="success" />
 									) : (
-										<Button title={t("teacher.grade")} size="sm" variant="outline" onPress={() => {}} />
+										<Button
+											title={t("teacher.grade")}
+											size="sm"
+											variant="outline"
+											onPress={() => openGradeDialog(sub._id, sub.studentName ?? sub.student ?? "student")}
+										/>
 									)}
 								</View>
 							</Card>
@@ -90,56 +179,111 @@ export default function TeacherAssignmentsScreen() {
 			>
 				{showCreate && (
 					<Card style={{ borderColor: "#7C3AED", borderWidth: 1.5 }}>
-						<Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, marginBottom: 14 }}>{t("teacher.createAssignment")}</Text>
+						<Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, marginBottom: 14 }}>
+							{t("teacher.createAssignment")}
+						</Text>
 						<View style={{ gap: 10 }}>
-							<Input placeholder="Assignment title" />
-							<Input placeholder="Description" multiline numberOfLines={3} style={{ height: 80, textAlignVertical: "top" }} />
-							<Input placeholder="Select class" />
-							<Input placeholder="Due date" />
-							<Button title={t("teacher.createAssignment")} onPress={() => setShowCreate(false)} />
+							<Input
+								placeholder="Assignment title"
+								value={assignTitle}
+								onChangeText={setAssignTitle}
+							/>
+							<Input
+								placeholder="Description"
+								multiline
+								numberOfLines={3}
+								style={{ height: 80, textAlignVertical: "top" }}
+								value={assignDescription}
+								onChangeText={setAssignDescription}
+							/>
+							<Input
+								placeholder="Select class"
+								value={assignClass}
+								onChangeText={setAssignClass}
+							/>
+							<Input
+								placeholder="Due date"
+								value={assignDueDate}
+								onChangeText={setAssignDueDate}
+							/>
+							<Button
+								title={creating ? "Creating…" : t("teacher.createAssignment")}
+								onPress={handleCreate}
+								loading={creating}
+							/>
 						</View>
 					</Card>
 				)}
 
-				{!showCreate && assignmentsList.length === 0 && (
-					<EmptyState icon="clipboard-outline" title="No Assignments" subtitle="Create your first assignment using the + button" />
+				{/* Loading state */}
+				{!showCreate && assignments === undefined && sectionId && (
+					<SkeletonList count={3} />
 				)}
 
-				{assignmentsList.map((a) => (
-					<Card key={a.id} onPress={() => a.status !== "active" && setViewSubmissions(true)}>
-						<View style={{ gap: 8 }}>
-							<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-								<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text, flex: 1 }}>{a.title}</Text>
-								<Badge
-									text={a.status}
-									variant={a.status === "active" ? "primary" : a.status === "grading" ? "warning" : "success"}
-								/>
-							</View>
-							<Text style={{ fontSize: 13, color: colors.textSecondary }}>
-								{a.class} · Due: {a.dueDate}
-							</Text>
-							{/* Progress bar */}
-							<View style={{ gap: 4 }}>
-								<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-									<Text style={{ fontSize: 12, color: colors.textMuted }}>Submissions</Text>
-									<Text style={{ fontSize: 12, fontWeight: "600", color: colors.text }}>
-										{a.submissions}/{a.total}
-									</Text>
-								</View>
-								<View style={{ height: 6, backgroundColor: colors.surfaceAlt, borderRadius: 3 }}>
-									<View
-										style={{
-											height: 6,
-											borderRadius: 3,
-											backgroundColor: a.submissions === a.total ? colors.success : "#7C3AED",
-											width: `${(a.submissions / a.total) * 100}%`,
-										}}
+				{/* Empty state */}
+				{!showCreate && assignments !== undefined && assignmentList.length === 0 && (
+					<EmptyState
+						icon="clipboard-outline"
+						title="No Assignments"
+						subtitle="Create your first assignment using the + button"
+					/>
+				)}
+
+				{assignmentList.map((a: any) => {
+					const submissionsCount = a.submissionsCount ?? a.submissions ?? 0
+					const total = a.totalStudents ?? a.total ?? 0
+					const ratio = total > 0 ? submissionsCount / total : 0
+
+					return (
+						<Card
+							key={a._id}
+							onPress={() => {
+								setSelectedAssignmentId(a._id)
+								if (a.status !== "active") setViewSubmissions(true)
+							}}
+						>
+							<View style={{ gap: 8 }}>
+								<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+									<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text, flex: 1 }}>{a.title}</Text>
+									<Badge
+										text={a.status ?? "active"}
+										variant={
+											a.status === "active" || !a.status
+												? "primary"
+												: a.status === "grading"
+												? "warning"
+												: "success"
+										}
 									/>
 								</View>
+								<Text style={{ fontSize: 13, color: colors.textSecondary }}>
+									{a.sectionName ?? a.class ?? "—"} · Due: {a.dueDate ?? "—"}
+								</Text>
+								{/* Progress bar */}
+								{total > 0 && (
+									<View style={{ gap: 4 }}>
+										<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+											<Text style={{ fontSize: 12, color: colors.textMuted }}>Submissions</Text>
+											<Text style={{ fontSize: 12, fontWeight: "600", color: colors.text }}>
+												{submissionsCount}/{total}
+											</Text>
+										</View>
+										<View style={{ height: 6, backgroundColor: colors.surfaceAlt, borderRadius: 3 }}>
+											<View
+												style={{
+													height: 6,
+													borderRadius: 3,
+													backgroundColor: ratio >= 1 ? colors.success : "#7C3AED",
+													width: `${ratio * 100}%`,
+												}}
+											/>
+										</View>
+									</View>
+								)}
 							</View>
-						</View>
-					</Card>
-				))}
+						</Card>
+					)
+				})}
 			</ScrollView>
 		</View>
 	)

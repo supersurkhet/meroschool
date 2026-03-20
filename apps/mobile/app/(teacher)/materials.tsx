@@ -25,7 +25,6 @@ export default function TeacherMaterialsScreen() {
 	const [refreshing, setRefreshing] = useState(false)
 	const [uploadTitle, setUploadTitle] = useState("")
 	const [uploadClass, setUploadClass] = useState("")
-	const [uploadSubject, setUploadSubject] = useState("")
 	const [uploadUrl, setUploadUrl] = useState("")
 	const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null)
 	const [uploading, setUploading] = useState(false)
@@ -70,7 +69,6 @@ export default function TeacherMaterialsScreen() {
 			setShowUpload(false)
 			setUploadTitle("")
 			setUploadClass("")
-			setUploadSubject("")
 			setUploadUrl("")
 		} catch (err: any) {
 			Alert.alert("Upload Failed", err?.message ?? "Could not upload material.")
@@ -156,7 +154,6 @@ export default function TeacherMaterialsScreen() {
 											key={subj._id}
 											onPress={() => {
 												setSelectedSubjectId(subj._id)
-												setUploadSubject(subj.subjectName ?? subj.name ?? "")
 											}}
 											style={{
 												paddingHorizontal: 14,

@@ -1,7 +1,10 @@
 import { useState, useCallback } from "react"
-import { View, Text, ScrollView, Pressable, Alert, TextInput } from "react-native"
+import { View, Text, ScrollView, Pressable, Alert, TextInput, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/lib/convex/api"
+import { useAuth } from "@/lib/auth"
 import { useTheme } from "@/lib/theme"
 import { ScreenHeader } from "@/components/shared/ScreenHeader"
 import { Card } from "@/components/ui/Card"
@@ -12,103 +15,34 @@ import { EmptyState } from "@/components/ui/EmptyState"
 type Tab = "pending" | "completed"
 type DetailView = "list" | "detail"
 
-interface PendingAssignment {
-	id: string
+// Matches what Convex returns from assignments.getStudentAssignments
+interface Assignment {
+	_id: string
 	title: string
-	subject: string
-	description: string
-	dueDate: string
-	dueDateObj: Date
-	teacher: string
-}
-
-interface CompletedAssignment {
-	id: string
-	title: string
-	subject: string
-	grade: string
-	score: number
-	total: number
-	feedback: string
-	submittedDate: string
+	subjectName?: string
+	subject?: string
+	description?: string
+	dueDate?: string        // formatted string like "Mar 26"
+	dueDateMs?: number      // epoch ms for computing urgency
+	teacherName?: string
+	teacher?: string
+	submissionStatus: "pending" | "in-progress" | "submitted" | "graded"
+	grade?: string
+	score?: number
+	totalMarks?: number
+	total?: number
+	feedback?: string
+	submittedAt?: string
+	submittedDate?: string
 }
 
 const today = new Date()
 
-const pendingAssignments: PendingAssignment[] = [
-	{
-		id: "1",
-		title: "Solve exercises 5.1-5.3",
-		subject: "Mathematics",
-		description: "Complete all exercises from sections 5.1, 5.2, and 5.3 in your textbook. Show all working steps clearly. Submit in your notebook.",
-		dueDate: "Mar 26",
-		dueDateObj: new Date(2026, 2, 26),
-		teacher: "Sita Devi",
-	},
-	{
-		id: "2",
-		title: "Write essay on climate change",
-		subject: "English",
-		description: "Write a 500-word essay on 'Climate Change and Its Impact on Nepal'. Include introduction, body paragraphs, and conclusion. Use at least 3 references.",
-		dueDate: "Mar 21",
-		dueDateObj: new Date(2026, 2, 21),
-		teacher: "Hari Sir",
-	},
-	{
-		id: "3",
-		title: "Lab report - Photosynthesis",
-		subject: "Science",
-		description: "Write a lab report on the photosynthesis experiment conducted in class. Include hypothesis, methodology, observations, and conclusion.",
-		dueDate: "Mar 20",
-		dueDateObj: new Date(2026, 2, 20),
-		teacher: "Ram Sir",
-	},
-	{
-		id: "4",
-		title: "Draw map of Nepal with provinces",
-		subject: "Social Studies",
-		description: "Draw a detailed map of Nepal showing all 7 provinces with their capitals. Color code each province differently.",
-		dueDate: "Mar 30",
-		dueDateObj: new Date(2026, 2, 30),
-		teacher: "Gita Madam",
-	},
-]
-
-const completedAssignments: CompletedAssignment[] = [
-	{
-		id: "5",
-		title: "Nepal History Timeline",
-		subject: "Social Studies",
-		grade: "A",
-		score: 45,
-		total: 50,
-		feedback: "Excellent work! Very detailed timeline with accurate dates.",
-		submittedDate: "Mar 15",
-	},
-	{
-		id: "6",
-		title: "Poem Analysis",
-		subject: "Nepali",
-		grade: "B+",
-		score: 38,
-		total: 50,
-		feedback: "Good analysis overall, work on vocabulary and figure of speech identification.",
-		submittedDate: "Mar 12",
-	},
-	{
-		id: "7",
-		title: "Trigonometry Problem Set",
-		subject: "Mathematics",
-		grade: "A+",
-		score: 49,
-		total: 50,
-		feedback: "Near perfect! Excellent understanding of trigonometric identities.",
-		submittedDate: "Mar 8",
-	},
-]
-
-function getDueStatus(dueDate: Date): { label: string; variant: "success" | "warning" | "danger"; color: string } {
-	const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+function getDueStatus(dueDateMs: number | undefined, dueDateStr: string | undefined): { label: string; variant: "success" | "warning" | "danger"; color: string } {
+	if (!dueDateMs) {
+		return { label: dueDateStr ?? "—", variant: "warning", color: "#EAB308" }
+	}
+	const diffDays = Math.ceil((dueDateMs - today.getTime()) / (1000 * 60 * 60 * 24))
 	if (diffDays < 0) return { label: "Overdue", variant: "danger", color: "#DC2626" }
 	if (diffDays === 0) return { label: "Due Today", variant: "danger", color: "#DC2626" }
 	if (diffDays <= 3) return { label: `${diffDays}d left`, variant: "warning", color: "#EAB308" }
@@ -118,25 +52,54 @@ function getDueStatus(dueDate: Date): { label: string; variant: "success" | "war
 export default function AssignmentsScreen() {
 	const { t } = useTranslation()
 	const { colors } = useTheme()
+	const { user } = useAuth()
+
 	const [tab, setTab] = useState<Tab>("pending")
 	const [view, setView] = useState<DetailView>("list")
-	const [selectedAssignment, setSelectedAssignment] = useState<PendingAssignment | null>(null)
+	const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
 	const [submissionText, setSubmissionText] = useState("")
 	const [submitting, setSubmitting] = useState(false)
+
+	// Fetch all assignments for this student
+	const assignmentsData = useQuery(
+		api.assignments.getStudentAssignments,
+		user?.studentId && user?.sectionId
+			? { studentId: user.studentId as any, sectionId: user.sectionId as any }
+			: "skip"
+	)
+
+	const submitAssignmentMutation = useMutation(api.assignments.submit)
+
+	const allAssignments: Assignment[] = assignmentsData ?? []
+
+	const pendingAssignments = allAssignments.filter(
+		(a) => a.submissionStatus === "pending" || a.submissionStatus === "in-progress"
+	)
+	const completedAssignments = allAssignments.filter(
+		(a) => a.submissionStatus === "submitted" || a.submissionStatus === "graded"
+	)
+
+	const isLoading = assignmentsData === undefined
 
 	const handleSubmitAssignment = useCallback(() => {
 		if (!submissionText.trim()) {
 			Alert.alert("Empty Submission", "Please write something or attach a file before submitting.")
 			return
 		}
+		if (!selectedAssignment || !user?.studentId) return
+
 		Alert.alert("Submit Assignment", "Are you sure you want to submit this assignment?", [
 			{ text: t("common.cancel"), style: "cancel" },
 			{
 				text: t("common.submit"),
-				onPress: () => {
+				onPress: async () => {
 					setSubmitting(true)
-					setTimeout(() => {
-						setSubmitting(false)
+					try {
+						await submitAssignmentMutation({
+							assignmentId: selectedAssignment._id as any,
+							studentId: user.studentId as any,
+							submissionText,
+						} as any)
 						Alert.alert("Success", "Assignment submitted successfully!", [
 							{
 								text: "OK",
@@ -147,25 +110,29 @@ export default function AssignmentsScreen() {
 								},
 							},
 						])
-					}, 1000)
+					} catch (err) {
+						Alert.alert("Error", "Failed to submit assignment. Please try again.")
+					} finally {
+						setSubmitting(false)
+					}
 				},
 			},
 		])
-	}, [submissionText, t])
+	}, [submissionText, selectedAssignment, user, submitAssignmentMutation, t])
 
 	const tabs: { key: Tab; label: string; count: number }[] = [
-		{ key: "pending", label: t("student.pending"), count: pendingAssignments.length },
-		{ key: "completed", label: t("student.graded"), count: completedAssignments.length },
+		{ key: "pending", label: t("student.pending"), count: isLoading ? 0 : pendingAssignments.length },
+		{ key: "completed", label: t("student.graded"), count: isLoading ? 0 : completedAssignments.length },
 	]
 
 	// Detail view for submitting assignment
 	if (view === "detail" && selectedAssignment) {
-		const status = getDueStatus(selectedAssignment.dueDateObj)
+		const status = getDueStatus(selectedAssignment.dueDateMs, selectedAssignment.dueDate)
 		return (
 			<View style={{ flex: 1, backgroundColor: colors.bg }}>
 				<ScreenHeader
 					title={selectedAssignment.title}
-					subtitle={selectedAssignment.subject}
+					subtitle={selectedAssignment.subjectName ?? selectedAssignment.subject}
 					right={
 						<Pressable onPress={() => { setView("list"); setSubmissionText("") }}>
 							<Ionicons name="close" size={24} color={colors.textSecondary} />
@@ -177,15 +144,15 @@ export default function AssignmentsScreen() {
 					<Card>
 						<View style={{ gap: 10 }}>
 							<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-								<Badge text={selectedAssignment.subject} variant="primary" />
+								<Badge text={selectedAssignment.subjectName ?? selectedAssignment.subject ?? "—"} variant="primary" />
 								<Badge text={status.label} variant={status.variant} />
 							</View>
 							<Text style={{ fontSize: 13, color: colors.textSecondary }}>
-								By {selectedAssignment.teacher} · Due: {selectedAssignment.dueDate}
+								By {selectedAssignment.teacherName ?? selectedAssignment.teacher ?? "—"} · Due: {selectedAssignment.dueDate ?? "—"}
 							</Text>
 							<View style={{ height: 1, backgroundColor: colors.border }} />
 							<Text style={{ fontSize: 15, color: colors.text, lineHeight: 22 }}>
-								{selectedAssignment.description}
+								{selectedAssignment.description ?? "No description provided."}
 							</Text>
 						</View>
 					</Card>
@@ -307,7 +274,15 @@ export default function AssignmentsScreen() {
 			</View>
 
 			<ScrollView contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 40 }}>
-				{tab === "pending" && pendingAssignments.length === 0 && (
+				{/* Loading state */}
+				{isLoading && (
+					<View style={{ alignItems: "center", paddingVertical: 40 }}>
+						<ActivityIndicator size="large" color={colors.primary} />
+					</View>
+				)}
+
+				{/* Pending tab */}
+				{!isLoading && tab === "pending" && pendingAssignments.length === 0 && (
 					<EmptyState
 						icon="checkmark-done-outline"
 						title="All Caught Up!"
@@ -315,12 +290,12 @@ export default function AssignmentsScreen() {
 					/>
 				)}
 
-				{tab === "pending" &&
+				{!isLoading && tab === "pending" &&
 					pendingAssignments.map((a) => {
-						const status = getDueStatus(a.dueDateObj)
+						const status = getDueStatus(a.dueDateMs, a.dueDate)
 						return (
 							<Card
-								key={a.id}
+								key={a._id}
 								onPress={() => {
 									setSelectedAssignment(a)
 									setView("detail")
@@ -328,7 +303,7 @@ export default function AssignmentsScreen() {
 							>
 								<View style={{ gap: 8 }}>
 									<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-										<Badge text={a.subject} variant="primary" />
+										<Badge text={a.subjectName ?? a.subject ?? "—"} variant="primary" />
 										<Badge text={status.label} variant={status.variant} />
 									</View>
 									<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>
@@ -336,12 +311,12 @@ export default function AssignmentsScreen() {
 									</Text>
 									<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
 										<Text style={{ fontSize: 12, color: colors.textSecondary }}>
-											By {a.teacher}
+											By {a.teacherName ?? a.teacher ?? "—"}
 										</Text>
 										<View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
 											<Ionicons name="calendar-outline" size={12} color={status.color} />
 											<Text style={{ fontSize: 12, fontWeight: "600", color: status.color }}>
-												Due: {a.dueDate}
+												Due: {a.dueDate ?? "—"}
 											</Text>
 										</View>
 									</View>
@@ -350,7 +325,8 @@ export default function AssignmentsScreen() {
 						)
 					})}
 
-				{tab === "completed" && completedAssignments.length === 0 && (
+				{/* Completed tab */}
+				{!isLoading && tab === "completed" && completedAssignments.length === 0 && (
 					<EmptyState
 						icon="document-outline"
 						title="No Completed Assignments"
@@ -358,9 +334,9 @@ export default function AssignmentsScreen() {
 					/>
 				)}
 
-				{tab === "completed" &&
+				{!isLoading && tab === "completed" &&
 					completedAssignments.map((a) => (
-						<Card key={a.id}>
+						<Card key={a._id}>
 							<View style={{ gap: 8 }}>
 								<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
 									<View style={{ flex: 1 }}>
@@ -368,25 +344,27 @@ export default function AssignmentsScreen() {
 											{a.title}
 										</Text>
 										<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
-											{a.subject} · {a.score}/{a.total} · {a.submittedDate}
+											{a.subjectName ?? a.subject ?? "—"} · {a.score !== undefined ? `${a.score}/${a.totalMarks ?? a.total}` : ""}{a.submittedAt ?? a.submittedDate ? ` · ${a.submittedAt ?? a.submittedDate}` : ""}
 										</Text>
 									</View>
-									<View
-										style={{
-											width: 40,
-											height: 40,
-											borderRadius: 20,
-											backgroundColor: colors.successLight,
-											alignItems: "center",
-											justifyContent: "center",
-										}}
-									>
-										<Text style={{ fontSize: 14, fontWeight: "700", color: colors.success }}>
-											{a.grade}
-										</Text>
-									</View>
+									{a.grade && (
+										<View
+											style={{
+												width: 40,
+												height: 40,
+												borderRadius: 20,
+												backgroundColor: colors.successLight,
+												alignItems: "center",
+												justifyContent: "center",
+											}}
+										>
+											<Text style={{ fontSize: 14, fontWeight: "700", color: colors.success }}>
+												{a.grade}
+											</Text>
+										</View>
+									)}
 								</View>
-								{a.feedback && (
+								{a.feedback ? (
 									<View
 										style={{
 											backgroundColor: colors.surfaceAlt,
@@ -405,7 +383,7 @@ export default function AssignmentsScreen() {
 											{"\u201C"}{a.feedback}{"\u201D"}
 										</Text>
 									</View>
-								)}
+								) : null}
 							</View>
 						</Card>
 					))}

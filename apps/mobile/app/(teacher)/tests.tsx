@@ -1,7 +1,10 @@
 import { useState, useCallback } from "react"
-import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native"
+import { View, Text, ScrollView, Pressable, RefreshControl, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/lib/convex/api"
+import { useAuth } from "@/lib/auth"
 import { useTheme } from "@/lib/theme"
 import { ScreenHeader } from "@/components/shared/ScreenHeader"
 import { Card } from "@/components/ui/Card"
@@ -9,41 +12,130 @@ import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { EmptyState } from "@/components/ui/EmptyState"
+import { SkeletonList } from "@/components/ui/Skeleton"
 
 type Tab = "tests" | "bank" | "results"
 
-const existingTests = [
-	{ id: "1", title: "Algebra Quiz", class: "Class 10-A", questions: 20, duration: "30 min", date: "Mar 25", status: "active" },
-	{ id: "2", title: "Geometry Test", class: "Class 10-B", questions: 15, duration: "25 min", date: "Mar 20", status: "completed" },
-]
-
-const questionBank = [
-	{ id: "1", text: "What is the value of x in 2x + 4 = 10?", subject: "Mathematics", difficulty: "Easy" },
-	{ id: "2", text: "Simplify: 3(x + 2) - 5", subject: "Mathematics", difficulty: "Easy" },
-	{ id: "3", text: "Find roots of x\u00B2 - 5x + 6 = 0", subject: "Mathematics", difficulty: "Medium" },
-	{ id: "4", text: "Prove that \u221A2 is irrational", subject: "Mathematics", difficulty: "Hard" },
-]
-
-const testResults = [
-	{ id: "1", student: "Aarav Sharma", score: 18, total: 20, percentage: 90 },
-	{ id: "2", student: "Bina Gurung", score: 16, total: 20, percentage: 80 },
-	{ id: "3", student: "Chandan Thapa", score: 14, total: 20, percentage: 70 },
-	{ id: "4", student: "Deepa Adhikari", score: 19, total: 20, percentage: 95 },
-]
-
 export default function TeacherTestsScreen() {
 	const { t } = useTranslation()
+	const { user } = useAuth()
 	const { colors } = useTheme()
 	const [tab, setTab] = useState<Tab>("tests")
 	const [showCreate, setShowCreate] = useState(false)
 	const [refreshing, setRefreshing] = useState(false)
+
+	// Selected IDs for drill-down queries
+	const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null)
+	const [selectedTestId, setSelectedTestId] = useState<string | null>(null)
+
+	// Create form state
+	const [testTitle, setTestTitle] = useState("")
+	const [testClass, setTestClass] = useState("")
+	const [testQuestions, setTestQuestions] = useState("")
+	const [testDuration, setTestDuration] = useState("")
+	const [testDueDate, setTestDueDate] = useState("")
+	const [creating, setCreating] = useState(false)
+
+	// Add question form state
+	const [showAddQuestion, setShowAddQuestion] = useState(false)
+	const [questionText, setQuestionText] = useState("")
+	const [addingQuestion, setAddingQuestion] = useState(false)
+
+	// Queries
+	const subjects = useQuery(
+		api.academics.listSubjectsByTeacher,
+		user?.teacherId ? { teacherId: user.teacherId as any } : "skip"
+	)
+
+	const tests = useQuery(
+		api.tests.listTestsBySubject,
+		selectedSubjectId ? { subjectId: selectedSubjectId as any } : "skip"
+	)
+
+	const questions = useQuery(
+		api.tests.listQuestions,
+		selectedTestId ? { testId: selectedTestId as any } : "skip"
+	)
+
+	const attempts = useQuery(
+		api.tests.listAttemptsByTest,
+		selectedTestId ? { testId: selectedTestId as any } : "skip"
+	)
+
+	// Mutations
+	const createTest = useMutation(api.tests.createTest)
+	const addQuestion = useMutation(api.tests.addQuestion)
 
 	const onRefresh = useCallback(() => {
 		setRefreshing(true)
 		setTimeout(() => setRefreshing(false), 1000)
 	}, [])
 
-	const difficultyColors: Record<string, string> = { Easy: colors.success, Medium: colors.warning, Hard: colors.danger }
+	const difficultyColors: Record<string, string> = {
+		Easy: colors.success,
+		Medium: colors.warning,
+		Hard: colors.danger,
+	}
+
+	const handleCreateTest = useCallback(async () => {
+		if (!testTitle.trim()) {
+			Alert.alert("Missing Title", "Please enter a test title.")
+			return
+		}
+		setCreating(true)
+		try {
+			await createTest({
+				title: testTitle,
+				subjectId: selectedSubjectId as any,
+				teacherId: user?.teacherId as any,
+				totalQuestions: testQuestions ? parseInt(testQuestions, 10) : undefined,
+				durationMinutes: testDuration ? parseInt(testDuration, 10) : undefined,
+				dueDate: testDueDate || undefined,
+			} as any)
+			setShowCreate(false)
+			setTestTitle("")
+			setTestClass("")
+			setTestQuestions("")
+			setTestDuration("")
+			setTestDueDate("")
+		} catch (err: any) {
+			Alert.alert("Error", err?.message ?? "Failed to create test.")
+		} finally {
+			setCreating(false)
+		}
+	}, [testTitle, testClass, testQuestions, testDuration, testDueDate, selectedSubjectId, user?.teacherId, createTest])
+
+	const handleAddQuestion = useCallback(async () => {
+		if (!questionText.trim()) {
+			Alert.alert("Missing Question", "Please enter a question.")
+			return
+		}
+		if (!selectedTestId) {
+			Alert.alert("No Test Selected", "Please select a test first.")
+			return
+		}
+		setAddingQuestion(true)
+		try {
+			await addQuestion({
+				testId: selectedTestId as any,
+				text: questionText,
+			} as any)
+			setShowAddQuestion(false)
+			setQuestionText("")
+		} catch (err: any) {
+			Alert.alert("Error", err?.message ?? "Failed to add question.")
+		} finally {
+			setAddingQuestion(false)
+		}
+	}, [questionText, selectedTestId, addQuestion])
+
+	const testList: any[] = tests ?? []
+	const questionList: any[] = questions ?? []
+	const attemptList: any[] = attempts ?? []
+
+	const avgScore = attemptList.length > 0
+		? Math.round(attemptList.reduce((acc: number, r: any) => acc + (r.percentage ?? 0), 0) / attemptList.length)
+		: null
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -82,103 +174,219 @@ export default function TeacherTestsScreen() {
 				))}
 			</View>
 
+			{/* Subject selector chips */}
+			{subjects !== undefined && (subjects as any[]).length > 0 && (
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					style={{ maxHeight: 50, flexGrow: 0 }}
+					contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 8 }}
+				>
+					{(subjects as any[]).map((subj) => (
+						<Pressable
+							key={subj._id}
+							onPress={() => setSelectedSubjectId(subj._id)}
+							style={{
+								paddingHorizontal: 14,
+								paddingVertical: 8,
+								borderRadius: 10,
+								backgroundColor: selectedSubjectId === subj._id ? "#7C3AED" : colors.surfaceAlt,
+							}}
+						>
+							<Text style={{ fontSize: 13, fontWeight: "600", color: selectedSubjectId === subj._id ? "#FFF" : colors.textSecondary }}>
+								{subj.subjectName ?? subj.name ?? "—"}
+							</Text>
+						</Pressable>
+					))}
+				</ScrollView>
+			)}
+
 			<ScrollView
 				contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 40 }}
 				refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
 			>
+				{/* Tests tab */}
 				{tab === "tests" && showCreate && (
 					<Card style={{ borderColor: "#7C3AED", borderWidth: 1.5 }}>
 						<Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, marginBottom: 14 }}>{t("teacher.createTest")}</Text>
 						<View style={{ gap: 10 }}>
-							<Input placeholder="Test title" />
-							<Input placeholder="Select class" />
+							<Input placeholder="Test title" value={testTitle} onChangeText={setTestTitle} />
+							<Input placeholder="Select class" value={testClass} onChangeText={setTestClass} />
 							<View style={{ flexDirection: "row", gap: 10 }}>
-								<View style={{ flex: 1 }}><Input placeholder="# Questions" keyboardType="numeric" /></View>
-								<View style={{ flex: 1 }}><Input placeholder="Duration (min)" keyboardType="numeric" /></View>
+								<View style={{ flex: 1 }}>
+									<Input placeholder="# Questions" keyboardType="numeric" value={testQuestions} onChangeText={setTestQuestions} />
+								</View>
+								<View style={{ flex: 1 }}>
+									<Input placeholder="Duration (min)" keyboardType="numeric" value={testDuration} onChangeText={setTestDuration} />
+								</View>
 							</View>
-							<Input placeholder="Due date" />
-							<Button title="Generate from Question Bank" onPress={() => {}} icon={<Ionicons name="shuffle" size={18} color="#FFF" />} />
+							<Input placeholder="Due date" value={testDueDate} onChangeText={setTestDueDate} />
+							<Button
+								title={creating ? "Creating…" : "Generate from Question Bank"}
+								onPress={handleCreateTest}
+								loading={creating}
+								icon={!creating ? <Ionicons name="shuffle" size={18} color="#FFF" /> : undefined}
+							/>
 						</View>
 					</Card>
 				)}
 
-				{tab === "tests" && !showCreate && existingTests.length === 0 && (
+				{tab === "tests" && !showCreate && tests === undefined && selectedSubjectId && (
+					<SkeletonList count={3} />
+				)}
+
+				{tab === "tests" && !showCreate && !selectedSubjectId && (
+					<EmptyState icon="book-outline" title="Select a Subject" subtitle="Pick a subject above to view its tests" />
+				)}
+
+				{tab === "tests" && !showCreate && selectedSubjectId && tests !== undefined && testList.length === 0 && (
 					<EmptyState icon="document-text-outline" title="No Tests Created" subtitle="Create your first test using the + button above" />
 				)}
 
-				{tab === "tests" &&
-					existingTests.map((test) => (
-						<Card key={test.id}>
+				{tab === "tests" && testList.map((test: any) => (
+					<Pressable key={test._id} onPress={() => setSelectedTestId(test._id)}>
+						<Card style={selectedTestId === test._id ? { borderColor: "#7C3AED", borderWidth: 1.5 } : undefined}>
 							<View style={{ gap: 6 }}>
 								<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
 									<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>{test.title}</Text>
-									<Badge text={test.status} variant={test.status === "active" ? "success" : "default"} />
+									<Badge
+										text={test.status ?? "draft"}
+										variant={(test.status === "active" || test.isActive) ? "success" : "default"}
+									/>
 								</View>
 								<Text style={{ fontSize: 13, color: colors.textSecondary }}>
-									{test.class} · {test.questions}Q · {test.duration} · {test.date}
+									{test.sectionName ?? test.class ?? "—"} · {test.totalQuestions ?? test.questions ?? 0}Q · {test.durationMinutes ? `${test.durationMinutes} min` : test.duration ?? "—"} · {test.dueDate ?? test.date ?? ""}
 								</Text>
 							</View>
 						</Card>
-					))}
+					</Pressable>
+				))}
 
+				{/* Question bank tab */}
 				{tab === "bank" && (
 					<>
-						<Button title={t("teacher.addQuestion")} variant="outline" onPress={() => {}} icon={<Ionicons name="add" size={18} color={colors.primary} />} />
-						{questionBank.length === 0 ? (
-							<EmptyState icon="help-circle-outline" title="Empty Question Bank" subtitle="Add questions to build your MCQ library" />
-						) : (
-							questionBank.map((q) => (
-								<Card key={q.id}>
-									<View style={{ gap: 6 }}>
-										<Text style={{ fontSize: 14, fontWeight: "500", color: colors.text }}>{q.text}</Text>
-										<View style={{ flexDirection: "row", gap: 8 }}>
-											<Badge text={q.subject} variant="primary" />
-											<View style={{ backgroundColor: difficultyColors[q.difficulty] + "20", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-												<Text style={{ fontSize: 11, fontWeight: "600", color: difficultyColors[q.difficulty] }}>{q.difficulty}</Text>
-											</View>
-										</View>
-									</View>
-								</Card>
-							))
+						<Button
+							title={t("teacher.addQuestion")}
+							variant="outline"
+							onPress={() => setShowAddQuestion(!showAddQuestion)}
+							icon={<Ionicons name="add" size={18} color={colors.primary} />}
+						/>
+
+						{showAddQuestion && (
+							<Card style={{ borderColor: "#7C3AED", borderWidth: 1.5 }}>
+								<Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, marginBottom: 12 }}>Add Question</Text>
+								<View style={{ gap: 10 }}>
+									<Input
+										placeholder="Question text"
+										multiline
+										numberOfLines={3}
+										style={{ height: 80, textAlignVertical: "top" }}
+										value={questionText}
+										onChangeText={setQuestionText}
+									/>
+									<Button
+										title={addingQuestion ? "Adding…" : t("teacher.addQuestion")}
+										onPress={handleAddQuestion}
+										loading={addingQuestion}
+									/>
+								</View>
+							</Card>
 						)}
+
+						{questions === undefined && selectedTestId && <SkeletonList count={3} />}
+
+						{!selectedTestId && (
+							<EmptyState icon="book-outline" title="Select a Test" subtitle="Pick a test in the Tests tab to view its question bank" />
+						)}
+
+						{selectedTestId && questions !== undefined && questionList.length === 0 && (
+							<EmptyState icon="help-circle-outline" title="Empty Question Bank" subtitle="Add questions to build your MCQ library" />
+						)}
+
+						{questionList.map((q: any) => (
+							<Card key={q._id}>
+								<View style={{ gap: 6 }}>
+									<Text style={{ fontSize: 14, fontWeight: "500", color: colors.text }}>{q.text ?? q.question ?? "—"}</Text>
+									<View style={{ flexDirection: "row", gap: 8 }}>
+										{q.subject && <Badge text={q.subject} variant="primary" />}
+										{q.difficulty && (
+											<View style={{ backgroundColor: (difficultyColors[q.difficulty] ?? colors.textSecondary) + "20", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+												<Text style={{ fontSize: 11, fontWeight: "600", color: difficultyColors[q.difficulty] ?? colors.textSecondary }}>
+													{q.difficulty}
+												</Text>
+											</View>
+										)}
+									</View>
+								</View>
+							</Card>
+						))}
 					</>
 				)}
 
+				{/* Results tab */}
 				{tab === "results" && (
 					<>
-						{testResults.length === 0 ? (
+						{!selectedTestId && (
+							<EmptyState icon="stats-chart-outline" title="Select a Test" subtitle="Pick a test in the Tests tab to view results" />
+						)}
+
+						{selectedTestId && attempts === undefined && <SkeletonList count={3} />}
+
+						{selectedTestId && attempts !== undefined && attemptList.length === 0 && (
 							<EmptyState icon="stats-chart-outline" title="No Results Yet" subtitle="Results will appear after students take tests" />
-						) : (
+						)}
+
+						{selectedTestId && attempts !== undefined && attemptList.length > 0 && (
 							<>
 								<Card>
 									<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-										<Text style={{ fontSize: 14, color: colors.textSecondary }}>Algebra Quiz · Class 10-A</Text>
-										<Text style={{ fontSize: 14, fontWeight: "600", color: colors.text }}>Avg: 84%</Text>
+										<Text style={{ fontSize: 14, color: colors.textSecondary }}>
+											{testList.find((t: any) => t._id === selectedTestId)?.title ?? "Test"} · {attemptList.length} students
+										</Text>
+										{avgScore !== null && (
+											<Text style={{ fontSize: 14, fontWeight: "600", color: colors.text }}>Avg: {avgScore}%</Text>
+										)}
 									</View>
 								</Card>
-								{testResults.map((r) => (
-									<Card key={r.id}>
+								{attemptList.map((r: any) => (
+									<Card key={r._id}>
 										<View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
 											<View>
-												<Text style={{ fontSize: 15, fontWeight: "500", color: colors.text }}>{r.student}</Text>
-												<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>{r.score}/{r.total}</Text>
+												<Text style={{ fontSize: 15, fontWeight: "500", color: colors.text }}>
+													{r.studentName ?? r.student ?? "Unknown"}
+												</Text>
+												<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+													{r.score ?? 0}/{r.total ?? r.totalQuestions ?? "—"}
+												</Text>
 											</View>
 											<View
 												style={{
 													width: 44,
 													height: 44,
 													borderRadius: 22,
-													backgroundColor: r.percentage >= 80 ? colors.successLight : r.percentage >= 60 ? colors.warningLight : colors.dangerLight,
+													backgroundColor:
+														(r.percentage ?? 0) >= 80
+															? colors.successLight
+															: (r.percentage ?? 0) >= 60
+															? colors.warningLight
+															: colors.dangerLight,
 													alignItems: "center",
 													justifyContent: "center",
 												}}
 											>
-												<Text style={{
-													fontSize: 13,
-													fontWeight: "700",
-													color: r.percentage >= 80 ? colors.success : r.percentage >= 60 ? colors.warning : colors.danger,
-												}}>
-													{r.percentage}%
+												<Text
+													style={{
+														fontSize: 13,
+														fontWeight: "700",
+														color:
+															(r.percentage ?? 0) >= 80
+																? colors.success
+																: (r.percentage ?? 0) >= 60
+																? colors.warning
+																: colors.danger,
+													}}
+												>
+													{r.percentage ?? 0}%
 												</Text>
 											</View>
 										</View>

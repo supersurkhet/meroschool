@@ -12,7 +12,6 @@ import { Card, StatCard } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
 import { EmptyState } from "@/components/ui/EmptyState"
 import { SkeletonList } from "@/components/ui/Skeleton"
-import { DashboardSkeleton } from "@/components/ui/DashboardSkeleton"
 
 const ACCENT = "#059669"
 const ACCENT_LIGHT = "#D1FAE5"
