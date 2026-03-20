@@ -10,7 +10,8 @@
     "check": "turbo check"
   },
   "devDependencies": {
-    "turbo": "^2.8.20"
+    "turbo": "^2.8.20",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@workos-inc/node": "^8.9.0",
