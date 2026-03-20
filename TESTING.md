@@ -154,3 +154,36 @@
 - [ ] Layout is responsive: 2 cols on mobile, 4 cols on desktop for quick actions
 - [ ] Dark mode renders correctly on teacher dashboard
 - [ ] i18n keys work for both English and Nepali on teacher dashboard
+
+## Auth Integration — Mobile (Phase 1.3)
+- [ ] AuthProvider loads stored user from SecureStore on app launch
+- [ ] Login screen renders with MeroSchool branding, email/password fields, and Sign In button
+- [ ] Mock login creates user and stores token in expo-secure-store
+- [ ] Logout clears SecureStore token and AsyncStorage user data
+- [ ] Role-based routing: student email -> (student) tabs, teacher -> (teacher), parent -> (parent)
+- [ ] Unauthenticated user redirected to (auth)/login
+- [ ] ConvexProviderWrapper wraps app with ConvexReactClient
+- [ ] Root layout uses AuthProvider and ConvexProviderWrapper
+
+## Student Dashboard — Mobile (Phase 2.3)
+- [ ] Greeting card shows "Namaste, {name}!" with avatar placeholder initial
+- [ ] Circular attendance progress indicator shows percentage (94%)
+- [ ] Stats row displays attendance rate and upcoming test count
+- [ ] Upcoming Tests section lists test cards with subject, chapter, date, time
+- [ ] Pending Assignments section shows assignments with title, subject, due date, status badge
+- [ ] Recent test scores show subject, score/total, date, and letter grade
+- [ ] Bottom tabs: Home, Materials, Tests, Assignments, Profile all navigate correctly
+- [ ] QR scan button in header links to /qr-scan
+- [ ] Dark mode renders correctly on student dashboard
+
+## Parent Dashboard — Mobile (Phase 2.4)
+- [ ] Child selector shows when parent has multiple children
+- [ ] Tapping child selector switches displayed data (attendance, scores, results)
+- [ ] Child info card shows selected child name, class, roll number
+- [ ] Attendance and average score stat cards display correct values per child
+- [ ] Quick links row: Attendance, Results, Notifications with navigation
+- [ ] Notification badge shows unread count on bell icon in header
+- [ ] Recent test results cards show test name, score, date with color-coded percentage
+- [ ] Recent activity feed shows attendance, test, assignment, and absence events
+- [ ] Bottom tabs: Home, Attendance, Results, Notifications all navigate correctly
+- [ ] Dark mode renders correctly on parent dashboard
