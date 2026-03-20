@@ -43,6 +43,7 @@
 		{ key: "nav.features", href: "/features" },
 		{ key: "nav.pricing", href: "/pricing" },
 		{ key: "nav.demo", href: "/demo" },
+		{ key: "nav.download", href: "/download" },
 		{ key: "nav.about", href: "/about" },
 		{ key: "nav.contact", href: "/contact" },
 	];
