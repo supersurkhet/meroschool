@@ -1,6 +1,6 @@
 [package]
 name = "meroschool-admin"
-version = "0.1.0"
+version = "1.0.0"
 description = "MeroSchool Admin - School Management Desktop App"
 authors = ["MeroSchool Team"]
 license = "MIT"

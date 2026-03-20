@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "MeroSchool Admin",
-  "version": "0.1.0",
-  "identifier": "com.meroschool.admin",
+  "version": "1.0.0",
+  "identifier": "app.surkhet.school.desktop",
   "build": {
     "frontendDist": "../build",
     "devUrl": "http://localhost:1420",

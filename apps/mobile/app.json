@@ -7,7 +7,10 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,7 +18,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.meroschool.app",
+      "bundleIdentifier": "app.surkhet.school",
       "infoPlist": {
         "NSCameraUsageDescription": "MeroSchool needs camera access to scan classroom QR codes"
       }
@@ -27,8 +30,11 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.meroschool.app",
-      "permissions": ["android.permission.CAMERA"]
+      "package": "app.surkhet.school",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -39,6 +45,12 @@
           "cameraPermission": "Allow MeroSchool to access your camera to scan QR codes"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "25ec35d1-d012-4cc2-87a5-8584201f6762"
+      }
+    }
   }
 }
