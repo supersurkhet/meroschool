@@ -170,7 +170,8 @@
 				<a
 					href="/auth/login?return_to=/onboard"
 					data-sveltekit-reload
-					class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-11 px-8 text-base"
+					onclick={(e) => { e.preventDefault(); window.location.href = '/auth/login?return_to=/onboard'; }}
+					class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-11 px-8 text-base cursor-pointer"
 				>{$t("onboard.signInCta")}</a>
 				<p class="mt-3 text-xs text-muted-foreground">{$t("onboard.signInNote")}</p>
 			</Card>
