@@ -15,12 +15,14 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		clientId: getClientId(),
 	})
 
-	// Upsert user in Convex with admin role for school registration
-	// WorkOS user metadata may contain role; default to admin for onboard flow
-	const returnTo = url.searchParams.get('return_to')
+	// Read return_to from cookie (set by login route)
+	const returnTo = cookies.get('auth_return_to') ?? ''
+	cookies.delete('auth_return_to', { path: '/' })
+
 	const isOnboarding = returnTo === '/onboard'
 	const role = isOnboarding ? 'admin' : 'teacher'
 
+	// Upsert user in Convex
 	try {
 		await mutate('auth:upsertUser', {
 			workosUserId: user.id,
@@ -33,30 +35,30 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		// Convex not configured — continue with session-only auth
 	}
 
+	// Set session cookie with JWT
 	cookies.set('session', accessToken, {
 		httpOnly: true,
-		secure: true,
+		secure: false, // allow http://localhost
 		sameSite: 'lax',
 		path: '/',
 		maxAge: 60 * 60 * 24 * 7,
 	})
 
-	// Store basic user info in a readable cookie for client-side
-	const userInfo = JSON.stringify({
+	// Set user info cookie for client-side access
+	cookies.set('user_info', JSON.stringify({
 		id: user.id,
 		name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
 		email: user.email,
 		role,
-	})
-	cookies.set('user_info', userInfo, {
+	}), {
 		httpOnly: false,
-		secure: true,
+		secure: false,
 		sameSite: 'lax',
 		path: '/',
 		maxAge: 60 * 60 * 24 * 7,
 	})
 
-	// Redirect to return_to if set, otherwise role-based dashboard
+	// Redirect to return_to or role-based dashboard
 	if (returnTo) {
 		throw redirect(302, returnTo)
 	}
