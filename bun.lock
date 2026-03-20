@@ -58,6 +58,7 @@
         "expo-auth-session": "^55.0.9",
         "expo-camera": "^55.0.10",
         "expo-constants": "^55.0.9",
+        "expo-crypto": "^55.0.10",
         "expo-linking": "^55.0.8",
         "expo-localization": "^55.0.9",
         "expo-router": "^55.0.7",
