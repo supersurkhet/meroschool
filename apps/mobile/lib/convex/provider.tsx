@@ -10,8 +10,7 @@ interface ConvexProviderProps {
  * ConvexProvider wraps children with the ConvexReactClient.
  *
  * Uses EXPO_PUBLIC_CONVEX_URL from environment.
- * Auth token integration: once WorkOS is wired up,
- * pass the auth token via convex.setAuth() for authenticated queries.
+ * Auth token is set via convex.setAuth() in AuthProvider.
  */
 export function ConvexProviderWrapper({ children }: ConvexProviderProps) {
 	return (

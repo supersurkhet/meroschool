@@ -152,8 +152,8 @@ export default function ProfileScreen() {
 							</View>
 						)}
 						<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-							<Text style={{ fontSize: 13, color: colors.textMuted }}>Auth</Text>
-							<Text style={{ fontSize: 13, color: colors.success, fontWeight: "500" }}>WorkOS AuthKit</Text>
+							<Text style={{ fontSize: 13, color: colors.textMuted }}>Status</Text>
+							<Text style={{ fontSize: 13, color: colors.success, fontWeight: "500" }}>Authenticated</Text>
 						</View>
 					</View>
 				</Card>

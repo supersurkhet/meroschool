@@ -118,18 +118,13 @@ export default function LoginScreen() {
 						</Text>
 					) : null}
 
-					{/* Primary: WorkOS SSO button */}
 					<Button
-						title="Sign in with WorkOS"
+						title={t("auth.login")}
 						onPress={handleLogin}
 						loading={loading}
 						size="lg"
-						icon={!loading ? <Ionicons name="shield-checkmark" size={18} color="#FFF" /> : undefined}
+						icon={!loading ? <Ionicons name="log-in-outline" size={18} color="#FFF" /> : undefined}
 					/>
-
-					<Text style={{ fontSize: 12, color: colors.textMuted, textAlign: "center" }}>
-						Secure sign-in powered by WorkOS AuthKit
-					</Text>
 				</View>
 
 				{/* Footer */}
