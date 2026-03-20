@@ -246,7 +246,7 @@ export const submitAttempt = mutation({
     // Notify parent(s)
     const student = await ctx.db.get(args.studentId);
     const test = await ctx.db.get(args.testId);
-    if (student && test) {
+    if (student && test && student.parentIds) {
       for (const parentId of student.parentIds) {
         const parent = await ctx.db.get(parentId);
         if (parent) {
@@ -256,7 +256,7 @@ export const submitAttempt = mutation({
             message: `Your child scored ${score}/${totalMarks} on "${test.title}"`,
             type: "test_result",
             isRead: false,
-            relatedId: attemptId,
+            relatedId: attemptId as string,
           });
         }
       }

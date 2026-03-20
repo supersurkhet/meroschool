@@ -1,7 +1,7 @@
 export default {
   providers: [
     {
-      domain: process.env.WORKOS_ISSUER_URL ?? "https://api.workos.com",
+      domain: `https://api.workos.com/sso/token/${process.env.WORKOS_CLIENT_ID}`,
       applicationID: "convex",
     },
   ],

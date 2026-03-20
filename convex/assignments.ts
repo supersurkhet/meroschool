@@ -72,9 +72,6 @@ export const submit = mutation({
         fileId: args.fileId,
         textContent: args.textContent,
         submittedAt: Date.now(),
-        grade: undefined,
-        feedback: undefined,
-        gradedBy: undefined,
       });
       return existing._id;
     }
@@ -115,7 +112,7 @@ export const grade = mutation({
           message: `You scored ${args.grade}/${assignment.totalMarks} on "${assignment.title}"`,
           type: "assignment",
           isRead: false,
-          relatedId: args.submissionId,
+          relatedId: args.submissionId as string,
         });
       }
     }

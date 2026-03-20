@@ -132,7 +132,7 @@ export const getParentChildren = query({
     // Find all students who have this parent in their parentIds
     const allStudents = await ctx.db.query("students").collect();
     const children = allStudents.filter((s) =>
-      s.parentIds.includes(args.parentId)
+      s.parentIds?.includes(args.parentId)
     );
 
     return Promise.all(

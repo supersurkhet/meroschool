@@ -2,14 +2,33 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // ─── Users (WorkOS-backed) ────────────────────────────────────────
+  users: defineTable({
+    workosUserId: v.string(),
+    name: v.string(),
+    email: v.string(),
+    role: v.union(
+      v.literal("admin"),
+      v.literal("teacher"),
+      v.literal("student"),
+      v.literal("parent")
+    ),
+    avatarUrl: v.optional(v.string()),
+    isActive: v.boolean(),
+    schoolId: v.optional(v.id("schools")),
+  })
+    .index("by_workos_id", ["workosUserId"])
+    .index("by_role", ["role"]),
+
   // ─── School Structure ───────────────────────────────────────────
   schools: defineTable({
     name: v.string(),
     address: v.string(),
-    phone: v.string(),
-    email: v.string(),
-    logo: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    logo: v.optional(v.id("_storage")),
     settings: v.optional(v.any()),
+    establishedYear: v.optional(v.number()),
   }),
 
   classes: defineTable({
@@ -25,66 +44,53 @@ export default defineSchema({
 
   // ─── People ─────────────────────────────────────────────────────
   students: defineTable({
-    schoolId: v.id("schools"),
+    userId: v.id("users"),
     sectionId: v.id("sections"),
-    userId: v.string(),
-    name: v.string(),
-    email: v.string(),
-    phone: v.string(),
-    enrollmentDate: v.string(),
     rollNumber: v.string(),
-    guardianName: v.string(),
-    guardianPhone: v.string(),
-    status: v.union(v.literal("active"), v.literal("inactive")),
+    dateOfBirth: v.optional(v.string()),
+    admissionDate: v.optional(v.string()),
+    parentIds: v.optional(v.array(v.id("parents"))),
   })
-    .index("by_school", ["schoolId"])
     .index("by_section", ["sectionId"])
-    .index("by_userId", ["userId"]),
+    .index("by_user", ["userId"]),
 
   teachers: defineTable({
+    userId: v.id("users"),
     schoolId: v.id("schools"),
-    userId: v.string(),
-    name: v.string(),
-    email: v.string(),
-    phone: v.string(),
-    qualification: v.string(),
-    joinDate: v.string(),
-    status: v.union(v.literal("active"), v.literal("inactive")),
+    employeeId: v.string(),
+    department: v.optional(v.string()),
+    joinDate: v.optional(v.string()),
   })
     .index("by_school", ["schoolId"])
-    .index("by_userId", ["userId"]),
+    .index("by_user", ["userId"]),
 
   parents: defineTable({
-    userId: v.string(),
-    name: v.string(),
-    email: v.string(),
-    phone: v.string(),
-    studentIds: v.array(v.id("students")),
-  }).index("by_userId", ["userId"]),
+    userId: v.id("users"),
+    occupation: v.optional(v.string()),
+    address: v.optional(v.string()),
+  }).index("by_user", ["userId"]),
 
   // ─── Academics: Subjects → Modules → Topics ────────────────────
   subjects: defineTable({
-    schoolId: v.id("schools"),
     classId: v.id("classes"),
     name: v.string(),
-    code: v.string(),
-    teacherId: v.id("teachers"),
+    code: v.optional(v.string()),
+    teacherId: v.optional(v.id("teachers")),
   })
-    .index("by_school", ["schoolId"])
     .index("by_class", ["classId"])
     .index("by_teacher", ["teacherId"]),
 
   modules: defineTable({
     subjectId: v.id("subjects"),
     name: v.string(),
-    description: v.string(),
+    description: v.optional(v.string()),
     order: v.number(),
   }).index("by_subject", ["subjectId"]),
 
   topics: defineTable({
     moduleId: v.id("modules"),
     name: v.string(),
-    description: v.string(),
+    description: v.optional(v.string()),
     order: v.number(),
   }).index("by_module", ["moduleId"]),
 
@@ -95,11 +101,13 @@ export default defineSchema({
     type: v.union(
       v.literal("video"),
       v.literal("pdf"),
-      v.literal("link")
+      v.literal("link"),
+      v.literal("document")
     ),
-    url: v.string(),
+    fileId: v.optional(v.id("_storage")),
+    url: v.optional(v.string()),
     description: v.optional(v.string()),
-    uploadedBy: v.string(),
+    uploadedBy: v.id("users"),
   }).index("by_topic", ["topicId"]),
 
   // ─── Tests & MCQ Engine ─────────────────────────────────────────
@@ -107,14 +115,11 @@ export default defineSchema({
     subjectId: v.id("subjects"),
     moduleId: v.optional(v.id("modules")),
     title: v.string(),
-    description: v.string(),
-    duration: v.number(), // minutes
+    description: v.optional(v.string()),
+    durationMinutes: v.number(),
     totalMarks: v.number(),
-    status: v.union(
-      v.literal("draft"),
-      v.literal("published"),
-      v.literal("closed")
-    ),
+    isPublished: v.boolean(),
+    createdBy: v.id("users"),
   })
     .index("by_subject", ["subjectId"])
     .index("by_module", ["moduleId"]),
@@ -123,39 +128,40 @@ export default defineSchema({
     testId: v.id("tests"),
     question: v.string(),
     options: v.array(v.string()),
-    correctOption: v.number(),
+    correctOptionIndex: v.number(),
     marks: v.number(),
+    order: v.number(),
   }).index("by_test", ["testId"]),
 
   testAttempts: defineTable({
     testId: v.id("tests"),
     studentId: v.id("students"),
     answers: v.array(v.number()),
-    score: v.optional(v.number()),
+    score: v.number(),
+    totalMarks: v.number(),
     startedAt: v.number(),
+    submittedAt: v.number(),
     completedAt: v.optional(v.number()),
   })
     .index("by_test", ["testId"])
     .index("by_student", ["studentId"])
     .index("by_test_student", ["testId", "studentId"]),
 
-  // ─── Attendance ─────────────────────────────────────────────────
+  // ─── Attendance (flat individual records) ─────────────────────
   attendance: defineTable({
+    studentId: v.id("students"),
     sectionId: v.id("sections"),
     date: v.string(), // YYYY-MM-DD
-    records: v.array(
-      v.object({
-        studentId: v.id("students"),
-        status: v.union(
-          v.literal("present"),
-          v.literal("absent"),
-          v.literal("late")
-        ),
-      })
+    status: v.union(
+      v.literal("present"),
+      v.literal("absent"),
+      v.literal("late"),
+      v.literal("excused")
     ),
-    markedBy: v.string(),
+    markedBy: v.id("users"),
   })
     .index("by_section", ["sectionId"])
+    .index("by_student", ["studentId"])
     .index("by_section_date", ["sectionId", "date"]),
 
   // ─── Assignments ────────────────────────────────────────────────
@@ -163,9 +169,11 @@ export default defineSchema({
     subjectId: v.id("subjects"),
     sectionId: v.id("sections"),
     title: v.string(),
-    description: v.string(),
+    description: v.optional(v.string()),
     dueDate: v.string(),
-    createdBy: v.string(),
+    totalMarks: v.number(),
+    createdBy: v.id("users"),
+    fileId: v.optional(v.id("_storage")),
   })
     .index("by_subject", ["subjectId"])
     .index("by_section", ["sectionId"]),
@@ -173,10 +181,11 @@ export default defineSchema({
   submissions: defineTable({
     assignmentId: v.id("assignments"),
     studentId: v.id("students"),
-    content: v.optional(v.string()),
-    fileUrl: v.optional(v.string()),
-    grade: v.optional(v.string()),
+    fileId: v.optional(v.id("_storage")),
+    textContent: v.optional(v.string()),
+    grade: v.optional(v.number()),
     feedback: v.optional(v.string()),
+    gradedBy: v.optional(v.id("users")),
     submittedAt: v.number(),
   })
     .index("by_assignment", ["assignmentId"])
@@ -186,24 +195,32 @@ export default defineSchema({
   // ─── Salary Records ────────────────────────────────────────────
   salaryRecords: defineTable({
     teacherId: v.id("teachers"),
-    month: v.number(),
-    year: v.number(),
-    amount: v.number(),
-    status: v.union(v.literal("pending"), v.literal("paid")),
+    month: v.string(), // YYYY-MM
+    baseSalary: v.number(),
+    deductions: v.number(),
+    bonuses: v.number(),
+    netSalary: v.number(),
+    notes: v.optional(v.string()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("paid"),
+      v.literal("cancelled")
+    ),
     paidAt: v.optional(v.number()),
   })
     .index("by_teacher", ["teacherId"])
-    .index("by_month_year", ["year", "month"]),
+    .index("by_teacher_month", ["teacherId", "month"])
+    .index("by_month", ["month"]),
 
   // ─── Notifications ─────────────────────────────────────────────
   notifications: defineTable({
-    recipientId: v.string(),
+    userId: v.id("users"),
     type: v.string(),
     title: v.string(),
     message: v.string(),
-    read: v.boolean(),
-    sentAt: v.number(),
+    isRead: v.boolean(),
+    relatedId: v.optional(v.string()),
   })
-    .index("by_recipient", ["recipientId"])
-    .index("by_recipient_read", ["recipientId", "read"]),
+    .index("by_user", ["userId"])
+    .index("by_user_unread", ["userId", "isRead"]),
 });

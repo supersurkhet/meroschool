@@ -106,3 +106,31 @@
 - [ ] Dark mode toggle switches theme
 - [ ] All components render correctly in dark mode
 - [ ] Theme preference persists across sessions
+
+## Schema & Auth Alignment (Phase 1.1 + 1.5)
+- [ ] `users` table exists with workosUserId, name, email, role, avatarUrl, isActive, schoolId fields
+- [ ] `users` table has `by_workos_id` and `by_role` indexes
+- [ ] `auth.ts` currentUser/upsertUser/getUsersByRole/deactivateUser functions work against `users` table
+- [ ] `attendance` table uses flat individual records (studentId, sectionId, date, status, markedBy) not embedded arrays
+- [ ] `attendance` table has `by_section`, `by_student`, and `by_section_date` indexes
+- [ ] `attendance.status` union includes "excused" in addition to present/absent/late
+- [ ] `tests` table uses `isPublished: boolean` and `createdBy: id("users")` instead of status union
+- [ ] `tests` table uses `durationMinutes` field name (not `duration`)
+- [ ] `testQuestions` table has `order` and `correctOptionIndex` fields
+- [ ] `testAttempts` table has `totalMarks` and `submittedAt` fields
+- [ ] `students` table has `parentIds: optional(array(id("parents")))` and `userId: id("users")`
+- [ ] `students` table uses `by_user` index (not `by_userId`)
+- [ ] `teachers` table has `userId: id("users")`, `employeeId`, `department` fields and `by_user` index
+- [ ] `parents` table has `userId: id("users")`, `occupation`, `address` fields and `by_user` index
+- [ ] `assignments` table has `totalMarks: number` field
+- [ ] `submissions.grade` is `optional(number)` not `optional(string)`
+- [ ] `submissions` table has `fileId`, `textContent`, `gradedBy` fields
+- [ ] `notifications` table uses `userId: id("users")` and `isRead: boolean` (not `recipientId`/`read`)
+- [ ] `notifications` table has `relatedId: optional(string)` field
+- [ ] `notifications` indexes are `by_user` and `by_user_unread`
+- [ ] `salaryRecords` table uses `month: string` (YYYY-MM) with `baseSalary`, `deductions`, `bonuses`, `netSalary` fields
+- [ ] `salaryRecords` has `by_teacher_month` and `by_month` indexes
+- [ ] `materials` table supports "document" type and has `fileId: optional(id("_storage"))` and `uploadedBy: id("users")`
+- [ ] `subjects` table has optional `code` and `teacherId`, no `schoolId`
+- [ ] `auth.config.ts` uses `WORKOS_CLIENT_ID` env var in issuer domain URL
+- [ ] `npx convex dev` starts without schema validation errors

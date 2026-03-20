@@ -53,7 +53,7 @@ export const markPaid = mutation({
         message: `Your salary for ${record.month} (NPR ${record.netSalary}) has been paid.`,
         type: "salary",
         isRead: false,
-        relatedId: args.id,
+        relatedId: args.id as string,
       });
     }
   },
