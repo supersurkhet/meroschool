@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { t } from '$lib/i18n/index.svelte'
+	import { onMount } from 'svelte'
+	import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex'
 	import { Button } from '$lib/components/ui/button'
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
 	import { Input } from '$lib/components/ui/input'
@@ -15,6 +17,7 @@
 		Phone,
 		Mail,
 		Search,
+		Loader2,
 	} from 'lucide-svelte'
 
 	// ── Types ──────────────────────────────────────────────────────────
@@ -51,6 +54,7 @@
 		},
 	])
 
+	let loading = $state(true)
 	let showForm = $state(false)
 	let editingId = $state<string | null>(null)
 	let searchQuery = $state('')
@@ -60,6 +64,43 @@
 	let formAddress = $state('')
 	let formPhone = $state('')
 	let formEmail = $state('')
+
+	// ── Convex loading ────────────────────────────────────────────────
+	onMount(async () => {
+		if (!isConvexConfigured()) { loading = false; return }
+
+		try {
+			const convexSchools = await convexQuery(api.schools.list, {}, [] as any[])
+			if (Array.isArray(convexSchools) && convexSchools.length > 0) {
+				schools = convexSchools.map((s: any) => ({
+					id: s._id ?? s.id,
+					name: s.name ?? '',
+					address: s.address ?? '',
+					phone: s.phone ?? '',
+					email: s.email ?? '',
+				}))
+			}
+		} catch (err) {
+			console.warn('[schools] Convex load failed, using mock data:', err)
+		}
+		loading = false
+	})
+
+	async function refreshFromConvex() {
+		if (!isConvexConfigured()) return
+		try {
+			const convexSchools = await convexQuery(api.schools.list, {}, [] as any[])
+			if (Array.isArray(convexSchools) && convexSchools.length > 0) {
+				schools = convexSchools.map((s: any) => ({
+					id: s._id ?? s.id,
+					name: s.name ?? '',
+					address: s.address ?? '',
+					phone: s.phone ?? '',
+					email: s.email ?? '',
+				}))
+			}
+		} catch { /* keep current state */ }
+	}
 
 	let filteredSchools = $derived(
 		searchQuery
@@ -95,31 +136,63 @@
 		showForm = true
 	}
 
-	function handleSubmit(e: SubmitEvent) {
+	async function handleSubmit(e: SubmitEvent) {
 		e.preventDefault()
 		if (editingId) {
+			// Optimistic local update
 			schools = schools.map((s) =>
 				s.id === editingId
 					? { ...s, name: formName, address: formAddress, phone: formPhone, email: formEmail }
 					: s,
 			)
+			// Convex: persist update
+			if (isConvexConfigured()) {
+				try {
+					await convexMutation(api.schools.update, {
+						id: editingId,
+						name: formName,
+						address: formAddress,
+						...(formPhone ? { phone: formPhone } : {}),
+						...(formEmail ? { email: formEmail } : {}),
+					})
+				} catch (err) {
+					console.warn('[schools] Convex update failed, keeping local state:', err)
+				}
+			}
 		} else {
+			const optimisticId = crypto.randomUUID()
 			schools = [
 				...schools,
 				{
-					id: crypto.randomUUID(),
+					id: optimisticId,
 					name: formName,
 					address: formAddress,
 					phone: formPhone,
 					email: formEmail,
 				},
 			]
+			// Convex: persist creation
+			if (isConvexConfigured()) {
+				try {
+					const realId = await convexMutation(api.schools.create, {
+						name: formName,
+						address: formAddress,
+						...(formPhone ? { phone: formPhone } : {}),
+						...(formEmail ? { email: formEmail } : {}),
+					})
+					schools = schools.map((s) => s.id === optimisticId ? { ...s, id: realId } : s)
+				} catch (err) {
+					console.warn('[schools] Convex create failed, keeping local entry:', err)
+				}
+			}
 		}
 		resetForm()
 	}
 
-	function handleDelete(id: string) {
+	async function handleDelete(id: string) {
 		schools = schools.filter((s) => s.id !== id)
+		// Note: Convex schools.ts does not export a `remove` mutation.
+		// If one is added later, wire it here.
 	}
 </script>
 
@@ -209,6 +282,16 @@
 	{/if}
 
 	<!-- Schools Table -->
+	{#if loading}
+		<Card>
+			<CardContent class="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+				<Loader2 class="h-5 w-5 animate-spin" />
+				<span class="text-sm">Loading schools...</span>
+			</CardContent>
+		</Card>
+	{/if}
+
+	{#if !loading}
 	<Card>
 		<CardContent class="p-0">
 			{#if filteredSchools.length === 0}
@@ -283,6 +366,8 @@
 			{/if}
 		</CardContent>
 	</Card>
+
+	{/if}
 
 	<!-- Summary -->
 	<div class="flex items-center gap-2 text-xs text-muted-foreground">

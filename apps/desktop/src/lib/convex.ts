@@ -1,6 +1,5 @@
 import { ConvexHttpClient } from 'convex/browser';
-// @ts-expect-error — stub until `npx convex dev` generates real types
-import { api } from '../../../convex/_generated/api';
+import { api } from '../../../../convex/_generated/api';
 
 let client: ConvexHttpClient | null = null;
 
@@ -15,11 +14,11 @@ function getClient(): ConvexHttpClient {
 }
 
 /** Run a Convex query. Returns fallback if Convex is not configured. */
-export async function convexQuery<T>(
+export async function convexQuery(
 	queryFn: any,
 	args: Record<string, any>,
-	fallback: T,
-): Promise<T> {
+	fallback?: any,
+): Promise<any> {
 	try {
 		const c = getClient();
 		const result = await c.query(queryFn, args);
