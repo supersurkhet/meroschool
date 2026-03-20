@@ -254,7 +254,7 @@
 				<label class="text-sm font-medium text-foreground mb-1.5 block">{$t('materials.description')}</label>
 				<Textarea bind:value={newDescription} placeholder={$t('materials.descriptionPlaceholder')} rows={3} />
 			</div>
-			<!-- Upload area placeholder -->
+			<!-- File upload zone -->
 			<div class="rounded-lg border-2 border-dashed border-input p-8 text-center">
 				<div class="text-muted-foreground">
 					<svg class="mx-auto h-10 w-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">

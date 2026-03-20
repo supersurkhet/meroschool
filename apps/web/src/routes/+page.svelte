@@ -79,7 +79,7 @@
 			</div>
 		</div>
 
-		<!-- Hero illustration: School dashboard mockup -->
+		<!-- Hero illustration: Dashboard preview -->
 		<div class="mt-16 mx-auto max-w-5xl">
 			<div class="rounded-2xl border bg-card shadow-2xl overflow-hidden">
 				<div class="flex items-center gap-2 px-4 py-3 border-b bg-muted/50">
