@@ -1,0 +1,304 @@
+<script lang="ts">
+  import { Button } from '$lib/components/ui/button';
+  import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '$lib/components/ui/card';
+  import { Badge } from '$lib/components/ui/badge';
+  import { Label } from '$lib/components/ui/label';
+  import { Separator } from '$lib/components/ui/separator';
+  import { t } from '$lib/i18n/index.svelte';
+  import { Download, FileText, FileSpreadsheet, Printer, CheckCircle2, Users } from 'lucide-svelte';
+
+  type ExportFormat = 'csv' | 'pdf';
+  type ExportScope = 'class' | 'student';
+
+  let selectedFormat = $state<ExportFormat>('csv');
+  let selectedScope = $state<ExportScope>('class');
+  let selectedClass = $state('class-10');
+  let selectedExam = $state('first-term');
+  let isExporting = $state(false);
+  let exportSuccess = $state(false);
+
+  const classes = [
+    { id: 'class-10', name: 'Class 10', grade: 10 },
+    { id: 'class-9', name: 'Class 9', grade: 9 },
+    { id: 'class-8', name: 'Class 8', grade: 8 },
+    { id: 'class-7', name: 'Class 7', grade: 7 },
+    { id: 'class-5', name: 'Class 5', grade: 5 },
+    { id: 'class-1', name: 'Class 1', grade: 1 },
+  ];
+
+  const exams = [
+    { id: 'first-term', name: 'First Term Examination' },
+    { id: 'mid-term', name: 'Mid Term Examination' },
+    { id: 'final', name: 'Final Examination' },
+  ];
+
+  const sampleResults = [
+    { roll: '001', name: 'Aarav Sharma', math: 85, science: 78, english: 92, nepali: 88, social: 75, total: 418, pct: 83.6, grade: 'A' },
+    { roll: '002', name: 'Bipana Thapa', math: 92, science: 88, english: 85, nepali: 90, social: 82, total: 437, pct: 87.4, grade: 'A+' },
+    { roll: '003', name: 'Chandan Rai', math: 70, science: 65, english: 72, nepali: 68, social: 60, total: 335, pct: 67.0, grade: 'B+' },
+    { roll: '004', name: 'Deepa Gurung', math: 95, science: 92, english: 88, nepali: 94, social: 90, total: 459, pct: 91.8, grade: 'A+' },
+    { roll: '005', name: 'Eshan Maharjan', math: 60, science: 55, english: 65, nepali: 70, social: 58, total: 308, pct: 61.6, grade: 'B' },
+    { roll: '006', name: 'Fulmaya Tamang', math: 78, science: 82, english: 80, nepali: 85, social: 77, total: 402, pct: 80.4, grade: 'A' },
+    { roll: '007', name: 'Ganesh Adhikari', math: 88, science: 90, english: 76, nepali: 82, social: 85, total: 421, pct: 84.2, grade: 'A' },
+    { roll: '008', name: 'Hari KC', math: 45, science: 40, english: 50, nepali: 55, social: 42, total: 232, pct: 46.4, grade: 'C' },
+  ];
+
+  const selectedClassName = $derived(classes.find(c => c.id === selectedClass)?.name ?? '');
+  const selectedExamName = $derived(exams.find(e => e.id === selectedExam)?.name ?? '');
+
+  function generateCSV(): string {
+    const headers = ['Roll No', 'Student Name', 'Mathematics', 'Science', 'English', 'Nepali', 'Social Studies', 'Total', 'Percentage', 'Grade'];
+    const rows = sampleResults.map(r => [r.roll, r.name, r.math, r.science, r.english, r.nepali, r.social, r.total, r.pct, r.grade].join(','));
+    return [headers.join(','), ...rows].join('\n');
+  }
+
+  function downloadCSV() {
+    const csv = generateCSV();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedClassName}_${selectedExamName}_Results.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function generatePDFContent(): string {
+    return `
+      <html>
+      <head>
+        <title>${selectedClassName} - ${selectedExamName} Results</title>
+        <style>
+          body { font-family: system-ui, sans-serif; padding: 2rem; color: #1a1a2e; }
+          h1 { text-align: center; color: #4338ca; margin-bottom: 0.25rem; }
+          h2 { text-align: center; color: #6366f1; font-weight: normal; margin-top: 0; }
+          .meta { text-align: center; color: #666; margin-bottom: 2rem; }
+          table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+          th { background: #4338ca; color: white; padding: 0.5rem; text-align: left; }
+          td { padding: 0.5rem; border-bottom: 1px solid #e5e7eb; }
+          tr:nth-child(even) { background: #f9fafb; }
+          .grade-a { color: #059669; font-weight: 600; }
+          .grade-b { color: #d97706; font-weight: 600; }
+          .grade-c { color: #dc2626; font-weight: 600; }
+          .footer { margin-top: 2rem; text-align: center; font-size: 0.75rem; color: #999; }
+        </style>
+      </head>
+      <body>
+        <h1>मेरो स्कूल</h1>
+        <h2>${selectedExamName}</h2>
+        <p class="meta">${selectedClassName} | Academic Year 2081/82</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Roll</th><th>Name</th><th>Math</th><th>Science</th><th>English</th><th>Nepali</th><th>Social</th><th>Total</th><th>%</th><th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sampleResults.map(r => `
+              <tr>
+                <td>${r.roll}</td><td>${r.name}</td><td>${r.math}</td><td>${r.science}</td><td>${r.english}</td><td>${r.nepali}</td><td>${r.social}</td><td>${r.total}</td><td>${r.pct}%</td>
+                <td class="${r.grade.startsWith('A') ? 'grade-a' : r.grade.startsWith('B') ? 'grade-b' : 'grade-c'}">${r.grade}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <p class="footer">Generated by MeroSchool Admin | ${new Date().toLocaleDateString()}</p>
+      </body>
+      </html>
+    `;
+  }
+
+  function downloadPDF() {
+    const content = generatePDFContent();
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(content);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  }
+
+  async function handleExport() {
+    isExporting = true;
+    exportSuccess = false;
+    await new Promise(r => setTimeout(r, 800));
+
+    if (selectedFormat === 'csv') {
+      downloadCSV();
+    } else {
+      downloadPDF();
+    }
+
+    isExporting = false;
+    exportSuccess = true;
+    setTimeout(() => { exportSuccess = false; }, 3000);
+  }
+</script>
+
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">{t('common.export')} - Grade Results</h1>
+      <p class="text-muted-foreground mt-1">Export exam results as CSV or PDF</p>
+    </div>
+    <a href="/reports" class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+      ← Back to Reports
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Export Configuration -->
+    <div class="lg:col-span-1 space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Export Settings</CardTitle>
+          <CardDescription>Configure your export options</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div class="space-y-4">
+            <div>
+              <Label>Format</Label>
+              <div class="grid grid-cols-2 gap-2 mt-1.5">
+                <button
+                  class="flex items-center gap-2 p-3 rounded-lg border-2 transition-all {selectedFormat === 'csv' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
+                  onclick={() => selectedFormat = 'csv'}
+                >
+                  <FileSpreadsheet class="h-5 w-5 {selectedFormat === 'csv' ? 'text-primary' : 'text-muted-foreground'}" />
+                  <div class="text-left">
+                    <div class="text-sm font-medium">CSV</div>
+                    <div class="text-xs text-muted-foreground">Spreadsheet</div>
+                  </div>
+                </button>
+                <button
+                  class="flex items-center gap-2 p-3 rounded-lg border-2 transition-all {selectedFormat === 'pdf' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
+                  onclick={() => selectedFormat = 'pdf'}
+                >
+                  <FileText class="h-5 w-5 {selectedFormat === 'pdf' ? 'text-primary' : 'text-muted-foreground'}" />
+                  <div class="text-left">
+                    <div class="text-sm font-medium">PDF</div>
+                    <div class="text-xs text-muted-foreground">Printable</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <Label>Scope</Label>
+              <div class="grid grid-cols-2 gap-2 mt-1.5">
+                <button
+                  class="flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-sm {selectedScope === 'class' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
+                  onclick={() => selectedScope = 'class'}
+                >
+                  <Users class="h-4 w-4" />
+                  Entire Class
+                </button>
+                <button
+                  class="flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-sm {selectedScope === 'student' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
+                  onclick={() => selectedScope = 'student'}
+                >
+                  <FileText class="h-4 w-4" />
+                  Per Student
+                </button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <Label>Class</Label>
+              <select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedClass}>
+                {#each classes as cls}
+                  <option value={cls.id}>{cls.name}</option>
+                {/each}
+              </select>
+            </div>
+
+            <div>
+              <Label>Examination</Label>
+              <select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedExam}>
+                {#each exams as exam}
+                  <option value={exam.id}>{exam.name}</option>
+                {/each}
+              </select>
+            </div>
+
+            <Separator />
+
+            <Button class="w-full" onclick={handleExport} disabled={isExporting}>
+              {#if isExporting}
+                <span class="animate-spin mr-2">⟳</span> Exporting...
+              {:else if exportSuccess}
+                <CheckCircle2 class="h-4 w-4 mr-2" /> Exported!
+              {:else}
+                <Download class="h-4 w-4 mr-2" /> {t('common.export')} {selectedFormat.toUpperCase()}
+              {/if}
+            </Button>
+
+            {#if selectedFormat === 'pdf'}
+              <Button variant="outline" class="w-full" onclick={downloadPDF}>
+                <Printer class="h-4 w-4 mr-2" /> Print Preview
+              </Button>
+            {/if}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    <!-- Preview -->
+    <div class="lg:col-span-2">
+      <Card>
+        <CardHeader>
+          <div class="flex items-center justify-between">
+            <div>
+              <CardTitle>Preview</CardTitle>
+              <CardDescription>{selectedClassName} — {selectedExamName}</CardDescription>
+            </div>
+            <Badge variant="secondary">{sampleResults.length} students</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-border">
+                  <th class="text-left py-2 px-2 font-medium text-muted-foreground">Roll</th>
+                  <th class="text-left py-2 px-2 font-medium text-muted-foreground">Name</th>
+                  <th class="text-center py-2 px-2 font-medium text-muted-foreground">Math</th>
+                  <th class="text-center py-2 px-2 font-medium text-muted-foreground">Sci</th>
+                  <th class="text-center py-2 px-2 font-medium text-muted-foreground">Eng</th>
+                  <th class="text-center py-2 px-2 font-medium text-muted-foreground">Nep</th>
+                  <th class="text-center py-2 px-2 font-medium text-muted-foreground">Soc</th>
+                  <th class="text-center py-2 px-2 font-medium text-muted-foreground">Total</th>
+                  <th class="text-center py-2 px-2 font-medium text-muted-foreground">%</th>
+                  <th class="text-center py-2 px-2 font-medium text-muted-foreground">Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each sampleResults as result}
+                  <tr class="border-b border-border/50 hover:bg-muted/50 transition-colors">
+                    <td class="py-2 px-2 font-mono text-xs">{result.roll}</td>
+                    <td class="py-2 px-2 font-medium">{result.name}</td>
+                    <td class="py-2 px-2 text-center">{result.math}</td>
+                    <td class="py-2 px-2 text-center">{result.science}</td>
+                    <td class="py-2 px-2 text-center">{result.english}</td>
+                    <td class="py-2 px-2 text-center">{result.nepali}</td>
+                    <td class="py-2 px-2 text-center">{result.social}</td>
+                    <td class="py-2 px-2 text-center font-semibold">{result.total}</td>
+                    <td class="py-2 px-2 text-center">{result.pct}%</td>
+                    <td class="py-2 px-2 text-center">
+                      <Badge variant={result.grade.startsWith('A') ? 'success' : result.grade.startsWith('B') ? 'warning' : 'destructive'}>
+                        {result.grade}
+                      </Badge>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</div>

@@ -79,17 +79,69 @@
 - [ ] Parent: progress card shows attendance %, test avg, assignment completion
 - [ ] Admin: school-wide analytics load
 
+## Teachers Page (Desktop)
+- [ ] Admin: teacher list displays in card grid with avatar, name, email, department, subjects, classes
+- [ ] Admin: search filters teachers by name, email, employee ID, department
+- [ ] Admin: "Add Teacher" form opens inline with name, email, phone, employee ID, department, join date
+- [ ] Admin: subject and class multi-select toggles work in teacher form
+- [ ] Admin: edit teacher populates form with existing data
+- [ ] Admin: delete teacher removes from list
+- [ ] Admin: department badges show color-coded labels
+- [ ] Admin: empty state shows when no teachers match search
+
+## Students Page (Desktop)
+- [ ] Admin: student list table shows roll number, name, email, class, section, DOB, actions
+- [ ] Admin: class and section filter dropdowns filter the table
+- [ ] Admin: search filters by name, email, roll number
+- [ ] Admin: sortable columns (roll number, name, DOB) toggle asc/desc
+- [ ] Admin: "Add Student" form validates required fields with error messages
+- [ ] Admin: edit student populates form with existing data
+- [ ] Admin: delete student removes from list with confirmation
+- [ ] Admin: "Import CSV" button opens inline CSV import panel
+- [ ] Admin: table footer shows filtered count and sort info
+
 ## Salary (Desktop)
-- [ ] Admin: teacher list with salary records
-- [ ] Admin: create salary record with month/year/amount
-- [ ] Admin: mark as paid updates status
-- [ ] Admin: export salary to CSV
+- [ ] Admin: salary table shows employee ID, name, department, base, deductions, bonuses, net, status
+- [ ] Admin: summary cards show total payroll, paid amount, pending amount, average salary
+- [ ] Admin: month selector filters records by selected month
+- [ ] Admin: add salary record form with employee ID, name, department, base, deductions, bonuses, notes
+- [ ] Admin: edit salary record populates form with existing values
+- [ ] Admin: "Mark as Paid" button updates pending record to paid status
+- [ ] Admin: "Pay All" marks all pending records as paid
+- [ ] Admin: expandable rows show notes and net calculation breakdown
 
 ## CSV Import/Export (Desktop)
-- [ ] Admin: import students from CSV with preview
+- [ ] Admin: import page shows drag-and-drop zone for CSV upload
+- [ ] Admin: CSV column hints show expected format
+- [ ] Admin: example CSV shown in expandable details
+- [ ] Admin: file drop/browse triggers CSV parsing with preview table
 - [ ] Admin: validation errors shown with row numbers
+- [ ] Admin: import button creates student records from valid rows
 - [ ] Admin: export student list to CSV
 - [ ] Admin: export attendance to CSV
+
+## QR Codes Page (Desktop)
+- [ ] Admin: grid view shows all classes with QR thumbnails
+- [ ] Admin: clicking a class opens detail view with section tabs
+- [ ] Admin: QR code generates for selected class and section
+- [ ] Admin: section selector switches QR code in detail view
+- [ ] Admin: download button saves QR as PNG
+- [ ] Admin: print button opens print dialog
+- [ ] Admin: "Download All" generates QR codes for all class/section combinations
+- [ ] Admin: back navigation returns to grid view
+
+## Reports Page (Desktop)
+- [ ] Admin: tab bar switches between Attendance, Exam Results, Class Performance
+- [ ] Admin: attendance tab shows summary cards (total, present %, absent %, late %)
+- [ ] Admin: attendance distribution stacked bar visualizes present/late/absent
+- [ ] Admin: per-student attendance table with percentage badges
+- [ ] Admin: attendance filters by date range and class
+- [ ] Admin: exam results tab shows average, highest, lowest, pass rate cards
+- [ ] Admin: grade distribution bar chart shows A+ through F
+- [ ] Admin: results table with rank, name, marks, percentage, grade
+- [ ] Admin: class performance tab shows clickable class cards with avg score bars
+- [ ] Admin: clicking class card shows subject-wise performance breakdown
+- [ ] Admin: legend explains color coding for score ranges
 
 ## Notifications
 - [ ] Parent: notification list shows with unread indicator
