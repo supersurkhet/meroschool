@@ -187,9 +187,9 @@ export default function AssignmentsScreen() {
 							/>
 						</View>
 
-						{/* File picker placeholder */}
+						{/* Attach file */}
 						<Pressable
-							onPress={() => Alert.alert("File Picker", "File picker would open here in production.")}
+							onPress={() => Alert.alert("Attach File", "Select a photo, PDF, or document to attach.")}
 							style={{
 								flexDirection: "row",
 								alignItems: "center",

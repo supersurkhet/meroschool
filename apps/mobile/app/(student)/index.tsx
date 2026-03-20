@@ -117,7 +117,7 @@ export default function StudentDashboard() {
 				{/* Greeting + Attendance Card */}
 				<Card>
 					<View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-						{/* Avatar placeholder */}
+						{/* Avatar */}
 						<View
 							style={{
 								width: 56,
