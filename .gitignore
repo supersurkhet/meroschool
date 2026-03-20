@@ -1,0 +1,16 @@
+node_modules
+dist
+.svelte-kit
+build
+.env
+.env.local
+.env.*.local
+*.log
+.turbo
+.DS_Store
+.vite
+coverage
+.expo
+android
+ios
+src-tauri/target
