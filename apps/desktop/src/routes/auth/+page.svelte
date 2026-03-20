@@ -1,37 +1,38 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { login } from '$lib/stores/auth.svelte';
+  import { startOAuthLogin, isOAuthAvailable, getIsAuthenticated } from '$lib/stores/auth.svelte';
   import { toggleTheme, getResolvedTheme } from '$lib/stores/theme.svelte';
   import { t, setLocale, getLocale } from '$lib/i18n/index.svelte';
   import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import { Sun, Moon, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-svelte';
+  import { Sun, Moon, ArrowRight, AlertCircle, ExternalLink } from 'lucide-svelte';
 
-  let email = $state('');
-  let password = $state('');
-  let showPassword = $state(false);
   let isLoading = $state(false);
   let errorMessage = $state('');
   let mounted = $state(false);
 
   let isDark = $derived(getResolvedTheme() === 'dark');
   let locale = $derived(getLocale());
+  let oauthReady = $derived(isOAuthAvailable());
 
   $effect(() => {
     mounted = true;
+    // If already authenticated, redirect
+    if (getIsAuthenticated()) {
+      goto('/dashboard', { replaceState: true });
+    }
   });
 
-  async function handleLogin(e: SubmitEvent) {
-    e.preventDefault();
-    errorMessage = '';
+  function handleLogin() {
+    if (!oauthReady) {
+      errorMessage = 'WorkOS is not configured. Set VITE_WORKOS_CLIENT_ID and VITE_WORKOS_API_KEY in .env.local';
+      return;
+    }
     isLoading = true;
+    errorMessage = '';
     try {
-      await login(email, password);
-      goto('/dashboard', { replaceState: true });
+      startOAuthLogin();
     } catch (err) {
-      errorMessage = err instanceof Error ? err.message : 'Login failed.';
-    } finally {
+      errorMessage = err instanceof Error ? err.message : 'Failed to start login.';
       isLoading = false;
     }
   }
@@ -62,7 +63,6 @@
       <rect width="100%" height="100%" fill="url(#mandala-grid)"/>
     </svg>
 
-    <!-- Warm gradient wash -->
     <div class="pointer-events-none absolute -bottom-1/4 -left-1/4 h-[600px] w-[600px] rounded-full bg-[#c2410c] opacity-[0.06] blur-[120px]"></div>
     <div class="pointer-events-none absolute -right-1/4 -top-1/4 h-[500px] w-[500px] rounded-full bg-[#4338ca] opacity-[0.08] blur-[100px]"></div>
 
@@ -111,7 +111,7 @@
     </div>
   </div>
 
-  <!-- Right panel — login form -->
+  <!-- Right panel — login -->
   <div class="flex flex-1 flex-col bg-background">
     <!-- Top bar -->
     <div class="flex items-center justify-end gap-2 p-5">
@@ -133,7 +133,7 @@
       </button>
     </div>
 
-    <!-- Centered form -->
+    <!-- Centered content -->
     <div class="flex flex-1 items-center justify-center px-6">
       <div class="w-full max-w-[360px] {mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'} transition-all duration-500 delay-200">
         <!-- Heading -->
@@ -149,73 +149,58 @@
           </p>
         </div>
 
-        <form onsubmit={handleLogin} class="space-y-5">
-          <div class="space-y-1.5">
-            <Label class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t('common.email')}
-            </Label>
-            <Input
-              type="email"
-              placeholder="admin@school.edu.np"
-              bind:value={email}
-              required
-              disabled={isLoading}
-              class="h-11 rounded-lg border-border/60 bg-muted/30 transition-colors focus-visible:bg-background"
-            />
-          </div>
-
-          <div class="space-y-1.5">
-            <Label class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t('common.password')}
-            </Label>
-            <div class="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                bind:value={password}
-                required
-                disabled={isLoading}
-                class="h-11 rounded-lg border-border/60 bg-muted/30 pr-10 transition-colors focus-visible:bg-background"
-              />
-              <button
-                type="button"
-                onclick={() => (showPassword = !showPassword)}
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 transition-colors hover:text-muted-foreground"
-                tabindex={-1}
-              >
-                {#if showPassword}
-                  <EyeOff class="h-4 w-4" />
-                {:else}
-                  <Eye class="h-4 w-4" />
-                {/if}
-              </button>
-            </div>
-          </div>
-
-          {#if errorMessage}
-            <div class="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
-              <AlertCircle class="h-4 w-4 shrink-0" />
-              {errorMessage}
-            </div>
-          {/if}
-
+        <!-- WorkOS OAuth button -->
+        <div class="space-y-4">
           <Button
-            type="submit"
+            onclick={handleLogin}
             disabled={isLoading}
-            class="group h-11 w-full rounded-lg bg-[#1a1631] font-semibold text-white shadow-lg shadow-[#1a1631]/20 transition-all hover:bg-[#241f42] hover:shadow-xl hover:shadow-[#1a1631]/30 disabled:opacity-60 dark:bg-primary dark:hover:bg-primary/90"
+            class="group h-12 w-full rounded-lg bg-[#1a1631] font-semibold text-white shadow-lg shadow-[#1a1631]/20 transition-all hover:bg-[#241f42] hover:shadow-xl hover:shadow-[#1a1631]/30 disabled:opacity-60 dark:bg-primary dark:hover:bg-primary/90"
           >
             {#if isLoading}
               <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-              <span class="ml-2">{t('common.loading')}</span>
+              <span class="ml-2">Redirecting to WorkOS...</span>
             {:else}
-              {t('auth.login')}
-              <ArrowRight class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              <!-- WorkOS logo mark -->
+              <svg class="mr-2.5 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              Sign in with WorkOS
+              <ExternalLink class="ml-2 h-3.5 w-3.5 opacity-50 transition-opacity group-hover:opacity-100" />
             {/if}
           </Button>
-        </form>
+
+          {#if !oauthReady}
+            <div class="flex items-start gap-2.5 rounded-lg border border-warning/30 bg-warning/5 px-3.5 py-3 text-xs text-warning">
+              <AlertCircle class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <div>
+                <p class="font-semibold">WorkOS not configured</p>
+                <p class="mt-0.5 text-warning/70">
+                  Set <code class="rounded bg-warning/10 px-1 font-mono text-[10px]">VITE_WORKOS_CLIENT_ID</code> and
+                  <code class="rounded bg-warning/10 px-1 font-mono text-[10px]">VITE_WORKOS_API_KEY</code> in
+                  <code class="rounded bg-warning/10 px-1 font-mono text-[10px]">.env.local</code>
+                </p>
+              </div>
+            </div>
+          {/if}
+
+          {#if errorMessage}
+            <div class="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/5 px-3.5 py-3 text-sm text-destructive">
+              <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          {/if}
+        </div>
+
+        <!-- Security note -->
+        <div class="mt-8 rounded-lg border border-border/50 bg-muted/20 p-4">
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">Secure Authentication</p>
+          <p class="mt-1.5 text-xs leading-relaxed text-muted-foreground/70">
+            Authentication is handled by WorkOS AuthKit. Your credentials are never stored locally — only a session token is kept after successful sign-in.
+          </p>
+        </div>
 
         <!-- Footer -->
-        <div class="mt-10 flex items-center gap-3">
+        <div class="mt-8 flex items-center gap-3">
           <div class="h-px flex-1 bg-border/50"></div>
           <span class="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/40">
             MeroSchool Desktop v1.0
