@@ -13,8 +13,8 @@
 	let submitting = $state(false);
 	let errorMsg = $state("");
 
-	// Check if user is authenticated (via cookie set by auth callback)
-	let isAuthenticated = $derived(typeof document !== "undefined" && document.cookie.includes("session="));
+	// Check if user is authenticated (via user_info cookie — not httpOnly)
+	let isAuthenticated = $derived(typeof document !== "undefined" && document.cookie.includes("user_info="));
 
 	// School info (step 1)
 	let schoolName = $state("");
