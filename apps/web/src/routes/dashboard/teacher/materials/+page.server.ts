@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types'
-import { convexQuery } from '$lib/server/convex'
+import { query } from '$lib/server/convex'
 
 const FALLBACK_SUBJECTS = [
 	{
@@ -91,7 +91,20 @@ const FALLBACK_SUBJECTS = [
 	},
 ]
 
-export const load: PageServerLoad = async () => {
-	const subjectsData = await convexQuery(null, {}, FALLBACK_SUBJECTS)
-	return { subjectsData }
+export const load: PageServerLoad = async ({ url }) => {
+	const subjectId = url.searchParams.get('subjectId')
+
+	// If a subjectId is provided, fetch the full hierarchy from Convex
+	if (subjectId) {
+		const hierarchy = await query(
+			'academics:getSubjectHierarchy',
+			{ subjectId },
+			null,
+		)
+		if (hierarchy) {
+			return { subjectsData: [hierarchy] }
+		}
+	}
+
+	return { subjectsData: FALLBACK_SUBJECTS }
 }

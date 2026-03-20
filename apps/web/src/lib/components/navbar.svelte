@@ -4,6 +4,8 @@
 	import { theme, setTheme, type Theme } from "$lib/theme.js";
 	import Button from "$lib/components/ui/button.svelte";
 	import { page } from "$app/stores";
+	import { onMount } from "svelte";
+	import { getConvexClient } from "$lib/convex-client.js";
 
 	let mobileOpen = $state(false);
 	let bellOpen = $state(false);
@@ -17,6 +19,19 @@
 	]);
 
 	let isDashboard = $derived($page.url.pathname.startsWith('/dashboard'));
+
+	onMount(async () => {
+		if (!isDashboard) return;
+		try {
+			const client = getConvexClient();
+			if (!client) return;
+			// Optionally fetch real notification count when Convex is configured
+			// const count = await client.query('notifications:unreadCount' as any, { userId });
+			// if (typeof count === 'number') unreadCount = count;
+		} catch {
+			// Convex not available, keep fallback count
+		}
+	});
 
 	function markAllRead() {
 		for (const n of sampleNotifications) n.read = true;

@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types'
-import { convexQuery } from '$lib/server/convex'
+import { query } from '$lib/server/convex'
 
 const FALLBACK_STUDENTS = [
 	{ id: 1, name: 'Aarav Sharma', attendance: 92, testAvg: 85, assignmentsDone: 18, assignmentsTotal: 20, testScores: [{ subject: 'Math', score: 88 }, { subject: 'Science', score: 82 }, { subject: 'English', score: 85 }], attendanceHistory: [95, 90, 88, 93, 91, 92] },
@@ -19,7 +19,10 @@ const FALLBACK_STUDENTS = [
 	{ id: 15, name: 'Rajan Pokharel', attendance: 42, testAvg: 32, assignmentsDone: 6, assignmentsTotal: 20, testScores: [{ subject: 'Math', score: 28 }, { subject: 'Science', score: 35 }, { subject: 'English', score: 33 }], attendanceHistory: [45, 40, 42, 44, 41, 42] },
 ]
 
-export const load: PageServerLoad = async () => {
-	const students = await convexQuery(null, {}, FALLBACK_STUDENTS)
+export const load: PageServerLoad = async ({ url }) => {
+	const sectionId = url.searchParams.get('sectionId')
+	const students = sectionId
+		? await query('progress:getSectionProgress', { sectionId }, FALLBACK_STUDENTS)
+		: FALLBACK_STUDENTS
 	return { students }
 }

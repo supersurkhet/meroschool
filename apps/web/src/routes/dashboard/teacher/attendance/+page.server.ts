@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types'
-import { convexQuery, convexMutation, api } from '$lib/server/convex'
+import { query, mutate } from '$lib/server/convex'
 import { fail } from '@sveltejs/kit'
 
 const FALLBACK_SECTIONS = ['10-A', '10-B', '9-A', '9-B', '8-A', '8-B']
@@ -19,9 +19,12 @@ const FALLBACK_STUDENTS = [
 	{ id: '12', roll: 12, name: 'Laxmi Shrestha', status: 'present' as const },
 ]
 
-export const load: PageServerLoad = async () => {
-	const sections = await convexQuery(null, {}, FALLBACK_SECTIONS)
-	const students = await convexQuery(null, {}, FALLBACK_STUDENTS)
+export const load: PageServerLoad = async ({ url }) => {
+	const sectionId = url.searchParams.get('sectionId')
+	const sections = FALLBACK_SECTIONS
+	const students = sectionId
+		? await query('people:listStudentsBySection', { sectionId }, FALLBACK_STUDENTS)
+		: FALLBACK_STUDENTS
 	return { sections, students }
 }
 
@@ -38,7 +41,7 @@ export const actions: Actions = {
 
 		try {
 			const records = JSON.parse(recordsJson)
-			await convexMutation(api.attendance?.markBulk, {
+			await mutate('attendance:markBulk', {
 				sectionId,
 				date,
 				records,

@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types'
-import { convexQuery, convexMutation, api } from '$lib/server/convex'
+import { query, mutate } from '$lib/server/convex'
 import { fail } from '@sveltejs/kit'
 
 const FALLBACK_ASSIGNMENTS = [
@@ -60,8 +60,11 @@ const FALLBACK_ASSIGNMENTS = [
 	},
 ]
 
-export const load: PageServerLoad = async () => {
-	const assignments = await convexQuery(null, {}, FALLBACK_ASSIGNMENTS)
+export const load: PageServerLoad = async ({ url }) => {
+	const sectionId = url.searchParams.get('sectionId')
+	const assignments = sectionId
+		? await query('assignments:listBySection', { sectionId }, FALLBACK_ASSIGNMENTS)
+		: FALLBACK_ASSIGNMENTS
 	return { assignments }
 }
 
@@ -76,7 +79,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			await convexMutation(api.assignments?.create, {
+			await mutate('assignments:create', {
 				title,
 				description: formData.get('description') as string,
 				subjectId: formData.get('subjectId') as string,
@@ -102,7 +105,7 @@ export const actions: Actions = {
 		const feedback = formData.get('feedback') as string
 
 		try {
-			await convexMutation(api.assignments?.grade, {
+			await mutate('assignments:grade', {
 				submissionId,
 				grade,
 				feedback,

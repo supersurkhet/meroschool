@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types'
-import { convexQuery, convexMutation, api } from '$lib/server/convex'
+import { query, mutate } from '$lib/server/convex'
 import { fail } from '@sveltejs/kit'
 
 const FALLBACK_TESTS = [
@@ -32,8 +32,11 @@ const FALLBACK_TESTS = [
 	},
 ]
 
-export const load: PageServerLoad = async () => {
-	const tests = await convexQuery(null, {}, FALLBACK_TESTS)
+export const load: PageServerLoad = async ({ url }) => {
+	const subjectId = url.searchParams.get('subjectId')
+	const tests = subjectId
+		? await query('tests:listTestsBySubject', { subjectId }, FALLBACK_TESTS)
+		: FALLBACK_TESTS
 	return { tests }
 }
 
@@ -41,20 +44,17 @@ export const actions: Actions = {
 	publish: async ({ request }) => {
 		const formData = await request.formData()
 		const title = formData.get('title') as string
-		const subject = formData.get('subject') as string
+		const subjectId = formData.get('subject') as string
 		const totalMarks = Number(formData.get('totalMarks'))
-		const questionsJson = formData.get('questions') as string
 
-		if (!title || !questionsJson) {
+		if (!title || !subjectId) {
 			return fail(400, { error: 'Missing required fields' })
 		}
 
 		try {
-			const questions = JSON.parse(questionsJson)
-			// Create test and add questions via Convex
-			await convexMutation(api.tests?.createTest, {
+			await mutate('tests:createTest', {
 				title,
-				subjectId: subject,
+				subjectId,
 				totalMarks,
 				durationMinutes: Number(formData.get('duration') ?? 60),
 				createdBy: formData.get('userId') ?? '',

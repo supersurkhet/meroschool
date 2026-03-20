@@ -1,43 +1,37 @@
 import { ConvexHttpClient } from 'convex/browser'
-import { api } from '../../../../../convex/_generated/api'
 
-let client: ConvexHttpClient | null = null
+let _client: ConvexHttpClient | null = null
 
-export function getConvexClient(): ConvexHttpClient | null {
-	if (client) return client
+export function getClient(): ConvexHttpClient | null {
+	if (_client) return _client
 	const url =
 		typeof process !== 'undefined'
 			? process.env?.PUBLIC_CONVEX_URL
 			: undefined
 	if (!url) return null
-	client = new ConvexHttpClient(url)
-	return client
+	_client = new ConvexHttpClient(url)
+	return _client
 }
 
-// Generic query wrapper that falls back gracefully
-export async function convexQuery<T>(
-	queryFn: any,
-	args: any,
+export async function query<T>(
+	functionName: string,
+	args: Record<string, any> = {},
 	fallback: T,
 ): Promise<T> {
-	const c = getConvexClient()
-	if (!c || !queryFn) return fallback
+	const c = getClient()
+	if (!c) return fallback
 	try {
-		const result = await c.query(queryFn, args)
-		return result ?? fallback
+		return (await c.query(functionName as any, args)) ?? fallback
 	} catch {
 		return fallback
 	}
 }
 
-// Generic mutation wrapper
-export async function convexMutation(
-	mutationFn: any,
-	args: any,
+export async function mutate(
+	functionName: string,
+	args: Record<string, any> = {},
 ): Promise<any> {
-	const c = getConvexClient()
-	if (!c) throw new Error('Convex not configured')
-	return c.mutation(mutationFn, args)
+	const c = getClient()
+	if (!c) throw new Error('Convex not configured — set PUBLIC_CONVEX_URL')
+	return c.mutation(functionName as any, args)
 }
-
-export { api }
