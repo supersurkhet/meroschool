@@ -174,6 +174,27 @@ export default {
 	"common.getStarted": "सुरु गर्नुहोस्",
 	"common.viewAll": "सबै हेर्नुहोस्",
 
+	// Dashboard nav
+	"dashboard.nav.home": "ड्यासबोर्ड",
+	"dashboard.nav.attendance": "उपस्थिति",
+	"dashboard.nav.tests": "परीक्षाहरू",
+	"dashboard.nav.materials": "सामग्रीहरू",
+	"dashboard.nav.assignments": "असाइनमेन्टहरू",
+	"dashboard.nav.logout": "साइन आउट",
+
+	// Teacher dashboard
+	"teacher.welcome": "पुनः स्वागत छ",
+	"teacher.defaultName": "शिक्षक",
+	"teacher.role": "शिक्षक",
+	"teacher.quickActions": "द्रुत कार्यहरू",
+	"teacher.action.attendance": "उपस्थिति चिन्ह लगाउनुहोस्",
+	"teacher.action.test": "परीक्षा बनाउनुहोस्",
+	"teacher.action.material": "सामग्री अपलोड गर्नुहोस्",
+	"teacher.action.assignment": "असाइनमेन्ट बनाउनुहोस्",
+	"teacher.myClasses": "मेरा कक्षाहरू",
+	"teacher.students": "विद्यार्थीहरू",
+	"teacher.viewClass": "कक्षा हेर्नुहोस्",
+
 	// Dark mode
 	"theme.light": "उज्यालो",
 	"theme.dark": "अँध्यारो",

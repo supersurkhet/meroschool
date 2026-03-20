@@ -134,3 +134,23 @@
 - [ ] `subjects` table has optional `code` and `teacherId`, no `schoolId`
 - [ ] `auth.config.ts` uses `WORKOS_CLIENT_ID` env var in issuer domain URL
 - [ ] `npx convex dev` starts without schema validation errors
+
+## Auth Integration — Web (Phase 1.2)
+- [ ] GET /auth/login redirects to WorkOS AuthKit authorization URL
+- [ ] GET /auth/callback exchanges code for session and sets httpOnly cookie
+- [ ] GET /auth/callback redirects to role-based dashboard path
+- [ ] GET /auth/logout clears session cookie and redirects to /
+- [ ] hooks.server.ts decodes JWT from session cookie into event.locals.user
+- [ ] Unauthenticated access to /dashboard/* redirects to /auth/login
+- [ ] Dashboard layout shows sidebar with nav links and user name in topbar
+- [ ] Dashboard layout supports mobile sidebar toggle
+
+## Teacher Dashboard — Web (Phase 2.2)
+- [ ] Welcome card displays teacher name from session
+- [ ] Welcome card shows today's date formatted
+- [ ] Quick action grid renders 4 cards: Attendance, Test, Material, Assignment
+- [ ] Quick action cards link to correct placeholder routes
+- [ ] My Classes section shows sample class cards with subject, section, student count
+- [ ] Layout is responsive: 2 cols on mobile, 4 cols on desktop for quick actions
+- [ ] Dark mode renders correctly on teacher dashboard
+- [ ] i18n keys work for both English and Nepali on teacher dashboard

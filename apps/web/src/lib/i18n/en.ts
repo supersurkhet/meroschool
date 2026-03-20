@@ -174,6 +174,27 @@ export default {
 	"common.getStarted": "Get Started",
 	"common.viewAll": "View All",
 
+	// Dashboard nav
+	"dashboard.nav.home": "Dashboard",
+	"dashboard.nav.attendance": "Attendance",
+	"dashboard.nav.tests": "Tests",
+	"dashboard.nav.materials": "Materials",
+	"dashboard.nav.assignments": "Assignments",
+	"dashboard.nav.logout": "Sign Out",
+
+	// Teacher dashboard
+	"teacher.welcome": "Welcome back",
+	"teacher.defaultName": "Teacher",
+	"teacher.role": "Teacher",
+	"teacher.quickActions": "Quick Actions",
+	"teacher.action.attendance": "Mark Attendance",
+	"teacher.action.test": "Create Test",
+	"teacher.action.material": "Upload Material",
+	"teacher.action.assignment": "Create Assignment",
+	"teacher.myClasses": "My Classes",
+	"teacher.students": "students",
+	"teacher.viewClass": "View Class",
+
 	// Dark mode
 	"theme.light": "Light",
 	"theme.dark": "Dark",
