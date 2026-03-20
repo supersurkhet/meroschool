@@ -1,4 +1,3 @@
-import type { PageServerLoad } from './$types'
 import { query } from '$lib/server/convex'
 
 const FALLBACK_CLASSES = [
@@ -7,10 +6,10 @@ const FALLBACK_CLASSES = [
 	{ subject: 'Mathematics', section: 'Class 8-A', students: 45 },
 ]
 
-export const load: PageServerLoad = async ({ parent }) => {
-	const { user } = await parent()
+export const load = async ({ parent }: { parent: () => Promise<any> }) => {
+	const { user, sessionToken } = await parent()
 	const classes = user?.id
-		? await query('academics:listSubjectsByTeacher', { teacherId: user.id }, FALLBACK_CLASSES)
+		? await query('academics:listSubjectsByTeacher', { teacherId: user.id }, FALLBACK_CLASSES, sessionToken)
 		: FALLBACK_CLASSES
 	return { classes }
 }

@@ -10,6 +10,8 @@ declare global {
 				email: string
 				role: string
 			}
+			/** Raw WorkOS JWT for passing to Convex auth */
+			sessionToken?: string
 		}
 		// interface PageData {}
 		// interface PageState {}

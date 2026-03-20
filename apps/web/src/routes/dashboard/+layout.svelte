@@ -5,6 +5,7 @@
 	import { applyTheme } from '$lib/theme.js'
 	import { onMount } from 'svelte'
 	import { user as userStore } from '$lib/stores/auth.svelte.js'
+	import { setConvexAuth } from '$lib/convex-client.js'
 	import Button from '$lib/components/ui/button.svelte'
 
 	let { data, children } = $props()
@@ -15,6 +16,11 @@
 
 		if (data.user) {
 			userStore.set(data.user)
+		}
+
+		// Set up Convex auth with the JWT from the server
+		if (data.sessionToken) {
+			setConvexAuth(data.sessionToken)
 		}
 
 		return unsub
