@@ -1,14 +1,23 @@
-import en from './en';
-import ne from './ne';
+import en from './en'
+import ne from './ne'
 
-export type Locale = 'en' | 'ne';
+export type Locale = 'en' | 'ne'
 
-const translations = { en, ne } as const;
+const translations = { en, ne } as const
+
+const STORAGE_KEY = 'meroschool-locale'
+
+function loadSavedLocale(): Locale {
+	if (typeof localStorage === 'undefined') return 'en'
+	const saved = localStorage.getItem(STORAGE_KEY)
+	if (saved === 'en' || saved === 'ne') return saved
+	return 'en'
+}
 
 // Module-level $state — works in Svelte 5 rune context (.svelte.ts files
 // or inside <script> blocks). For plain .ts modules consumed by components,
 // the reactive value is read via the exported getter functions.
-let currentLocale = $state<Locale>('en');
+let currentLocale = $state<Locale>(loadSavedLocale())
 
 /**
  * Resolve a dot-notation key against the current locale's translation map.
@@ -17,43 +26,46 @@ let currentLocale = $state<Locale>('en');
  * Example: t('common.save') → 'Save' | 'सेभ गर्नुहोस्'
  */
 export function t(key: string): string {
-  const parts = key.split('.');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let value: any = translations[currentLocale];
+	const parts = key.split('.')
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let value: any = translations[currentLocale]
 
-  for (const part of parts) {
-    if (value == null || typeof value !== 'object') {
-      value = undefined;
-      break;
-    }
-    value = value[part];
-  }
+	for (const part of parts) {
+		if (value == null || typeof value !== 'object') {
+			value = undefined
+			break
+		}
+		value = value[part]
+	}
 
-  // Fall back to English if the key is missing in the current locale.
-  if (value == null || typeof value !== 'string') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let fallback: any = translations['en'];
-    for (const part of parts) {
-      if (fallback == null || typeof fallback !== 'object') {
-        fallback = undefined;
-        break;
-      }
-      fallback = fallback[part];
-    }
-    if (typeof fallback === 'string') return fallback;
-    // Last resort: return the raw key so missing translations are visible.
-    return key;
-  }
+	// Fall back to English if the key is missing in the current locale.
+	if (value == null || typeof value !== 'string') {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		let fallback: any = translations['en']
+		for (const part of parts) {
+			if (fallback == null || typeof fallback !== 'object') {
+				fallback = undefined
+				break
+			}
+			fallback = fallback[part]
+		}
+		if (typeof fallback === 'string') return fallback
+		// Last resort: return the raw key so missing translations are visible.
+		return key
+	}
 
-  return value;
+	return value
 }
 
 /** Switch the active locale. Triggers reactivity wherever t() is called. */
 export function setLocale(locale: Locale): void {
-  currentLocale = locale;
+	currentLocale = locale
+	if (typeof localStorage !== 'undefined') {
+		localStorage.setItem(STORAGE_KEY, locale)
+	}
 }
 
 /** Return the currently active locale. */
 export function getLocale(): Locale {
-  return currentLocale;
+	return currentLocale
 }

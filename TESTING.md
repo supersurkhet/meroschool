@@ -617,3 +617,47 @@
 - [ ] wrangler.jsonc exists with correct config
 - [ ] .env.example lists required environment variables
 - [ ] WorkOS auth initializes lazily (no build-time crash)
+
+## Phase 3 — Desktop Verification
+
+### i18n Completion (Desktop)
+- [ ] en.ts has keys for all sections: common, nav, auth, setup, dashboard, students, teachers, parents, exams, salary, reports, qr, schools, classes, csv
+- [ ] ne.ts has corresponding Nepali translations for all keys in en.ts
+- [ ] Language switcher in sidebar toggles between English and Nepali
+- [ ] Language preference persists to localStorage across sessions
+- [ ] Dashboard page uses t() for greeting, stat labels, section headers, action labels
+- [ ] Schools page uses t() for all labels, buttons, form titles, empty states
+- [ ] Classes page uses t() for all labels, buttons, form titles, empty states
+- [ ] Teachers page uses t() for form title, manage staff subtitle, update/edit labels
+- [ ] Parents page uses t() for form title, link children label, manage contacts subtitle
+- [ ] Salary page uses t() for total payroll, average salary, add/edit record titles
+- [ ] Reports page uses t() for page title, tab labels, section headers
+- [ ] QR page uses t() for download all, all classes, share QR description
+- [ ] Exams page uses t() for manage by term subtitle, save schedule, no exam schedule
+- [ ] Auth page uses t() for password label, sign in subtitle
+- [ ] Access denied screen uses t() for title and description
+
+### CSV Import/Export Polish (Desktop)
+- [ ] Import page drag-and-drop zone changes border color and scales on dragover
+- [ ] PapaParse used for both CSV parsing (header: true, skipEmptyLines: true) and template generation
+- [ ] Validation checks required fields (name, roll_number) with row-specific errors
+- [ ] Validation checks email format when email column is present
+- [ ] Validation checks phone format when guardian_phone column is present
+- [ ] Error rows highlighted with red background and left border in preview table
+- [ ] Error rows show error tooltip on hover via title attribute
+- [ ] Row numbers show alert icon for error rows
+- [ ] Download Template button generates CSV with PapaParse unparse
+- [ ] Export buttons use PapaParse unparse for Students, Attendance, and Results
+- [ ] Error count and valid count badges update correctly
+
+### Type Checking (Desktop)
+- [ ] svelte-check runs with 0 TypeScript errors
+- [ ] All page components have correct imports and type annotations
+
+### Dark Mode Polish (Desktop)
+- [ ] All pages use bg-background, text-foreground, border-border theme classes
+- [ ] No hardcoded bg-white or text-black in page templates (only in dedicated dark panels)
+- [ ] Exam schedule cards use dark: variants for subject colors
+- [ ] Teacher department badges use dark: variants for colors
+- [ ] Sidebar, cards, tables, forms all render correctly in dark mode
+- [ ] Chart bars and progress indicators use theme CSS variables

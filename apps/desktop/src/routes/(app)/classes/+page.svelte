@@ -210,11 +210,11 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-2xl font-bold tracking-tight">{t('nav.classesSections')}</h1>
-			<p class="text-sm text-muted-foreground">Manage classes and their sections</p>
+			<p class="text-sm text-muted-foreground">{t('classes.manageClasses')}</p>
 		</div>
 		<Button onclick={openAddClass} class="gap-2">
 			<Plus class="h-4 w-4" />
-			Add Class
+			{t('classes.addClass')}
 		</Button>
 	</div>
 
@@ -239,7 +239,7 @@
 			<CardHeader class="pb-4">
 				<div class="flex items-center justify-between">
 					<CardTitle class="text-base">
-						{editingClassId ? 'Edit Class' : 'Add New Class'}
+						{editingClassId ? t('classes.editClass') : t('classes.addNewClass')}
 					</CardTitle>
 					<button
 						onclick={resetClassForm}
@@ -252,7 +252,7 @@
 			<CardContent>
 				<form onsubmit={handleClassSubmit} class="flex items-end gap-4">
 					<div class="flex-1 space-y-1.5">
-						<Label class="text-xs font-medium">Class Name</Label>
+						<Label class="text-xs font-medium">{t('setup.className')}</Label>
 						<Input
 							placeholder="e.g. Grade 6"
 							bind:value={className}
@@ -260,7 +260,7 @@
 						/>
 					</div>
 					<div class="flex-1 space-y-1.5">
-						<Label class="text-xs font-medium">School</Label>
+						<Label class="text-xs font-medium">{t('nav.schools')}</Label>
 						<Input
 							placeholder="School name"
 							bind:value={classSchool}
@@ -342,7 +342,7 @@
 					<div class="border-t border-border/50 bg-muted/20 px-4 py-3">
 						{#if cls.sections.length === 0 && addingSectionForClassId !== cls.id}
 							<p class="py-2 text-center text-sm text-muted-foreground">
-								No sections yet. Click "Section" to add one.
+								{t('classes.noSectionsYet')}
 							</p>
 						{/if}
 
@@ -387,7 +387,7 @@
 								class="mt-3 flex items-end gap-3 rounded-lg border border-primary/20 bg-background p-3"
 							>
 								<div class="flex-1 space-y-1">
-									<Label class="text-xs font-medium">Section Name</Label>
+									<Label class="text-xs font-medium">{t('setup.sectionName')}</Label>
 									<Input
 										placeholder="e.g. Section A"
 										bind:value={sectionName}
@@ -395,7 +395,7 @@
 									/>
 								</div>
 								<div class="w-28 space-y-1">
-									<Label class="text-xs font-medium">Capacity</Label>
+									<Label class="text-xs font-medium">{t('setup.capacity')}</Label>
 									<Input
 										type="number"
 										min="1"
@@ -423,10 +423,10 @@
 		<Card>
 			<CardContent class="flex flex-col items-center gap-3 py-12">
 				<Layers class="h-10 w-10 text-muted-foreground/30" />
-				<p class="text-sm text-muted-foreground">No classes created yet</p>
+				<p class="text-sm text-muted-foreground">{t('classes.noClassesCreated')}</p>
 				<Button onclick={openAddClass} variant="outline" class="gap-2">
 					<Plus class="h-4 w-4" />
-					Add your first class
+					{t('classes.addFirstClass')}
 				</Button>
 			</CardContent>
 		</Card>

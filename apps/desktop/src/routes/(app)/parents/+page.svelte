@@ -267,7 +267,7 @@
   <div class="mb-6 flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-bold tracking-tight text-foreground">{t('parents.linking')}</h1>
-      <p class="text-sm text-muted-foreground mt-0.5">Link parents to their children and manage contact info</p>
+      <p class="text-sm text-muted-foreground mt-0.5">{t('parents.manageContacts')}</p>
     </div>
     <Button onclick={openAddForm} class="gap-2 shadow-sm">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -296,7 +296,7 @@
       <Card class="border-2 border-primary/20 shadow-lg">
         <CardHeader class="pb-4">
           <CardTitle class="text-lg">
-            {editingId !== null ? 'Edit Parent' : t('parents.addParent')}
+            {editingId !== null ? t('parents.editParent') : t('parents.addParent')}
           </CardTitle>
         </CardHeader>
         <CardContent class="space-y-6">
@@ -334,8 +334,8 @@
 
           <!-- Link children -->
           <div class="space-y-3">
-            <Label>Link Children</Label>
-            <p class="text-xs text-muted-foreground">Select the students to link to this parent</p>
+            <Label>{t('parents.linkChildren')}</Label>
+            <p class="text-xs text-muted-foreground">{t('parents.selectStudents')}</p>
             <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {#each STUDENTS as student}
                 <button
@@ -375,7 +375,7 @@
             onclick={saveParent}
             disabled={!formName.trim() || !formEmail.trim()}
           >
-            {editingId !== null ? 'Update Parent' : t('common.save')}
+            {editingId !== null ? t('parents.updateParent') : t('common.save')}
           </Button>
         </CardFooter>
       </Card>
@@ -390,7 +390,7 @@
           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
       </div>
-      <p class="text-base font-medium text-foreground">No parents found</p>
+      <p class="text-base font-medium text-foreground">{t('parents.noParentsFound')}</p>
       <p class="mt-1 text-sm text-muted-foreground">
         {searchQuery ? 'Try a different search term.' : 'Add your first parent record to get started.'}
       </p>
@@ -471,7 +471,7 @@
                       </div>
                     </div>
                   {:else}
-                    <p class="mt-2 text-xs text-muted-foreground italic">No children linked yet</p>
+                    <p class="mt-2 text-xs text-muted-foreground italic">{t('parents.noChildrenLinked')}</p>
                   {/if}
                 </div>
               </div>

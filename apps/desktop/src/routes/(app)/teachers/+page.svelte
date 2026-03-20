@@ -271,7 +271,7 @@
     <div class="flex items-center gap-3">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-foreground">{t('teachers.management')}</h1>
-        <p class="text-sm text-muted-foreground mt-0.5">Manage your school's teaching staff</p>
+        <p class="text-sm text-muted-foreground mt-0.5">{t('teachers.manageStaff')}</p>
       </div>
       <div class="flex h-7 items-center rounded-full bg-primary/10 px-3">
         <span class="text-xs font-semibold text-primary">{teachers.length} total</span>
@@ -304,7 +304,7 @@
       <Card class="border-2 border-primary/20 shadow-lg">
         <CardHeader class="pb-4">
           <CardTitle class="text-lg">
-            {editingId !== null ? 'Edit Teacher' : t('teachers.addTeacher')}
+            {editingId !== null ? t('teachers.editTeacher') : t('teachers.addTeacher')}
           </CardTitle>
         </CardHeader>
         <CardContent class="space-y-6">
@@ -378,7 +378,7 @@
 
           <!-- Classes multi-select -->
           <div class="space-y-3">
-            <Label>Assign Classes</Label>
+            <Label>{t('teachers.assignClasses')}</Label>
             <div class="flex flex-wrap gap-2">
               {#each ALL_CLASSES as cls}
                 <button
@@ -403,7 +403,7 @@
             onclick={saveTeacher}
             disabled={!formName.trim() || !formEmail.trim() || !formEmployeeId.trim()}
           >
-            {editingId !== null ? 'Update Teacher' : t('common.save')}
+            {editingId !== null ? t('teachers.updateTeacher') : t('common.save')}
           </Button>
         </CardFooter>
       </Card>
@@ -418,7 +418,7 @@
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
       </div>
-      <p class="text-base font-medium text-foreground">No teachers found</p>
+      <p class="text-base font-medium text-foreground">{t('teachers.noTeachersFound')}</p>
       <p class="mt-1 text-sm text-muted-foreground">
         {searchQuery ? 'Try a different search term.' : 'Add your first teacher to get started.'}
       </p>

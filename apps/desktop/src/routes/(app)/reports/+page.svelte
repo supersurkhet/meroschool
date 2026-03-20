@@ -247,8 +247,8 @@
 <div class="flex flex-col gap-6 p-6">
   <!-- Header -->
   <div>
-    <h1 class="text-2xl font-bold tracking-tight">Reports</h1>
-    <p class="text-sm text-muted-foreground">Attendance, exam results and class performance analytics</p>
+    <h1 class="text-2xl font-bold tracking-tight">{t('nav.reports')}</h1>
+    <p class="text-sm text-muted-foreground">{t('reports.attendance')}, {t('reports.examResults').toLowerCase()}, {t('reports.classPerformance').toLowerCase()}</p>
   </div>
 
   <!-- Tab Bar -->
@@ -346,7 +346,7 @@
 
       <!-- Visual bar -->
       <Card>
-        <CardHeader><CardTitle class="text-base">Attendance Distribution</CardTitle></CardHeader>
+        <CardHeader><CardTitle class="text-base">{t('reports.attendanceDistribution')}</CardTitle></CardHeader>
         <CardContent class="flex flex-col gap-3 pb-5">
           <div class="flex h-8 w-full overflow-hidden rounded-lg">
             <div
@@ -378,7 +378,7 @@
 
       <!-- Per-student table -->
       <Card>
-        <CardHeader><CardTitle class="text-base">Per-Student Attendance</CardTitle></CardHeader>
+        <CardHeader><CardTitle class="text-base">{t('reports.perStudentAttendance')}</CardTitle></CardHeader>
         <CardContent class="p-0">
           <table class="w-full text-sm">
             <thead>
@@ -492,7 +492,7 @@
               <CheckCircle class="h-4 w-4 text-success" />
             </div>
             <div>
-              <p class="text-xs text-muted-foreground">Pass Rate</p>
+              <p class="text-xs text-muted-foreground">{t('reports.passRate')}</p>
               <p class="text-xl font-bold">{resultsSummary.passRate}%</p>
             </div>
           </CardContent>
@@ -501,7 +501,7 @@
 
       <!-- Grade distribution visual -->
       <Card>
-        <CardHeader><CardTitle class="text-base">Grade Distribution</CardTitle></CardHeader>
+        <CardHeader><CardTitle class="text-base">{t('reports.gradeDistribution')}</CardTitle></CardHeader>
         <CardContent class="flex flex-col gap-3 pb-5">
           {#each gradeDistribution() as [grade, count]}
             <div class="flex items-center gap-3">
@@ -520,7 +520,7 @@
 
       <!-- Results table -->
       <Card>
-        <CardHeader><CardTitle class="text-base">Results Table</CardTitle></CardHeader>
+        <CardHeader><CardTitle class="text-base">{t('reports.resultsTable')}</CardTitle></CardHeader>
         <CardContent class="p-0">
           <table class="w-full text-sm">
             <thead>
@@ -619,7 +619,7 @@
       {:else}
         <!-- All classes subject comparison -->
         <Card>
-          <CardHeader><CardTitle class="text-base">All Classes — Average Score Comparison</CardTitle></CardHeader>
+          <CardHeader><CardTitle class="text-base">{t('reports.allClassComparison')}</CardTitle></CardHeader>
           <CardContent class="flex flex-col gap-4 pb-5">
             {#each classPerformance as cls}
               <div class="flex items-center gap-3">

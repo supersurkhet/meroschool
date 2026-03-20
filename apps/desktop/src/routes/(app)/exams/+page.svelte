@@ -220,7 +220,7 @@
   <div class="mb-6 flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-bold tracking-tight text-foreground">{t('exams.schedule')}</h1>
-      <p class="text-sm text-muted-foreground mt-0.5">Manage exam timetables by term and class</p>
+      <p class="text-sm text-muted-foreground mt-0.5">{t('exams.manageByTerm')}</p>
     </div>
     <Button onclick={openCreateForm} class="gap-2 shadow-sm">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -338,7 +338,7 @@
         <CardFooter class="flex justify-end gap-3 border-t pt-4">
           <Button variant="outline" onclick={cancelCreate}>{t('common.cancel')}</Button>
           <Button onclick={saveExamSchedule} disabled={formEntries.every(e => !e.date)}>
-            Save Schedule
+            {t('exams.saveSchedule')}
           </Button>
         </CardFooter>
       </Card>
@@ -400,7 +400,7 @@
           <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
         </svg>
       </div>
-      <p class="text-base font-medium text-foreground">No exam schedule</p>
+      <p class="text-base font-medium text-foreground">{t('exams.noExamSchedule')}</p>
       <p class="mt-1 text-sm text-muted-foreground">
         No {activeExamType} exams scheduled for {selectedClass} yet.
       </p>

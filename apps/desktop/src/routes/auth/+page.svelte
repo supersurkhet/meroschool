@@ -145,7 +145,7 @@
             {t('auth.welcomeBack')}
           </h2>
           <p class="mt-2 text-sm text-muted-foreground">
-            Sign in to manage your school
+            {t('auth.signIn')}
           </p>
         </div>
 
@@ -166,7 +166,7 @@
 
           <div class="space-y-1.5">
             <Label class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Password
+              {t('common.password')}
             </Label>
             <div class="relative">
               <Input

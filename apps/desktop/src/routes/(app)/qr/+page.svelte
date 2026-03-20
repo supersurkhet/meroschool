@@ -174,7 +174,7 @@
           class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronLeft class="h-4 w-4" />
-          All Classes
+          {t('qr.allClasses')}
         </button>
         <span class="text-muted-foreground">/</span>
         <h1 class="text-2xl font-bold tracking-tight">{selectedClass.name}</h1>
@@ -186,7 +186,7 @@
     {#if !selectedClass}
       <Button onclick={downloadAll} variant="outline" size="sm">
         <Download />
-        Download All
+        {t('qr.downloadAll')}
       </Button>
     {/if}
   </div>
@@ -290,8 +290,7 @@
         <Card>
           <CardContent class="p-4">
             <p class="text-xs text-muted-foreground leading-relaxed">
-              Share this QR code with students to allow them to join the class digitally.
-              Each class section has a unique QR code.
+              {t('qr.shareQr')}
             </p>
           </CardContent>
         </Card>

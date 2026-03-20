@@ -17,19 +17,29 @@
 
 	// ── State ──────────────────────────────────────────────────────────
 	let parsedRows = $state<Record<string, string>[]>([])
-	let errors = $state<{ row: number; message: string }[]>([])
+	let errors = $state<{ row: number; field: string; message: string }[]>([])
 	let fileName = $state('')
 	let isDragging = $state(false)
 
 	// ── Computed ───────────────────────────────────────────────────────
-	let validCount = $derived(parsedRows.length - errors.length)
-	let errorCount = $derived(errors.length)
 	let errorRowSet = $derived(new Set(errors.map((e) => e.row)))
+	let validCount = $derived(parsedRows.length - errorRowSet.size)
+	let errorCount = $derived(errorRowSet.size)
 	let previewRows = $derived(parsedRows.slice(0, 10))
 	let columns = $derived(parsedRows.length > 0 ? Object.keys(parsedRows[0]) : [])
 
 	// ── Required columns ──────────────────────────────────────────────
-	const requiredColumns = ['name', 'roll_number', 'class', 'section']
+	const requiredColumns = ['name', 'roll_number']
+
+	// ── Validation helpers ────────────────────────────────────────────
+	function isValidEmail(email: string): boolean {
+		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+	}
+
+	function isValidPhone(phone: string): boolean {
+		// Accept various Nepal phone formats
+		return /^[\d+\-() ]{7,15}$/.test(phone)
+	}
 
 	// ── File handling ─────────────────────────────────────────────────
 	function handleFile(file: File) {
@@ -46,17 +56,32 @@
 	}
 
 	function validateRows() {
-		const errs: { row: number; message: string }[] = []
+		const errs: { row: number; field: string; message: string }[] = []
 		for (let i = 0; i < parsedRows.length; i++) {
 			const row = parsedRows[i]
+			// Check required fields
 			for (const col of requiredColumns) {
 				if (!row[col] || !row[col].trim()) {
-					errs.push({ row: i, message: `Row ${i + 1}: Missing "${col}"` })
-					break
+					errs.push({ row: i, field: col, message: `Row ${i + 1}: Missing required field "${col}"` })
 				}
+			}
+			// Validate email format if present
+			if (row['email'] && row['email'].trim() && !isValidEmail(row['email'].trim())) {
+				errs.push({ row: i, field: 'email', message: `Row ${i + 1}: Invalid email format "${row['email']}"` })
+			}
+			// Validate phone format if present
+			if (row['guardian_phone'] && row['guardian_phone'].trim() && !isValidPhone(row['guardian_phone'].trim())) {
+				errs.push({ row: i, field: 'guardian_phone', message: `Row ${i + 1}: Invalid phone format "${row['guardian_phone']}"` })
 			}
 		}
 		errors = errs
+	}
+
+	function errorsForRow(rowIndex: number): string {
+		return errors
+			.filter((e) => e.row === rowIndex)
+			.map((e) => e.message)
+			.join('; ')
 	}
 
 	function onFileInput(e: Event) {
@@ -86,7 +111,6 @@
 	}
 
 	function importValid() {
-		// In a real app, this would send to Convex
 		const valid = parsedRows.filter((_, i) => !errorRowSet.has(i))
 		alert(`Imported ${valid.length} students successfully!`)
 		goto('/students')
@@ -94,7 +118,9 @@
 
 	// ── Template download ─────────────────────────────────────────────
 	function downloadTemplate() {
-		const csv = 'name,email,roll_number,class,section,guardian_name,guardian_phone\nJohn Doe,john@example.com,001,Grade 10,A,Jane Doe,9841000000'
+		const headers = ['name', 'email', 'roll_number', 'class', 'section', 'guardian_name', 'guardian_phone']
+		const sampleRow = ['Ram Prasad', 'ram@student.edu.np', '001', 'Grade 10', 'A', 'Sita Prasad', '9841000000']
+		const csv = Papa.unparse({ fields: headers, data: [sampleRow] })
 		const blob = new Blob([csv], { type: 'text/csv' })
 		const url = URL.createObjectURL(blob)
 		const a = document.createElement('a')
@@ -104,23 +130,35 @@
 		URL.revokeObjectURL(url)
 	}
 
-	// ── Export helpers ─────────────────────────────────────────────────
-	function exportSample(type: string) {
-		let csv = ''
-		if (type === 'students') {
-			csv = 'Roll#,Name,Class,Section,Status\n001,Aayush Bhandari,Grade 10,A,Active\n002,Priya Tamang,Grade 10,A,Active'
-		} else if (type === 'attendance') {
-			csv = 'Date,Roll#,Name,Status\n2026-03-19,001,Aayush Bhandari,Present\n2026-03-19,002,Priya Tamang,Absent'
-		} else if (type === 'results') {
-			csv = 'Roll#,Name,Subject,Marks,Total\n001,Aayush Bhandari,Math,85,100\n002,Priya Tamang,Math,92,100'
-		}
+	// ── Export utility ────────────────────────────────────────────────
+	function exportToCSV(data: Record<string, unknown>[], filename: string) {
+		const csv = Papa.unparse(data)
 		const blob = new Blob([csv], { type: 'text/csv' })
 		const url = URL.createObjectURL(blob)
 		const a = document.createElement('a')
 		a.href = url
-		a.download = `${type}_export.csv`
+		a.download = filename
 		a.click()
 		URL.revokeObjectURL(url)
+	}
+
+	function exportSample(type: string) {
+		if (type === 'students') {
+			exportToCSV([
+				{ 'Roll#': '001', Name: 'Aayush Bhandari', Class: 'Grade 10', Section: 'A', Status: 'Active' },
+				{ 'Roll#': '002', Name: 'Priya Tamang', Class: 'Grade 10', Section: 'A', Status: 'Active' },
+			], 'students_export.csv')
+		} else if (type === 'attendance') {
+			exportToCSV([
+				{ Date: '2026-03-19', 'Roll#': '001', Name: 'Aayush Bhandari', Status: 'Present' },
+				{ Date: '2026-03-19', 'Roll#': '002', Name: 'Priya Tamang', Status: 'Absent' },
+			], 'attendance_export.csv')
+		} else if (type === 'results') {
+			exportToCSV([
+				{ 'Roll#': '001', Name: 'Aayush Bhandari', Subject: 'Math', Marks: '85', Total: '100' },
+				{ 'Roll#': '002', Name: 'Priya Tamang', Subject: 'Math', Marks: '92', Total: '100' },
+			], 'results_export.csv')
+		}
 	}
 </script>
 
@@ -133,7 +171,7 @@
 		</Button>
 		<div>
 			<h1 class="text-2xl font-bold tracking-tight">{t('students.importCsv')}</h1>
-			<p class="text-sm text-muted-foreground">Import students from a CSV file or export data</p>
+			<p class="text-sm text-muted-foreground">{t('csv.importExportDescription')}</p>
 		</div>
 	</div>
 
@@ -143,23 +181,23 @@
 			<CardContent class="py-8">
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
-					class="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed p-12 transition-colors
-						{isDragging ? 'border-primary bg-primary/5' : 'border-border'}"
+					class="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed p-12 transition-all duration-200
+						{isDragging ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-border hover:border-primary/50'}"
 					ondrop={onDrop}
 					ondragover={onDragOver}
 					ondragleave={onDragLeave}
 				>
-					<div class="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+					<div class="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-transform {isDragging ? 'scale-110' : ''}">
 						<Upload class="h-8 w-8 text-primary" />
 					</div>
 					<div class="text-center">
-						<p class="text-lg font-semibold">Drop CSV here</p>
-						<p class="text-sm text-muted-foreground">or click to browse</p>
+						<p class="text-lg font-semibold">{t('csv.dropCsvHere')}</p>
+						<p class="text-sm text-muted-foreground">{t('csv.orClickBrowse')}</p>
 					</div>
 					<label class="cursor-pointer">
 						<Button variant="outline" class="gap-2">
 							<FileText class="h-4 w-4" />
-							Choose File
+							{t('csv.chooseFile')}
 						</Button>
 						<input type="file" accept=".csv" class="hidden" onchange={onFileInput} />
 					</label>
@@ -168,7 +206,7 @@
 				<div class="mt-6 flex justify-center">
 					<Button variant="ghost" onclick={downloadTemplate} class="gap-2 text-sm">
 						<Download class="h-4 w-4" />
-						Download Template
+						{t('common.downloadTemplate')}
 					</Button>
 				</div>
 			</CardContent>
@@ -182,22 +220,22 @@
 			</Badge>
 			<Badge variant="success" class="gap-1.5 px-3 py-1">
 				<CheckCircle class="h-3.5 w-3.5" />
-				{validCount} valid
+				{validCount} {t('csv.validRows')}
 			</Badge>
 			{#if errorCount > 0}
 				<Badge variant="destructive" class="gap-1.5 px-3 py-1">
 					<AlertCircle class="h-3.5 w-3.5" />
-					{errorCount} with errors
+					{errorCount} {t('csv.withErrors')}
 				</Badge>
 			{/if}
 			<div class="ml-auto flex gap-2">
 				<Button variant="ghost" size="sm" onclick={clearFile} class="gap-1">
 					<X class="h-4 w-4" />
-					Clear
+					{t('common.clear')}
 				</Button>
 				<Button onclick={importValid} class="gap-2" disabled={validCount === 0}>
 					<Upload class="h-4 w-4" />
-					Import {validCount} Valid Rows
+					{t('csv.importStudents')} ({validCount})
 				</Button>
 			</div>
 		</div>
@@ -206,7 +244,7 @@
 		{#if errors.length > 0}
 			<Card class="border-destructive/30">
 				<CardHeader class="pb-2">
-					<CardTitle class="text-sm text-destructive">Validation Errors</CardTitle>
+					<CardTitle class="text-sm text-destructive">{t('csv.validationErrors')}</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<ul class="space-y-1 text-sm">
@@ -224,7 +262,7 @@
 		<!-- Preview table -->
 		<Card>
 			<CardHeader class="pb-2">
-				<CardTitle class="text-sm">Preview (first 10 rows)</CardTitle>
+				<CardTitle class="text-sm">{t('common.preview')} ({previewRows.length})</CardTitle>
 			</CardHeader>
 			<CardContent class="p-0">
 				<div class="overflow-x-auto">
@@ -239,8 +277,20 @@
 						</thead>
 						<tbody class="divide-y divide-border/50">
 							{#each previewRows as row, i}
-								<tr class="{errorRowSet.has(i) ? 'bg-destructive/5' : ''} transition-colors hover:bg-muted/20">
-									<td class="px-4 py-2 text-muted-foreground">{i + 1}</td>
+								<tr
+									class="{errorRowSet.has(i) ? 'bg-destructive/10 border-l-2 border-l-destructive' : ''} transition-colors hover:bg-muted/20"
+									title={errorRowSet.has(i) ? errorsForRow(i) : ''}
+								>
+									<td class="px-4 py-2 text-muted-foreground">
+										{#if errorRowSet.has(i)}
+											<span class="flex items-center gap-1 text-destructive">
+												<AlertCircle class="h-3 w-3" />
+												{i + 1}
+											</span>
+										{:else}
+											{i + 1}
+										{/if}
+									</td>
 									{#each columns as col}
 										<td class="px-4 py-2">{row[col] ?? ''}</td>
 									{/each}
@@ -256,21 +306,21 @@
 	<!-- Export Section -->
 	<Card>
 		<CardHeader>
-			<CardTitle class="text-base">Export Data</CardTitle>
+			<CardTitle class="text-base">{t('csv.exportData')}</CardTitle>
 		</CardHeader>
 		<CardContent>
 			<div class="flex gap-3">
 				<Button variant="outline" onclick={() => exportSample('students')} class="gap-2">
 					<Download class="h-4 w-4" />
-					Export Students
+					{t('csv.exportStudents')}
 				</Button>
 				<Button variant="outline" onclick={() => exportSample('attendance')} class="gap-2">
 					<Download class="h-4 w-4" />
-					Export Attendance
+					{t('csv.exportAttendance')}
 				</Button>
 				<Button variant="outline" onclick={() => exportSample('results')} class="gap-2">
 					<Download class="h-4 w-4" />
-					Export Results
+					{t('csv.exportResults')}
 				</Button>
 			</div>
 		</CardContent>

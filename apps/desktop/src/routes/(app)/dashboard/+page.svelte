@@ -33,9 +33,9 @@
   const now = new Date();
   const greeting = $derived(() => {
     const h = now.getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return t('dashboard.goodMorning');
+    if (h < 17) return t('dashboard.goodAfternoon');
+    return t('dashboard.goodEvening');
   });
 
   const dateStr = now.toLocaleDateString('en-US', {
@@ -47,10 +47,10 @@
 
   // Stats
   const stats = [
-    { label: 'Total Students', value: '487', change: '+12', icon: Users, accent: 'from-indigo-500 to-violet-600', iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
-    { label: 'Teachers', value: '28', change: '+1', icon: GraduationCap, accent: 'from-amber-500 to-orange-600', iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
-    { label: 'Today\'s Attendance', value: '91%', change: '+3%', icon: CheckCircle, accent: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-    { label: 'Salary Pending', value: '5', change: 'NPR 1.65L', icon: DollarSign, accent: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
+    { labelKey: 'dashboard.totalStudents', value: '487', change: '+12', icon: Users, accent: 'from-indigo-500 to-violet-600', iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
+    { labelKey: 'nav.teachers', value: '28', change: '+1', icon: GraduationCap, accent: 'from-amber-500 to-orange-600', iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+    { labelKey: 'dashboard.todaysAttendance', value: '91%', change: '+3%', icon: CheckCircle, accent: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+    { labelKey: 'dashboard.salaryPending', value: '5', change: 'NPR 1.65L', icon: DollarSign, accent: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
   ];
 
   // Activity feed
@@ -104,7 +104,7 @@
     </div>
     <Button variant="outline" size="sm" class="gap-1.5 text-xs" onclick={() => goto('/reports')}>
       <Activity class="h-3.5 w-3.5" />
-      Full Analytics
+      {t('dashboard.fullAnalytics')}
     </Button>
   </div>
 
@@ -125,7 +125,7 @@
           </span>
         </div>
         <p class="mt-3 text-3xl font-bold tracking-tight">{stat.value}</p>
-        <p class="mt-0.5 text-xs font-medium text-muted-foreground">{stat.label}</p>
+        <p class="mt-0.5 text-xs font-medium text-muted-foreground">{t(stat.labelKey)}</p>
       </div>
     {/each}
   </div>
@@ -136,9 +136,9 @@
     <div class="col-span-5">
       <div class="rounded-xl border border-border bg-card">
         <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
-          <h3 class="text-sm font-semibold">Recent Activity</h3>
+          <h3 class="text-sm font-semibold">{t('dashboard.recentActivity')}</h3>
           <button class="text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground">
-            View all
+            {t('dashboard.viewAll')}
           </button>
         </div>
         <div class="divide-y divide-border/50">
@@ -161,7 +161,7 @@
     <div class="col-span-4">
       <div class="rounded-xl border border-border bg-card">
         <div class="border-b border-border px-5 py-3.5">
-          <h3 class="text-sm font-semibold">Quick Actions</h3>
+          <h3 class="text-sm font-semibold">{t('dashboard.quickActions')}</h3>
         </div>
         <div class="p-3">
           <div class="grid grid-cols-2 gap-2">
@@ -189,7 +189,7 @@
       <!-- Attendance trend -->
       <div class="rounded-xl border border-border bg-card p-5">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-semibold">Attendance Trend</h3>
+          <h3 class="text-sm font-semibold">{t('dashboard.attendanceTrend')}</h3>
           <span class="text-[11px] font-medium text-muted-foreground">7 days</span>
         </div>
         <div class="mt-4 flex items-end gap-1.5" style="height: 48px;">
@@ -208,7 +208,7 @@
 
       <!-- Class distribution -->
       <div class="rounded-xl border border-border bg-card p-5">
-        <h3 class="text-sm font-semibold">Class Distribution</h3>
+        <h3 class="text-sm font-semibold">{t('dashboard.classDistribution')}</h3>
         <div class="mt-3 space-y-2">
           {#each [
             { name: 'Grade 10', pct: 95 },
@@ -234,10 +234,10 @@
     <div class="flex items-center justify-between border-b border-border px-5 py-3.5">
       <h3 class="flex items-center gap-2 text-sm font-semibold">
         <Calendar class="h-4 w-4 text-primary" />
-        Today's Schedule
+        {t('dashboard.todaysSchedule')}
       </h3>
       <button onclick={() => goto('/exams')} class="flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground">
-        Full Timetable
+        {t('dashboard.fullTimetable')}
         <ArrowUpRight class="h-3 w-3" />
       </button>
     </div>

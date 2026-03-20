@@ -96,13 +96,13 @@
   <div class="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
     <ShieldAlert class="h-8 w-8 text-destructive" />
   </div>
-  <h1 class="text-2xl font-bold tracking-tight">Access Denied</h1>
+  <h1 class="text-2xl font-bold tracking-tight">{t('auth.accessDenied')}</h1>
   <p class="max-w-sm text-center text-sm text-muted-foreground">
-    You do not have admin privileges to access this application. Please contact your administrator.
+    {t('auth.noAdminPrivileges')}
   </p>
   <Button variant="outline" onclick={handleLogout}>
     <LogOut class="mr-2 h-4 w-4" />
-    Sign out
+    {t('auth.signOut')}
   </Button>
 </div>
 {:else}
@@ -163,7 +163,7 @@
     <div class="shrink-0 space-y-0.5 border-t border-border/40 px-1.5 py-2">
       <button
         onclick={toggleTheme}
-        title={isDark ? 'Light mode' : 'Dark mode'}
+        title={isDark ? 'Light' : 'Dark'}
         class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
       >
         {#if isDark}

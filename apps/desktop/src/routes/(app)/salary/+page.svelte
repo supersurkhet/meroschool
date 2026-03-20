@@ -251,7 +251,7 @@
   <div class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">{t('salary.management')}</h1>
-      <p class="text-sm text-muted-foreground">Manage staff salaries and payments</p>
+      <p class="text-sm text-muted-foreground">{t('salary.managePayments')}</p>
     </div>
     <div class="flex items-center gap-3">
       <div class="flex items-center gap-2">
@@ -270,7 +270,7 @@
       </div>
       <Button onclick={openAddForm} size="sm">
         <Plus />
-        Add Record
+        {t('salary.addRecord')}
       </Button>
       <Button onclick={payAll} variant="default" size="sm">
         <CheckCircle />
@@ -287,7 +287,7 @@
           <DollarSign class="h-5 w-5 text-primary" />
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Total Payroll</p>
+          <p class="text-xs text-muted-foreground">{t('salary.totalPayroll')}</p>
           <p class="text-lg font-bold">{formatNPR(totalPayroll)}</p>
         </div>
       </CardContent>
@@ -323,7 +323,7 @@
           <TrendingUp class="h-5 w-5 text-secondary-foreground" />
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Average Salary</p>
+          <p class="text-xs text-muted-foreground">{t('salary.averageSalary')}</p>
           <p class="text-lg font-bold">{formatNPR(averageSalary)}</p>
         </div>
       </CardContent>
@@ -335,7 +335,7 @@
     <Card class="border-primary/30">
       <CardHeader>
         <div class="flex items-center justify-between">
-          <CardTitle>{editingId ? 'Edit Salary Record' : 'Add Salary Record'}</CardTitle>
+          <CardTitle>{editingId ? t('salary.editRecord') : t('salary.addRecord')}</CardTitle>
           <button
             onclick={() => (showForm = false)}
             class="rounded-md p-1 hover:bg-accent"
@@ -348,7 +348,7 @@
       <CardContent>
         <div class="grid grid-cols-3 gap-4">
           <div class="flex flex-col gap-1.5">
-            <Label for="f-emp-id">Employee ID</Label>
+            <Label for="f-emp-id">{t('teachers.employeeId')}</Label>
             <Input id="f-emp-id" bind:value={formEmployeeId} placeholder="EMP001" />
           </div>
           <div class="flex flex-col gap-1.5">
@@ -372,7 +372,7 @@
             <Input id="f-bon" type="number" bind:value={formBonuses} placeholder="0" />
           </div>
           <div class="col-span-3 flex flex-col gap-1.5">
-            <Label for="f-notes">Notes</Label>
+            <Label for="f-notes">{t('common.notes')}</Label>
             <Input id="f-notes" bind:value={formNotes} placeholder="Optional notes..." />
           </div>
         </div>
@@ -387,7 +387,7 @@
   <!-- Salary Table -->
   <Card>
     <CardHeader>
-      <CardTitle>Staff Salary Records — {selectedMonth}</CardTitle>
+      <CardTitle>{t('salary.staffRecords')} — {selectedMonth}</CardTitle>
     </CardHeader>
     <CardContent class="p-0">
       <div class="overflow-x-auto">

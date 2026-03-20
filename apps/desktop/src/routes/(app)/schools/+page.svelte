@@ -128,11 +128,11 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-2xl font-bold tracking-tight">{t('nav.schools')}</h1>
-			<p class="text-sm text-muted-foreground">Manage schools in the system</p>
+			<p class="text-sm text-muted-foreground">{t('schools.manageSchools')}</p>
 		</div>
 		<Button onclick={openAdd} class="gap-2">
 			<Plus class="h-4 w-4" />
-			Add School
+			{t('schools.addSchool')}
 		</Button>
 	</div>
 
@@ -140,7 +140,7 @@
 	<div class="relative max-w-sm">
 		<Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 		<Input
-			placeholder="Search schools..."
+			placeholder={t('schools.searchSchools')}
 			bind:value={searchQuery}
 			class="pl-9"
 		/>
@@ -152,7 +152,7 @@
 			<CardHeader class="pb-4">
 				<div class="flex items-center justify-between">
 					<CardTitle class="text-base">
-						{editingId ? 'Edit School' : 'Add New School'}
+						{editingId ? t('schools.editSchool') : t('schools.addNewSchool')}
 					</CardTitle>
 					<button
 						onclick={resetForm}
@@ -214,7 +214,7 @@
 			{#if filteredSchools.length === 0}
 				<div class="flex flex-col items-center gap-3 py-12 text-muted-foreground">
 					<School class="h-10 w-10 opacity-30" />
-					<p class="text-sm">No schools found</p>
+					<p class="text-sm">{t('schools.noSchoolsFound')}</p>
 				</div>
 			{:else}
 				<div class="overflow-x-auto">
@@ -287,6 +287,6 @@
 	<!-- Summary -->
 	<div class="flex items-center gap-2 text-xs text-muted-foreground">
 		<Badge variant="secondary">{schools.length}</Badge>
-		<span>school{schools.length !== 1 ? 's' : ''} registered</span>
+		<span>{t('schools.registered')}</span>
 	</div>
 </div>
