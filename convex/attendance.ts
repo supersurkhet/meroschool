@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 // Helper: send attendance_alert notification to student's parents
 async function notifyParentsAbsent(
@@ -42,6 +43,7 @@ export const markSingle = mutation({
     markedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateFormat.test(args.date)) {
       throw new Error("Invalid date format. Expected YYYY-MM-DD");
@@ -102,6 +104,7 @@ export const markBulk = mutation({
     markedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateFormat.test(args.date)) {
       throw new Error("Invalid date format. Expected YYYY-MM-DD");
@@ -152,6 +155,7 @@ export const getBySectionDate = query({
     date: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const records = await ctx.db
       .query("attendance")
       .withIndex("by_section_date", (q) =>
@@ -177,6 +181,7 @@ export const getStudentAttendance = query({
     endDate: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateFormat.test(args.startDate) || !dateFormat.test(args.endDate)) {
       throw new Error("Invalid date format. Expected YYYY-MM-DD");
@@ -204,6 +209,7 @@ export const dailySummary = query({
     date: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const records = await ctx.db
       .query("attendance")
       .withIndex("by_section_date", (q) =>
@@ -237,6 +243,7 @@ export const getStudentAttendanceRange = query({
     endDate: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("attendance")
       .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
@@ -257,6 +264,7 @@ export const getSectionAttendanceHistory = query({
     month: v.string(), // YYYY-MM
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const startDate = `${args.month}-01`;
     const endDate = `${args.month}-31`;
 
@@ -296,6 +304,7 @@ export const monthlyStudentSummary = query({
     month: v.string(), // YYYY-MM
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const startDate = `${args.month}-01`;
     const endDate = `${args.month}-31`;
 

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 // ─── Assignment CRUD ──────────────────────────────────────────────
 
@@ -15,6 +16,7 @@ export const create = mutation({
     fileId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateFormat.test(args.dueDate)) {
       throw new Error("Invalid date format for dueDate. Expected YYYY-MM-DD");
@@ -26,6 +28,7 @@ export const create = mutation({
 export const listBySection = query({
   args: { sectionId: v.id("sections") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("assignments")
       .withIndex("by_section", (q) => q.eq("sectionId", args.sectionId))
@@ -36,6 +39,7 @@ export const listBySection = query({
 export const listBySubject = query({
   args: { subjectId: v.id("subjects") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("assignments")
       .withIndex("by_subject", (q) => q.eq("subjectId", args.subjectId))
@@ -46,6 +50,7 @@ export const listBySubject = query({
 export const get = query({
   args: { id: v.id("assignments") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db.get(args.id);
   },
 });
@@ -60,6 +65,7 @@ export const submit = mutation({
     textContent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "student");
     // Check if already submitted
     const existing = await ctx.db
       .query("submissions")
@@ -98,6 +104,7 @@ export const grade = mutation({
     gradedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     await ctx.db.patch(args.submissionId, {
       grade: args.grade,
       feedback: args.feedback,
@@ -136,6 +143,7 @@ export const bulkGrade = mutation({
     gradedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     for (const item of args.grades) {
       await ctx.db.patch(item.submissionId, {
         grade: item.grade,
@@ -167,6 +175,7 @@ export const bulkGrade = mutation({
 export const listSubmissions = query({
   args: { assignmentId: v.id("assignments") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const submissions = await ctx.db
       .query("submissions")
       .withIndex("by_assignment", (q) =>
@@ -191,6 +200,7 @@ export const getStudentSubmission = query({
     studentId: v.id("students"),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("submissions")
       .withIndex("by_assignment_student", (q) =>
@@ -206,6 +216,7 @@ export const getStudentSubmission = query({
 export const listStudentSubmissions = query({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const submissions = await ctx.db
       .query("submissions")
       .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
@@ -224,6 +235,7 @@ export const listStudentSubmissions = query({
 export const getAssignmentWithSubmissions = query({
   args: { assignmentId: v.id("assignments") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const assignment = await ctx.db.get(args.assignmentId);
     if (!assignment) return null;
 
@@ -257,6 +269,7 @@ export const getStudentAssignments = query({
     sectionId: v.id("sections"),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const assignments = await ctx.db
       .query("assignments")
       .withIndex("by_section", (q) => q.eq("sectionId", args.sectionId))

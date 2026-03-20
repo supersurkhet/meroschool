@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internalMutation } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 export const send = mutation({
   args: {
@@ -17,6 +18,7 @@ export const send = mutation({
     relatedId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     return await ctx.db.insert("notifications", {
       ...args,
       isRead: false,
@@ -40,6 +42,7 @@ export const sendBulk = mutation({
     relatedId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const ids = [];
     for (const userId of args.userIds) {
       const id = await ctx.db.insert("notifications", {
@@ -60,6 +63,7 @@ export const sendBulk = mutation({
 export const listUnread = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("notifications")
       .withIndex("by_user_unread", (q) =>
@@ -76,6 +80,7 @@ export const listAll = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const limit = args.limit ?? 50;
     return await ctx.db
       .query("notifications")
@@ -88,6 +93,7 @@ export const listAll = query({
 export const markRead = mutation({
   args: { id: v.id("notifications") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     await ctx.db.patch(args.id, { isRead: true });
   },
 });
@@ -95,6 +101,7 @@ export const markRead = mutation({
 export const markAllRead = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const unread = await ctx.db
       .query("notifications")
       .withIndex("by_user_unread", (q) =>
@@ -113,6 +120,7 @@ export const markAllRead = mutation({
 export const unreadCount = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const unread = await ctx.db
       .query("notifications")
       .withIndex("by_user_unread", (q) =>
@@ -127,6 +135,7 @@ export const unreadCount = query({
 export const subscribeUnread = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("notifications")
       .withIndex("by_user_unread", (q) =>

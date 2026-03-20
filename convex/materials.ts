@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 export const upload = mutation({
   args: {
@@ -17,6 +18,7 @@ export const upload = mutation({
     uploadedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     if (!args.title.trim()) throw new Error("Material title cannot be empty");
     if (args.type === "link" && !args.url) {
       throw new Error("URL is required for link-type materials");
@@ -31,6 +33,7 @@ export const upload = mutation({
 export const listByTopic = query({
   args: { topicId: v.id("topics") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("materials")
       .withIndex("by_topic", (q) => q.eq("topicId", args.topicId))
@@ -41,6 +44,7 @@ export const listByTopic = query({
 export const get = query({
   args: { id: v.id("materials") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db.get(args.id);
   },
 });
@@ -48,6 +52,7 @@ export const get = query({
 export const remove = mutation({
   args: { id: v.id("materials") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const material = await ctx.db.get(args.id);
     if (material?.fileId) {
       await ctx.storage.delete(material.fileId);
@@ -58,6 +63,7 @@ export const remove = mutation({
 
 export const generateUploadUrl = mutation({
   handler: async (ctx) => {
+    await requireRole(ctx, "admin", "teacher");
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -65,6 +71,7 @@ export const generateUploadUrl = mutation({
 export const getFileUrl = query({
   args: { fileId: v.id("_storage") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.storage.getUrl(args.fileId);
   },
 });
@@ -73,6 +80,7 @@ export const getFileUrl = query({
 export const getDownloadUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.storage.getUrl(args.storageId);
   },
 });
@@ -88,6 +96,7 @@ export const reorderMaterials = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     for (const item of args.items) {
       await ctx.db.patch(item.id, { order: item.order });
     }
@@ -98,6 +107,7 @@ export const reorderMaterials = mutation({
 export const listByModule = query({
   args: { moduleId: v.id("modules") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const topics = await ctx.db
       .query("topics")
       .withIndex("by_module", (q) => q.eq("moduleId", args.moduleId))

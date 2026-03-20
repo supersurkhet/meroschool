@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 export const create = mutation({
   args: {
@@ -11,6 +12,7 @@ export const create = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     if (args.baseSalary < 0) {
       throw new Error("baseSalary must be >= 0");
     }
@@ -40,6 +42,7 @@ export const create = mutation({
 export const markPaid = mutation({
   args: { id: v.id("salaryRecords") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     const record = await ctx.db.get(args.id);
     if (!record) throw new Error("Salary record not found");
 
@@ -66,6 +69,7 @@ export const markPaid = mutation({
 export const cancel = mutation({
   args: { id: v.id("salaryRecords") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     await ctx.db.patch(args.id, { status: "cancelled" });
   },
 });
@@ -79,6 +83,7 @@ export const update = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...fields }) => {
+    await requireRole(ctx, "admin");
     const record = await ctx.db.get(id);
     if (!record) throw new Error("Salary record not found");
     if (record.status === "paid") throw new Error("Cannot edit paid salary");
@@ -98,6 +103,7 @@ export const update = mutation({
 export const listByTeacher = query({
   args: { teacherId: v.id("teachers") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("salaryRecords")
       .withIndex("by_teacher", (q) => q.eq("teacherId", args.teacherId))
@@ -108,6 +114,7 @@ export const listByTeacher = query({
 export const listByMonth = query({
   args: { month: v.string() },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const records = await ctx.db
       .query("salaryRecords")
       .withIndex("by_month", (q) => q.eq("month", args.month))
@@ -126,6 +133,7 @@ export const listByMonth = query({
 export const get = query({
   args: { id: v.id("salaryRecords") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db.get(args.id);
   },
 });
@@ -134,6 +142,7 @@ export const get = query({
 export const getSalaryReport = query({
   args: { month: v.string() },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const records = await ctx.db
       .query("salaryRecords")
       .withIndex("by_month", (q) => q.eq("month", args.month))
@@ -169,6 +178,7 @@ export const getSalaryReport = query({
 export const getTeacherSalaryHistory = query({
   args: { teacherId: v.id("teachers") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const records = await ctx.db
       .query("salaryRecords")
       .withIndex("by_teacher", (q) => q.eq("teacherId", args.teacherId))
@@ -186,6 +196,7 @@ export const bulkCreateSalary = mutation({
     schoolId: v.id("schools"),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     if (args.baseSalary < 0) {
       throw new Error("baseSalary must be >= 0");
     }

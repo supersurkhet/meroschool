@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { requireAuth } from "./helpers";
 
 // Comprehensive student progress: attendance %, test scores, assignment completion
 export const getStudentProgress = query({
@@ -8,6 +9,7 @@ export const getStudentProgress = query({
     month: v.optional(v.string()), // YYYY-MM, defaults to all-time
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const student = await ctx.db.get(args.studentId);
     if (!student) return null;
 
@@ -139,6 +141,7 @@ export const getStudentProgress = query({
 export const getSectionProgress = query({
   args: { sectionId: v.id("sections") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const students = await ctx.db
       .query("students")
       .withIndex("by_section", (q) => q.eq("sectionId", args.sectionId))

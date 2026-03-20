@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 // ─── Students ─────────────────────────────────────────────────────
 
@@ -13,6 +14,7 @@ export const createStudent = mutation({
     parentIds: v.optional(v.array(v.id("parents"))),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
     if (args.dateOfBirth && !dateFormat.test(args.dateOfBirth)) {
       throw new Error("Invalid date format for dateOfBirth. Expected YYYY-MM-DD");
@@ -27,6 +29,7 @@ export const createStudent = mutation({
 export const getStudentByUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("students")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -37,6 +40,7 @@ export const getStudentByUser = query({
 export const listStudentsBySection = query({
   args: { sectionId: v.id("sections") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const students = await ctx.db
       .query("students")
       .withIndex("by_section", (q) => q.eq("sectionId", args.sectionId))
@@ -60,6 +64,7 @@ export const updateStudent = mutation({
     parentIds: v.optional(v.array(v.id("parents"))),
   },
   handler: async (ctx, { id, ...fields }) => {
+    await requireRole(ctx, "admin");
     const patch: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(fields)) {
       if (val !== undefined) patch[k] = val;
@@ -79,6 +84,7 @@ export const createTeacher = mutation({
     joinDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     return await ctx.db.insert("teachers", args);
   },
 });
@@ -86,6 +92,7 @@ export const createTeacher = mutation({
 export const getTeacherByUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("teachers")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -96,6 +103,7 @@ export const getTeacherByUser = query({
 export const listTeachersBySchool = query({
   args: { schoolId: v.id("schools") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const teachers = await ctx.db
       .query("teachers")
       .withIndex("by_school", (q) => q.eq("schoolId", args.schoolId))
@@ -119,6 +127,7 @@ export const createParent = mutation({
     address: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     return await ctx.db.insert("parents", args);
   },
 });
@@ -126,6 +135,7 @@ export const createParent = mutation({
 export const getParentByUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("parents")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -136,7 +146,7 @@ export const getParentByUser = query({
 export const getParentChildren = query({
   args: { parentId: v.id("parents") },
   handler: async (ctx, args) => {
-    // Find all students who have this parent in their parentIds
+    await requireRole(ctx, "admin", "teacher", "parent");
     const allStudents = await ctx.db.query("students").take(500);
     const children = allStudents.filter((s) =>
       s.parentIds?.includes(args.parentId)

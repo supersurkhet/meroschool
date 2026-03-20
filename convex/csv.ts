@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 // Bulk enroll students from CSV data
 export const bulkEnrollStudents = mutation({
@@ -17,6 +18,7 @@ export const bulkEnrollStudents = mutation({
 		schoolId: v.id("schools"),
 	},
 	handler: async (ctx, args) => {
+		await requireRole(ctx, "admin");
 		const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
 		for (const s of args.students) {
@@ -71,6 +73,7 @@ export const bulkCreateTeachers = mutation({
 		schoolId: v.id("schools"),
 	},
 	handler: async (ctx, args) => {
+		await requireRole(ctx, "admin");
 		const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		for (const t of args.teachers) {
 			if (!emailFormat.test(t.email)) {
@@ -107,6 +110,7 @@ export const bulkCreateTeachers = mutation({
 export const exportStudents = query({
 	args: { schoolId: v.id("schools") },
 	handler: async (ctx, args) => {
+		await requireAuth(ctx);
 		// Get all classes for the school
 		const classes = await ctx.db
 			.query("classes")
@@ -154,6 +158,7 @@ export const exportAttendance = query({
 		endDate: v.string(),
 	},
 	handler: async (ctx, args) => {
+		await requireAuth(ctx);
 		const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
 		if (!dateFormat.test(args.startDate) || !dateFormat.test(args.endDate)) {
 			throw new Error("Invalid date format. Expected YYYY-MM-DD");

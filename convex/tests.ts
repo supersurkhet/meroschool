@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 // ─── Test CRUD ────────────────────────────────────────────────────
 
@@ -14,6 +15,7 @@ export const createTest = mutation({
     moduleId: v.optional(v.id("modules")),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     if (args.durationMinutes <= 0 || args.durationMinutes > 180) {
       throw new Error("Test duration must be greater than 0 and at most 180 minutes");
     }
@@ -24,6 +26,7 @@ export const createTest = mutation({
 export const getTest = query({
   args: { id: v.id("tests") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db.get(args.id);
   },
 });
@@ -31,6 +34,7 @@ export const getTest = query({
 export const listTestsBySubject = query({
   args: { subjectId: v.id("subjects") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("tests")
       .withIndex("by_subject", (q) => q.eq("subjectId", args.subjectId))
@@ -41,6 +45,7 @@ export const listTestsBySubject = query({
 export const publishTest = mutation({
   args: { testId: v.id("tests") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     await ctx.db.patch(args.testId, { isPublished: true });
   },
 });
@@ -48,6 +53,7 @@ export const publishTest = mutation({
 export const closeTest = mutation({
   args: { testId: v.id("tests") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     await ctx.db.patch(args.testId, { isPublished: false });
   },
 });
@@ -56,6 +62,7 @@ export const closeTest = mutation({
 export const getTestStats = query({
   args: { testId: v.id("tests") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const test = await ctx.db.get(args.testId);
     if (!test) return null;
 
@@ -99,6 +106,7 @@ export const getTestStats = query({
 export const getStudentTestHistory = query({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const attempts = await ctx.db
       .query("testAttempts")
       .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
@@ -134,6 +142,7 @@ export const addQuestion = mutation({
     order: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     if (args.options.length !== 4) {
       throw new Error("Question must have exactly 4 options");
     }
@@ -157,6 +166,7 @@ export const addQuestionsBulk = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     for (const q of args.questions) {
       if (q.options.length !== 4) {
         throw new Error("Each question must have exactly 4 options");
@@ -181,6 +191,7 @@ export const addQuestionsBulk = mutation({
 export const listQuestions = query({
   args: { testId: v.id("tests") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("testQuestions")
       .withIndex("by_test", (q) => q.eq("testId", args.testId))
@@ -192,6 +203,7 @@ export const listQuestions = query({
 export const listQuestionsForStudent = query({
   args: { testId: v.id("tests") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const questions = await ctx.db
       .query("testQuestions")
       .withIndex("by_test", (q) => q.eq("testId", args.testId))
@@ -211,6 +223,7 @@ export const updateQuestion = mutation({
     order: v.optional(v.number()),
   },
   handler: async (ctx, { id, ...fields }) => {
+    await requireRole(ctx, "admin", "teacher");
     const patch: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(fields)) {
       if (val !== undefined) patch[k] = val;
@@ -222,6 +235,7 @@ export const updateQuestion = mutation({
 export const deleteQuestion = mutation({
   args: { id: v.id("testQuestions") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     await ctx.db.delete(args.id);
   },
 });
@@ -240,6 +254,7 @@ export const generateRandomTest = mutation({
     moduleId: v.optional(v.id("modules")),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     // Get all questions from the source test (question bank)
     const allQuestions = await ctx.db
       .query("testQuestions")
@@ -297,6 +312,7 @@ export const submitAttempt = mutation({
     startedAt: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "student");
     // Check if already attempted
     const existing = await ctx.db
       .query("testAttempts")
@@ -364,6 +380,7 @@ export const submitAttempt = mutation({
 export const getAttempt = query({
   args: { testId: v.id("tests"), studentId: v.id("students") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("testAttempts")
       .withIndex("by_test_student", (q) =>
@@ -377,6 +394,7 @@ export const getAttempt = query({
 export const listAttemptsByTest = query({
   args: { testId: v.id("tests") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const attempts = await ctx.db
       .query("testAttempts")
       .withIndex("by_test", (q) => q.eq("testId", args.testId))
@@ -396,6 +414,7 @@ export const listAttemptsByTest = query({
 export const listAttemptsByStudent = query({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const attempts = await ctx.db
       .query("testAttempts")
       .withIndex("by_student", (q) => q.eq("studentId", args.studentId))

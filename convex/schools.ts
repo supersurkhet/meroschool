@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 // ─── Schools ──────────────────────────────────────────────────────
 
@@ -13,6 +14,7 @@ export const create = mutation({
     establishedYear: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneFormat = /^(98|97)\d{8}$/;
     if (args.email && !emailFormat.test(args.email)) {
@@ -27,6 +29,7 @@ export const create = mutation({
 
 export const list = query({
   handler: async (ctx) => {
+    await requireAuth(ctx);
     return await ctx.db.query("schools").take(50);
   },
 });
@@ -34,6 +37,7 @@ export const list = query({
 export const get = query({
   args: { id: v.id("schools") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db.get(args.id);
   },
 });
@@ -49,6 +53,7 @@ export const update = mutation({
     establishedYear: v.optional(v.number()),
   },
   handler: async (ctx, { id, ...fields }) => {
+    await requireRole(ctx, "admin");
     const patch: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(fields)) {
       if (val !== undefined) patch[k] = val;
@@ -66,6 +71,7 @@ export const createClass = mutation({
     grade: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     return await ctx.db.insert("classes", args);
   },
 });
@@ -73,6 +79,7 @@ export const createClass = mutation({
 export const listClasses = query({
   args: { schoolId: v.id("schools") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("classes")
       .withIndex("by_school", (q) => q.eq("schoolId", args.schoolId))
@@ -88,6 +95,7 @@ export const createSection = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin");
     return await ctx.db.insert("sections", args);
   },
 });
@@ -95,6 +103,7 @@ export const createSection = mutation({
 export const listSections = query({
   args: { classId: v.id("classes") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("sections")
       .withIndex("by_class", (q) => q.eq("classId", args.classId))
@@ -107,6 +116,7 @@ export const listSections = query({
 export const getSchoolHierarchy = query({
   args: { schoolId: v.id("schools") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const school = await ctx.db.get(args.schoolId);
     if (!school) return null;
 

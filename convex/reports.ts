@@ -1,11 +1,13 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { requireRole } from "./helpers";
 
 // ─── Class Average Scores ─────────────────────────────────────────
 // Average test scores across all students in a class (all sections)
 export const getClassTestAverages = query({
   args: { classId: v.id("classes") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const sections = await ctx.db
       .query("sections")
       .withIndex("by_class", (q) => q.eq("classId", args.classId))
@@ -85,6 +87,7 @@ export const getSectionAttendanceRate = query({
     month: v.string(), // YYYY-MM
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const startDate = `${args.month}-01`;
     const endDate = `${args.month}-31`;
 
@@ -147,6 +150,7 @@ export const getSectionAttendanceRate = query({
 export const getSchoolDashboardStats = query({
   args: { schoolId: v.id("schools") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const classes = await ctx.db
       .query("classes")
       .withIndex("by_school", (q) => q.eq("schoolId", args.schoolId))
@@ -235,6 +239,7 @@ export const getSchoolDashboardStats = query({
 export const getAssignmentCompletionReport = query({
   args: { sectionId: v.id("sections") },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     const assignments = await ctx.db
       .query("assignments")
       .withIndex("by_section", (q) => q.eq("sectionId", args.sectionId))

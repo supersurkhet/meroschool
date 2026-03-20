@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuth, requireRole } from "./helpers";
 
 // ─── Subjects ─────────────────────────────────────────────────────
 
@@ -11,6 +12,7 @@ export const createSubject = mutation({
     teacherId: v.optional(v.id("teachers")),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     if (!args.name.trim()) throw new Error("Subject name cannot be empty");
     return await ctx.db.insert("subjects", args);
   },
@@ -19,6 +21,7 @@ export const createSubject = mutation({
 export const listSubjectsByClass = query({
   args: { classId: v.id("classes") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("subjects")
       .withIndex("by_class", (q) => q.eq("classId", args.classId))
@@ -29,6 +32,7 @@ export const listSubjectsByClass = query({
 export const listSubjectsByTeacher = query({
   args: { teacherId: v.id("teachers") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("subjects")
       .withIndex("by_teacher", (q) => q.eq("teacherId", args.teacherId))
@@ -44,6 +48,7 @@ export const updateSubject = mutation({
     teacherId: v.optional(v.id("teachers")),
   },
   handler: async (ctx, { id, ...fields }) => {
+    await requireRole(ctx, "admin", "teacher");
     const patch: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(fields)) {
       if (val !== undefined) patch[k] = val;
@@ -62,6 +67,7 @@ export const createModule = mutation({
     order: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     if (!args.name.trim()) throw new Error("Module name cannot be empty");
     if (args.order < 0) throw new Error("Order must be >= 0");
     return await ctx.db.insert("modules", args);
@@ -71,6 +77,7 @@ export const createModule = mutation({
 export const listModulesBySubject = query({
   args: { subjectId: v.id("subjects") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("modules")
       .withIndex("by_subject", (q) => q.eq("subjectId", args.subjectId))
@@ -86,6 +93,7 @@ export const updateModule = mutation({
     order: v.optional(v.number()),
   },
   handler: async (ctx, { id, ...fields }) => {
+    await requireRole(ctx, "admin", "teacher");
     const patch: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(fields)) {
       if (val !== undefined) patch[k] = val;
@@ -104,6 +112,7 @@ export const createTopic = mutation({
     order: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireRole(ctx, "admin", "teacher");
     if (!args.name.trim()) throw new Error("Topic name cannot be empty");
     if (args.order < 0) throw new Error("Order must be >= 0");
     return await ctx.db.insert("topics", args);
@@ -113,6 +122,7 @@ export const createTopic = mutation({
 export const listTopicsByModule = query({
   args: { moduleId: v.id("modules") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     return await ctx.db
       .query("topics")
       .withIndex("by_module", (q) => q.eq("moduleId", args.moduleId))
@@ -128,6 +138,7 @@ export const updateTopic = mutation({
     order: v.optional(v.number()),
   },
   handler: async (ctx, { id, ...fields }) => {
+    await requireRole(ctx, "admin", "teacher");
     const patch: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(fields)) {
       if (val !== undefined) patch[k] = val;
@@ -141,6 +152,7 @@ export const updateTopic = mutation({
 export const getSubjectHierarchy = query({
   args: { subjectId: v.id("subjects") },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
     const subject = await ctx.db.get(args.subjectId);
     if (!subject) return null;
 
