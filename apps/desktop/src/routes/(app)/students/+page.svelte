@@ -438,6 +438,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
             type="button"
             class="text-muted-foreground hover:text-foreground transition-colors"
             onclick={() => { showImport = false; csvPreviewRows = []; csvHeaders = []; csvFileName = ''; }}
+            aria-label="Close import"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -461,13 +462,14 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
         </div>
 
         <!-- Drop zone -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer {isDraggingCsv ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}"
+        <button
+          type="button"
+          class="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer w-full {isDraggingCsv ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}"
           ondrop={handleCsvDrop}
           ondragover={(e) => { e.preventDefault(); isDraggingCsv = true; }}
           ondragleave={() => { isDraggingCsv = false; }}
           onclick={() => document.getElementById('csv-input')?.click()}
+          aria-label="Upload CSV file"
         >
           <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
             <svg class="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -485,7 +487,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
               <p class="text-xs text-muted-foreground">or click to browse</p>
             </div>
           {/if}
-        </div>
+        </button>
         <input id="csv-input" type="file" accept=".csv" class="hidden" onchange={handleCsvInput} />
 
         {#if csvError}
@@ -561,6 +563,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
               type="button"
               class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               onclick={() => { searchQuery = ''; }}
+              aria-label="Clear search"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
