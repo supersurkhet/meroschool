@@ -62,6 +62,43 @@ export const getFileUrl = query({
   },
 });
 
+// Alias for getFileUrl — given a storageId, return download URL
+export const getDownloadUrl = query({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId);
+  },
+});
+
+// Reorder materials — accept array of {id, order} objects
+export const reorderMaterials = mutation({
+  args: {
+    items: v.array(
+      v.object({
+        id: v.id("materials"),
+        order: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    for (const item of args.items) {
+      await ctx.db.patch(item.id, { order: item.order });
+    }
+  },
+});
+
+// Delete material and its storage file if present
+export const deleteMaterial = mutation({
+  args: { id: v.id("materials") },
+  handler: async (ctx, args) => {
+    const material = await ctx.db.get(args.id);
+    if (material?.fileId) {
+      await ctx.storage.delete(material.fileId);
+    }
+    await ctx.db.delete(args.id);
+  },
+});
+
 // Get all materials for a module (across all topics)
 export const listByModule = query({
   args: { moduleId: v.id("modules") },

@@ -42,6 +42,83 @@ export const publishTest = mutation({
   },
 });
 
+export const closeTest = mutation({
+  args: { testId: v.id("tests") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.testId, { isPublished: false });
+  },
+});
+
+// Test statistics: total attempts, avg/highest/lowest score, pass rate
+export const getTestStats = query({
+  args: { testId: v.id("tests") },
+  handler: async (ctx, args) => {
+    const test = await ctx.db.get(args.testId);
+    if (!test) return null;
+
+    const attempts = await ctx.db
+      .query("testAttempts")
+      .withIndex("by_test", (q) => q.eq("testId", args.testId))
+      .collect();
+
+    const totalAttempts = attempts.length;
+    if (totalAttempts === 0) {
+      return {
+        testId: args.testId,
+        totalAttempts: 0,
+        avgScore: 0,
+        highestScore: 0,
+        lowestScore: 0,
+        passRate: 0,
+      };
+    }
+
+    const scores = attempts.map((a) => a.score);
+    const avgScore = Math.round(scores.reduce((s, v) => s + v, 0) / totalAttempts);
+    const highestScore = Math.max(...scores);
+    const lowestScore = Math.min(...scores);
+    const passingThreshold = test.totalMarks * 0.4;
+    const passCount = scores.filter((s) => s >= passingThreshold).length;
+    const passRate = Math.round((passCount / totalAttempts) * 100);
+
+    return {
+      testId: args.testId,
+      totalAttempts,
+      avgScore,
+      highestScore,
+      lowestScore,
+      passRate,
+    };
+  },
+});
+
+// All attempts by a student across all tests, with test details
+export const getStudentTestHistory = query({
+  args: { studentId: v.id("students") },
+  handler: async (ctx, args) => {
+    const attempts = await ctx.db
+      .query("testAttempts")
+      .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
+      .collect();
+
+    return Promise.all(
+      attempts.map(async (a) => {
+        const test = await ctx.db.get(a.testId);
+        let subjectName = "Unknown";
+        if (test) {
+          const subject = await ctx.db.get(test.subjectId);
+          subjectName = subject?.name ?? "Unknown";
+        }
+        return {
+          ...a,
+          testTitle: test?.title ?? "Unknown",
+          subject: subjectName,
+        };
+      })
+    );
+  },
+});
+
 // ─── Question Bank CRUD ───────────────────────────────────────────
 
 export const addQuestion = mutation({

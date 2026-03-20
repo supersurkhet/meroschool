@@ -1,6 +1,83 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+// Helper: send attendance_alert notification to student's parents
+async function notifyParentsAbsent(
+  ctx: any,
+  studentId: any,
+  date: string,
+  attendanceId: string
+) {
+  const student = await ctx.db.get(studentId);
+  if (!student?.parentIds) return;
+  const user = await ctx.db.get(student.userId);
+  const studentName = user?.name ?? "Your child";
+  for (const parentId of student.parentIds) {
+    const parent = await ctx.db.get(parentId);
+    if (parent) {
+      await ctx.db.insert("notifications", {
+        userId: parent.userId,
+        type: "attendance_alert",
+        title: "Absence Alert",
+        message: `${studentName} was marked absent on ${date}`,
+        isRead: false,
+        relatedId: attendanceId,
+      });
+    }
+  }
+}
+
+// Mark single student attendance (QR check-in flow)
+export const markSingle = mutation({
+  args: {
+    studentId: v.id("students"),
+    sectionId: v.id("sections"),
+    date: v.string(),
+    status: v.union(
+      v.literal("present"),
+      v.literal("absent"),
+      v.literal("late"),
+      v.literal("excused")
+    ),
+    markedBy: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // Check if already marked for that date
+    const existing = await ctx.db
+      .query("attendance")
+      .withIndex("by_section_date", (q) =>
+        q.eq("sectionId", args.sectionId).eq("date", args.date)
+      )
+      .filter((q) => q.eq(q.field("studentId"), args.studentId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        status: args.status,
+        markedBy: args.markedBy,
+      });
+      if (args.status === "absent") {
+        await notifyParentsAbsent(ctx, args.studentId, args.date, existing._id as string);
+      }
+      return existing._id;
+    }
+
+    const id = await ctx.db.insert("attendance", {
+      studentId: args.studentId,
+      sectionId: args.sectionId,
+      date: args.date,
+      status: args.status,
+      markedBy: args.markedBy,
+    });
+
+    if (args.status === "absent") {
+      await notifyParentsAbsent(ctx, args.studentId, args.date, id as string);
+    }
+
+    return id;
+  },
+});
+
 // Bulk mark attendance for entire section
 export const markBulk = mutation({
   args: {
@@ -46,6 +123,12 @@ export const markBulk = mutation({
           markedBy: args.markedBy,
         });
         ids.push(id);
+      }
+
+      // Auto-notify parents if absent
+      if (record.status === "absent") {
+        const recId = ids[ids.length - 1];
+        await notifyParentsAbsent(ctx, record.studentId, args.date, recId as string);
       }
     }
     return ids;
@@ -128,6 +211,66 @@ export const dailySummary = query({
       excused,
       presentPercent: total > 0 ? Math.round((present / total) * 100) : 0,
     };
+  },
+});
+
+// Get all records for a student between two dates
+export const getStudentAttendanceRange = query({
+  args: {
+    studentId: v.id("students"),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("attendance")
+      .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("date"), args.startDate),
+          q.lte(q.field("date"), args.endDate)
+        )
+      )
+      .collect();
+  },
+});
+
+// Section attendance history for a given month — daily counts
+export const getSectionAttendanceHistory = query({
+  args: {
+    sectionId: v.id("sections"),
+    month: v.string(), // YYYY-MM
+  },
+  handler: async (ctx, args) => {
+    const startDate = `${args.month}-01`;
+    const endDate = `${args.month}-31`;
+
+    const records = await ctx.db
+      .query("attendance")
+      .withIndex("by_section", (q) => q.eq("sectionId", args.sectionId))
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("date"), startDate),
+          q.lte(q.field("date"), endDate)
+        )
+      )
+      .collect();
+
+    // Group by date
+    const byDate: Record<string, { present: number; absent: number; late: number; excused: number }> = {};
+    for (const r of records) {
+      if (!byDate[r.date]) {
+        byDate[r.date] = { present: 0, absent: 0, late: 0, excused: 0 };
+      }
+      if (r.status === "present") byDate[r.date].present++;
+      else if (r.status === "absent") byDate[r.date].absent++;
+      else if (r.status === "late") byDate[r.date].late++;
+      else if (r.status === "excused") byDate[r.date].excused++;
+    }
+
+    return Object.entries(byDate)
+      .map(([date, counts]) => ({ date, ...counts }))
+      .sort((a, b) => a.date.localeCompare(b.date));
   },
 });
 

@@ -208,3 +208,44 @@
 - [ ] Delete class and delete section work correctly
 - [ ] i18n keys for Schools and Classes & Sections exist in English and Nepali
 - [ ] Dark mode renders correctly on schools and classes pages
+
+## Phase 2 — Convex Backend Enhancements
+
+### Attendance Enhancements
+- [ ] `markSingle` mutation marks one student's attendance for a date
+- [ ] `markSingle` prevents duplicate by updating existing record for same student+date
+- [ ] `markSingle` sends `attendance_alert` notification to each parent when status is absent
+- [ ] `markBulk` sends `attendance_alert` notification to parents for absent students
+- [ ] `getStudentAttendanceRange` returns records between startDate and endDate
+- [ ] `getSectionAttendanceHistory` returns daily present/absent/late/excused counts for a month
+
+### MCQ Test Engine Enhancements
+- [ ] `closeTest` sets isPublished=false on a test
+- [ ] `getTestStats` returns totalAttempts, avgScore, highestScore, lowestScore, passRate (40% threshold)
+- [ ] `getTestStats` returns zeroes when no attempts exist
+- [ ] `getStudentTestHistory` returns all attempts with test title and subject name
+- [ ] `submitAttempt` reads parentIds from student and sends `test_result` notification to each parent
+
+### Material Enhancements
+- [ ] `generateUploadUrl` returns a Convex storage upload URL
+- [ ] `getDownloadUrl` returns URL for a given storageId
+- [ ] `reorderMaterials` accepts array of {id, order} and updates each material's order
+- [ ] `deleteMaterial` deletes material document and its storage file if present
+- [ ] Schema includes optional `order` field on materials table
+
+### Assignment Lifecycle
+- [ ] `getAssignmentWithSubmissions` returns assignment + all submissions with student name and rollNumber
+- [ ] `getStudentAssignments` returns assignments for student's section with submission status (not submitted/submitted/graded)
+- [ ] `bulkGrade` updates multiple submissions with grade/feedback and sends `assignment_graded` notification
+- [ ] `grade` mutation sends notification with type `assignment_graded`
+
+### Salary Enhancements
+- [ ] `getSalaryReport` returns all records for a month with teacher names and totals (totalBase, totalDeductions, totalBonuses, totalNet)
+- [ ] `getTeacherSalaryHistory` returns records sorted by month descending
+- [ ] `bulkCreateSalary` creates salary records for all active teachers who don't have one for the given month
+
+### CSV Helpers
+- [ ] `bulkEnrollStudents` creates user + student records for each entry
+- [ ] `bulkCreateTeachers` creates user + teacher records for each entry
+- [ ] `exportStudents` returns all students for a school with class name, section name, email
+- [ ] `exportAttendance` returns attendance records for a section and date range with student names

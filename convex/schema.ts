@@ -108,6 +108,7 @@ export default defineSchema({
     url: v.optional(v.string()),
     description: v.optional(v.string()),
     uploadedBy: v.id("users"),
+    order: v.optional(v.number()),
   }).index("by_topic", ["topicId"]),
 
   // ─── Tests & MCQ Engine ─────────────────────────────────────────

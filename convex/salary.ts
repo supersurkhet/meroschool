@@ -125,3 +125,95 @@ export const get = query({
     return await ctx.db.get(args.id);
   },
 });
+
+// Salary report for a given month with teacher names and totals
+export const getSalaryReport = query({
+  args: { month: v.string() },
+  handler: async (ctx, args) => {
+    const records = await ctx.db
+      .query("salaryRecords")
+      .withIndex("by_month", (q) => q.eq("month", args.month))
+      .collect();
+
+    let totalBase = 0;
+    let totalDeductions = 0;
+    let totalBonuses = 0;
+    let totalNet = 0;
+
+    const recordsWithNames = await Promise.all(
+      records.map(async (r) => {
+        totalBase += r.baseSalary;
+        totalDeductions += r.deductions;
+        totalBonuses += r.bonuses;
+        totalNet += r.netSalary;
+
+        const teacher = await ctx.db.get(r.teacherId);
+        const user = teacher ? await ctx.db.get(teacher.userId) : null;
+        return { ...r, teacherName: user?.name ?? "Unknown" };
+      })
+    );
+
+    return {
+      month: args.month,
+      records: recordsWithNames,
+      totals: { totalBase, totalDeductions, totalBonuses, totalNet },
+    };
+  },
+});
+
+// Teacher salary history sorted by month descending
+export const getTeacherSalaryHistory = query({
+  args: { teacherId: v.id("teachers") },
+  handler: async (ctx, args) => {
+    const records = await ctx.db
+      .query("salaryRecords")
+      .withIndex("by_teacher", (q) => q.eq("teacherId", args.teacherId))
+      .collect();
+
+    return records.sort((a, b) => b.month.localeCompare(a.month));
+  },
+});
+
+// Bulk create salary records for all active teachers for a given month
+export const bulkCreateSalary = mutation({
+  args: {
+    month: v.string(),
+    baseSalary: v.number(),
+    schoolId: v.id("schools"),
+  },
+  handler: async (ctx, args) => {
+    const teachers = await ctx.db
+      .query("teachers")
+      .withIndex("by_school", (q) => q.eq("schoolId", args.schoolId))
+      .collect();
+
+    const ids = [];
+    for (const teacher of teachers) {
+      // Check teacher's user is active
+      const user = await ctx.db.get(teacher.userId);
+      if (!user?.isActive) continue;
+
+      // Check no existing record for this month
+      const existing = await ctx.db
+        .query("salaryRecords")
+        .withIndex("by_teacher_month", (q) =>
+          q.eq("teacherId", teacher._id).eq("month", args.month)
+        )
+        .first();
+
+      if (existing) continue;
+
+      const id = await ctx.db.insert("salaryRecords", {
+        teacherId: teacher._id,
+        month: args.month,
+        baseSalary: args.baseSalary,
+        deductions: 0,
+        bonuses: 0,
+        netSalary: args.baseSalary,
+        status: "pending",
+      });
+      ids.push(id);
+    }
+    return ids;
+  },
+});

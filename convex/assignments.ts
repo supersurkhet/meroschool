@@ -110,10 +110,50 @@ export const grade = mutation({
           userId: student.userId,
           title: "Assignment Graded",
           message: `You scored ${args.grade}/${assignment.totalMarks} on "${assignment.title}"`,
-          type: "assignment",
+          type: "assignment_graded",
           isRead: false,
           relatedId: args.submissionId as string,
         });
+      }
+    }
+  },
+});
+
+// Bulk grade multiple submissions
+export const bulkGrade = mutation({
+  args: {
+    grades: v.array(
+      v.object({
+        submissionId: v.id("submissions"),
+        grade: v.number(),
+        feedback: v.optional(v.string()),
+      })
+    ),
+    gradedBy: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    for (const item of args.grades) {
+      await ctx.db.patch(item.submissionId, {
+        grade: item.grade,
+        feedback: item.feedback,
+        gradedBy: args.gradedBy,
+      });
+
+      // Notify student
+      const submission = await ctx.db.get(item.submissionId);
+      if (submission) {
+        const student = await ctx.db.get(submission.studentId);
+        const assignment = await ctx.db.get(submission.assignmentId);
+        if (student && assignment) {
+          await ctx.db.insert("notifications", {
+            userId: student.userId,
+            title: "Assignment Graded",
+            message: `You scored ${item.grade}/${assignment.totalMarks} on "${assignment.title}"`,
+            type: "assignment_graded",
+            isRead: false,
+            relatedId: item.submissionId as string,
+          });
+        }
       }
     }
   },
@@ -171,6 +211,76 @@ export const listStudentSubmissions = query({
       submissions.map(async (s) => {
         const assignment = await ctx.db.get(s.assignmentId);
         return { ...s, assignmentTitle: assignment?.title ?? "Unknown" };
+      })
+    );
+  },
+});
+
+// Get assignment with all its submissions and student info
+export const getAssignmentWithSubmissions = query({
+  args: { assignmentId: v.id("assignments") },
+  handler: async (ctx, args) => {
+    const assignment = await ctx.db.get(args.assignmentId);
+    if (!assignment) return null;
+
+    const submissions = await ctx.db
+      .query("submissions")
+      .withIndex("by_assignment", (q) =>
+        q.eq("assignmentId", args.assignmentId)
+      )
+      .collect();
+
+    const submissionsWithStudents = await Promise.all(
+      submissions.map(async (s) => {
+        const student = await ctx.db.get(s.studentId);
+        const user = student ? await ctx.db.get(student.userId) : null;
+        return {
+          ...s,
+          studentName: user?.name ?? "Unknown",
+          rollNumber: student?.rollNumber ?? "Unknown",
+        };
+      })
+    );
+
+    return { ...assignment, submissions: submissionsWithStudents };
+  },
+});
+
+// Get all assignments for a student's section with submission status
+export const getStudentAssignments = query({
+  args: {
+    studentId: v.id("students"),
+    sectionId: v.id("sections"),
+  },
+  handler: async (ctx, args) => {
+    const assignments = await ctx.db
+      .query("assignments")
+      .withIndex("by_section", (q) => q.eq("sectionId", args.sectionId))
+      .collect();
+
+    return Promise.all(
+      assignments.map(async (a) => {
+        const submission = await ctx.db
+          .query("submissions")
+          .withIndex("by_assignment_student", (q) =>
+            q
+              .eq("assignmentId", a._id)
+              .eq("studentId", args.studentId)
+          )
+          .first();
+
+        let status: "not submitted" | "submitted" | "graded" = "not submitted";
+        if (submission) {
+          status = submission.grade !== undefined ? "graded" : "submitted";
+        }
+
+        return {
+          ...a,
+          submissionStatus: status,
+          grade: submission?.grade,
+          feedback: submission?.feedback,
+          submittedAt: submission?.submittedAt,
+        };
       })
     );
   },
