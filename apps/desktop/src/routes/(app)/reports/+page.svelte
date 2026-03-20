@@ -16,6 +16,7 @@
     BarChart2,
     BookOpen,
   } from 'lucide-svelte';
+  import { convexQuery, api } from '$lib/convex';
 
   // ── Tab state ──────────────────────────────────────────────────
   type Tab = 'attendance' | 'results' | 'performance';
@@ -235,6 +236,111 @@
   const perfDetail = $derived(
     selectedPerfClass ? classPerformance.find((c) => c.class === selectedPerfClass) : null
   );
+
+  // ── Convex: Attendance tab ────────────────────────────────────────────────────
+  $effect(() => {
+    if (activeTab !== 'attendance') return;
+    const sectionId = attendanceClass === 'all' ? undefined : attendanceClass;
+    const month = attendanceFrom.slice(0, 7); // "YYYY-MM"
+    (async () => {
+      try {
+        if (sectionId) {
+          // Get attendance rate summary for the section
+          const rate = await convexQuery(
+            api.reports.getSectionAttendanceRate,
+            { sectionId, month },
+            null,
+          );
+          if (rate && Array.isArray(rate.records) && rate.records.length > 0) {
+            attendanceData.splice(0, attendanceData.length, ...rate.records.map((r: any) => ({
+              id: r.studentId ?? r.id,
+              name: r.name ?? '',
+              rollNo: r.rollNumber ?? r.rollNo ?? '',
+              class: r.class ?? sectionId,
+              present: r.present ?? 0,
+              absent: r.absent ?? 0,
+              late: r.late ?? 0,
+              total: r.total ?? ((r.present ?? 0) + (r.absent ?? 0) + (r.late ?? 0)),
+            })));
+          }
+        }
+      } catch {
+        // Keep mock data as fallback
+      }
+    })();
+  });
+
+  // ── Convex: Exam Results tab ──────────────────────────────────────────────────
+  $effect(() => {
+    if (activeTab !== 'results') return;
+    const classId = resultsClass === 'all' ? undefined : resultsClass;
+    (async () => {
+      try {
+        if (classId) {
+          const averages = await convexQuery(
+            api.reports.getClassTestAverages,
+            { classId },
+            null,
+          );
+          // averages returns subject averages; update examResults if student-level data included
+          if (averages && Array.isArray(averages.students) && averages.students.length > 0) {
+            examResults.splice(0, examResults.length, ...averages.students.map((s: any) => ({
+              id: s.studentId ?? s.id,
+              name: s.name ?? '',
+              rollNo: s.rollNumber ?? s.rollNo ?? '',
+              class: classId,
+              marks: Math.round((s.averagePercent ?? 0)),
+              totalMarks: 100,
+            })));
+          }
+        }
+      } catch {
+        // Keep mock data as fallback
+      }
+    })();
+  });
+
+  // ── Convex: Class Performance tab ─────────────────────────────────────────────
+  $effect(() => {
+    if (activeTab !== 'performance') return;
+    (async () => {
+      try {
+        const perfResults = await Promise.all(
+          classPerformance.map(async (cls) => {
+            const progress = await convexQuery(
+              api.progress.getSectionProgress,
+              { sectionId: cls.class },
+              null,
+            );
+            return { cls, progress };
+          })
+        );
+        const updated = perfResults
+          .filter(({ progress }) => Array.isArray(progress) && progress.length > 0)
+          .map(({ cls, progress }) => {
+            const arr = progress as any[];
+            const avgAttendance = arr.reduce((s: number, r: any) => s + (r.attendancePercent ?? 0), 0) / arr.length;
+            const avgTest = arr.reduce((s: number, r: any) => s + (r.testAveragePercent ?? 0), 0) / arr.length;
+            const avgScore = Math.round((avgAttendance + avgTest) / 2);
+            return {
+              ...cls,
+              students: arr.length,
+              avgScore,
+            };
+          });
+        if (updated.length > 0) {
+          for (const u of updated) {
+            const idx = classPerformance.findIndex(c => c.class === u.class);
+            if (idx !== -1) {
+              classPerformance[idx] = { ...classPerformance[idx], ...u };
+            }
+          }
+        }
+      } catch {
+        // Keep mock data as fallback
+      }
+    })();
+  });
 
   function barColor(avg: number): string {
     if (avg >= 80) return 'bg-success';

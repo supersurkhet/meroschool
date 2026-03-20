@@ -1,38 +1,24 @@
-import { useState, useCallback } from "react"
-import { View, Text, FlatList, Pressable, Alert } from "react-native"
+import { useState, useCallback, useEffect } from "react"
+import { View, Text, FlatList, Pressable, Alert, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/lib/convex/api"
+import { useAuth } from "@/lib/auth"
 import { useTheme } from "@/lib/theme"
 import { ScreenHeader } from "@/components/shared/ScreenHeader"
-import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
+import { EmptyState } from "@/components/ui/EmptyState"
+import { SkeletonList } from "@/components/ui/Skeleton"
 
 type AttendanceStatus = "present" | "absent" | "late"
 
-const sections = ["Class 10-A", "Class 10-B", "Class 9-A", "Class 9-B", "Class 8-A"]
-
-const studentList = [
-	{ id: "1", name: "Aarav Sharma", roll: 1 },
-	{ id: "2", name: "Bina Gurung", roll: 2 },
-	{ id: "3", name: "Chandan Thapa", roll: 3 },
-	{ id: "4", name: "Deepa Adhikari", roll: 4 },
-	{ id: "5", name: "Ganesh Poudel", roll: 5 },
-	{ id: "6", name: "Hari Shrestha", roll: 6 },
-	{ id: "7", name: "Isha Rai", roll: 7 },
-	{ id: "8", name: "Jeevan KC", roll: 8 },
-	{ id: "9", name: "Kabita Tamang", roll: 9 },
-	{ id: "10", name: "Laxmi Basnet", roll: 10 },
-	{ id: "11", name: "Manoj Bhandari", roll: 11 },
-	{ id: "12", name: "Nirmala Pant", roll: 12 },
-	{ id: "13", name: "Om Prakash Yadav", roll: 13 },
-	{ id: "14", name: "Priya Magar", roll: 14 },
-	{ id: "15", name: "Rajesh Dahal", roll: 15 },
-	{ id: "16", name: "Sarita Bhatt", roll: 16 },
-	{ id: "17", name: "Tej Bahadur Chand", roll: 17 },
-	{ id: "18", name: "Uma Devi Oli", roll: 18 },
-	{ id: "19", name: "Vishnu Prasad", roll: 19 },
-	{ id: "20", name: "Yamuna Karki", roll: 20 },
-]
+function toYMD(date: Date): string {
+	const y = date.getFullYear()
+	const m = String(date.getMonth() + 1).padStart(2, "0")
+	const d = String(date.getDate()).padStart(2, "0")
+	return `${y}-${m}-${d}`
+}
 
 function formatDate(date: Date): string {
 	return date.toLocaleDateString("en-US", {
@@ -45,13 +31,39 @@ function formatDate(date: Date): string {
 
 export default function AttendanceScreen() {
 	const { t } = useTranslation()
+	const { user } = useAuth()
 	const { colors } = useTheme()
-	const [selectedSection, setSelectedSection] = useState(sections[0])
 	const [currentDate, setCurrentDate] = useState(new Date())
-	const [attendance, setAttendance] = useState<Record<string, AttendanceStatus | null>>(
-		Object.fromEntries(studentList.map((s) => [s.id, null]))
-	)
+	const [attendance, setAttendance] = useState<Record<string, AttendanceStatus | null>>({})
 	const [submitting, setSubmitting] = useState(false)
+
+	const sectionId = user?.sectionId as any
+
+	const students = useQuery(
+		api.people.listStudentsBySection,
+		sectionId ? { sectionId } : "skip"
+	)
+
+	const existingRecords = useQuery(
+		api.attendance.getBySectionDate,
+		sectionId ? { sectionId, date: toYMD(currentDate) } : "skip"
+	)
+
+	const markBulk = useMutation(api.attendance.markBulk)
+
+	// Seed local attendance state from existing records whenever date or records change
+	useEffect(() => {
+		if (!students) return
+		const base: Record<string, AttendanceStatus | null> = Object.fromEntries(
+			students.map((s: any) => [s._id, null])
+		)
+		if (existingRecords) {
+			for (const rec of existingRecords as any[]) {
+				base[rec.studentId] = rec.status as AttendanceStatus
+			}
+		}
+		setAttendance(base)
+	}, [students, existingRecords, currentDate])
 
 	const markStudent = useCallback((id: string, status: AttendanceStatus) => {
 		setAttendance((prev) => ({
@@ -61,8 +73,9 @@ export default function AttendanceScreen() {
 	}, [])
 
 	const markAllPresent = useCallback(() => {
-		setAttendance(Object.fromEntries(studentList.map((s) => [s.id, "present" as const])))
-	}, [])
+		if (!students) return
+		setAttendance(Object.fromEntries(students.map((s: any) => [s._id, "present" as const])))
+	}, [students])
 
 	const changeDate = useCallback((delta: number) => {
 		setCurrentDate((prev) => {
@@ -76,6 +89,8 @@ export default function AttendanceScreen() {
 		setCurrentDate(new Date())
 	}, [])
 
+	const studentList: any[] = students ?? []
+
 	const counts = {
 		present: Object.values(attendance).filter((v) => v === "present").length,
 		absent: Object.values(attendance).filter((v) => v === "absent").length,
@@ -84,33 +99,40 @@ export default function AttendanceScreen() {
 		marked: Object.values(attendance).filter((v) => v !== null).length,
 	}
 
-	const handleSubmit = useCallback(() => {
+	const handleSubmit = useCallback(async () => {
 		if (counts.marked === 0) {
 			Alert.alert("No Data", "Please mark attendance for at least one student.")
 			return
 		}
 		Alert.alert(
 			"Submit Attendance",
-			`Submit attendance for ${selectedSection}?\n\nPresent: ${counts.present}\nAbsent: ${counts.absent}\nLate: ${counts.late}\nUnmarked: ${counts.total - counts.marked}`,
+			`Submit attendance?\n\nPresent: ${counts.present}\nAbsent: ${counts.absent}\nLate: ${counts.late}\nUnmarked: ${counts.total - counts.marked}`,
 			[
 				{ text: t("common.cancel"), style: "cancel" },
 				{
 					text: t("common.submit"),
-					onPress: () => {
+					onPress: async () => {
 						setSubmitting(true)
-						setTimeout(() => {
+						try {
+							const records = Object.entries(attendance)
+								.filter(([, status]) => status !== null)
+								.map(([studentId, status]) => ({ studentId, status: status! }))
+							await markBulk({
+								sectionId,
+								date: toYMD(currentDate),
+								records,
+							} as any)
+							Alert.alert("Success", `Attendance submitted for ${formatDate(currentDate)}.`, [{ text: "OK" }])
+						} catch (err: any) {
+							Alert.alert("Error", err?.message ?? "Failed to submit attendance.")
+						} finally {
 							setSubmitting(false)
-							Alert.alert(
-								"Success",
-								`Attendance submitted for ${selectedSection} on ${formatDate(currentDate)}.`,
-								[{ text: "OK" }]
-							)
-						}, 1000)
+						}
 					},
 				},
 			]
 		)
-	}, [counts, selectedSection, currentDate, t])
+	}, [counts, attendance, currentDate, sectionId, markBulk, t])
 
 	const statusButtons: { status: AttendanceStatus; label: string; activeColor: string; activeBg: string }[] = [
 		{ status: "present", label: "P", activeColor: colors.success, activeBg: colors.successLight },
@@ -119,7 +141,7 @@ export default function AttendanceScreen() {
 	]
 
 	const renderStudent = useCallback(
-		({ item }: { item: (typeof studentList)[0] }) => (
+		({ item }: { item: any }) => (
 			<View
 				style={{
 					backgroundColor: colors.card,
@@ -145,19 +167,19 @@ export default function AttendanceScreen() {
 					}}
 				>
 					<Text style={{ fontSize: 13, fontWeight: "600", color: colors.textSecondary }}>
-						{item.roll}
+						{item.rollNumber ?? item.roll ?? "—"}
 					</Text>
 				</View>
 				<Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: colors.text }}>
-					{item.name}
+					{item.name ?? item.user?.name ?? "Unknown"}
 				</Text>
 				<View style={{ flexDirection: "row", gap: 6 }}>
 					{statusButtons.map((btn) => {
-						const isActive = attendance[item.id] === btn.status
+						const isActive = attendance[item._id] === btn.status
 						return (
 							<Pressable
 								key={btn.status}
-								onPress={() => markStudent(item.id, btn.status)}
+								onPress={() => markStudent(item._id, btn.status)}
 								style={{
 									width: 36,
 									height: 36,
@@ -190,37 +212,6 @@ export default function AttendanceScreen() {
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.bg }}>
 			<ScreenHeader title={t("teacher.markAttendance")} />
-
-			{/* Section Selector */}
-			<FlatList
-				horizontal
-				showsHorizontalScrollIndicator={false}
-				data={sections}
-				keyExtractor={(item) => item}
-				style={{ maxHeight: 50, flexGrow: 0 }}
-				contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 8 }}
-				renderItem={({ item }) => (
-					<Pressable
-						onPress={() => setSelectedSection(item)}
-						style={{
-							paddingHorizontal: 16,
-							paddingVertical: 8,
-							borderRadius: 10,
-							backgroundColor: selectedSection === item ? "#7C3AED" : colors.surfaceAlt,
-						}}
-					>
-						<Text
-							style={{
-								fontSize: 13,
-								fontWeight: "600",
-								color: selectedSection === item ? "#FFF" : colors.textSecondary,
-							}}
-						>
-							{item}
-						</Text>
-					</Pressable>
-				)}
-			/>
 
 			{/* Date Navigator */}
 			<View
@@ -301,13 +292,27 @@ export default function AttendanceScreen() {
 			</View>
 
 			{/* Student List */}
-			<FlatList
-				data={studentList}
-				keyExtractor={(item) => item.id}
-				renderItem={renderStudent}
-				contentContainerStyle={{ paddingBottom: 100 }}
-				showsVerticalScrollIndicator={false}
-			/>
+			{students === undefined ? (
+				<View style={{ padding: 20 }}>
+					<SkeletonList count={5} />
+				</View>
+			) : studentList.length === 0 ? (
+				<View style={{ flex: 1, justifyContent: "center" }}>
+					<EmptyState
+						icon="people-outline"
+						title="No Students"
+						subtitle="No students enrolled in this section"
+					/>
+				</View>
+			) : (
+				<FlatList
+					data={studentList}
+					keyExtractor={(item) => item._id}
+					renderItem={renderStudent}
+					contentContainerStyle={{ paddingBottom: 100 }}
+					showsVerticalScrollIndicator={false}
+				/>
+			)}
 
 			{/* Submit Button */}
 			<View
@@ -327,7 +332,7 @@ export default function AttendanceScreen() {
 					title={submitting ? "Submitting..." : `Submit Attendance (${counts.marked}/${counts.total})`}
 					onPress={handleSubmit}
 					loading={submitting}
-					disabled={counts.marked === 0}
+					disabled={counts.marked === 0 || submitting}
 					icon={!submitting ? <Ionicons name="checkmark-circle" size={18} color="#FFF" /> : undefined}
 				/>
 			</View>

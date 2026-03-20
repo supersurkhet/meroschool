@@ -12,6 +12,7 @@
     CardContent,
     CardFooter,
   } from '$lib/components/ui/card';
+  import { convexQuery, convexMutation, api } from '$lib/convex';
 
   // ── Types ────────────────────────────────────────────────────────────────────
   type Student = {
@@ -58,6 +59,41 @@
   function getStudent(id: number): Student | undefined {
     return STUDENTS.find(s => s.id === id);
   }
+
+  // ── Convex loading ───────────────────────────────────────────────────────────
+  $effect(() => {
+    (async () => {
+      try {
+        // Get all users with role "parent"
+        const parentUsers = await convexQuery(api.auth.getUsersByRole, { role: 'parent' }, []);
+        if (!Array.isArray(parentUsers) || parentUsers.length === 0) return;
+
+        const loaded: Parent[] = [];
+        for (const user of parentUsers) {
+          const details = await convexQuery(
+            api.people.getParentByUser,
+            { userId: user._id },
+            null,
+          );
+          const colorIdx = loaded.length % AVATAR_COLORS.length;
+          loaded.push({
+            id: user._id,
+            name: user.name ?? user.email ?? 'Unknown',
+            email: user.email ?? '',
+            phone: user.phone ?? '',
+            occupation: details?.occupation ?? '',
+            address: details?.address ?? '',
+            childIds: details?.childIds ?? [],
+            initials: makeInitials(user.name ?? user.email ?? 'U'),
+            avatarColor: AVATAR_COLORS[colorIdx],
+          });
+        }
+        if (loaded.length > 0) parents = loaded;
+      } catch {
+        // Keep mock data as fallback
+      }
+    })();
+  });
 
   // ── State ────────────────────────────────────────────────────────────────────
   let parents = $state<Parent[]>([
@@ -180,7 +216,7 @@
     showAddForm = true;
   }
 
-  function saveParent() {
+  async function saveParent() {
     if (!formName.trim() || !formEmail.trim()) return;
 
     if (editingId !== null) {
@@ -197,12 +233,30 @@
           initials: makeInitials(formName),
         };
       }
+      // Convex: update the parent record
+      try {
+        const userId = editingId;
+        await convexMutation(api.auth.upsertUser, {
+          name: formName,
+          email: formEmail,
+          phone: formPhone,
+          role: 'parent',
+        });
+        await convexMutation(api.people.createParent, {
+          userId,
+          occupation: formOccupation || undefined,
+          address: formAddress || undefined,
+        });
+      } catch {
+        // Local state already updated; continue
+      }
     } else {
       const colorIdx = parents.length % AVATAR_COLORS.length;
+      const newId = Date.now();
       parents = [
         ...parents,
         {
-          id: Date.now(),
+          id: newId,
           name: formName,
           email: formEmail,
           phone: formPhone,
@@ -213,6 +267,24 @@
           avatarColor: AVATAR_COLORS[colorIdx],
         },
       ];
+      // Convex: create user then parent record
+      try {
+        const user = await convexMutation(api.auth.upsertUser, {
+          name: formName,
+          email: formEmail,
+          phone: formPhone,
+          role: 'parent',
+        });
+        if (user?._id) {
+          await convexMutation(api.people.createParent, {
+            userId: user._id,
+            occupation: formOccupation || undefined,
+            address: formAddress || undefined,
+          });
+        }
+      } catch {
+        // Keep local mock entry as fallback
+      }
     }
 
     showAddForm = false;
@@ -233,23 +305,37 @@
     linkSearchQuery = '';
   }
 
-  function linkStudent(parentId: number, studentId: number) {
+  async function linkStudent(parentId: number, studentId: number) {
     const idx = parents.findIndex(p => p.id === parentId);
     if (idx !== -1 && !parents[idx].childIds.includes(studentId)) {
-      parents[idx] = {
-        ...parents[idx],
-        childIds: [...parents[idx].childIds, studentId],
-      };
+      const newChildIds = [...parents[idx].childIds, studentId];
+      parents[idx] = { ...parents[idx], childIds: newChildIds };
+      // Convex: update student's parentIds
+      try {
+        await convexMutation(api.people.updateStudent, {
+          id: studentId,
+          parentIds: newChildIds,
+        });
+      } catch {
+        // Local state already updated; continue
+      }
     }
   }
 
-  function unlinkStudent(parentId: number, studentId: number) {
+  async function unlinkStudent(parentId: number, studentId: number) {
     const idx = parents.findIndex(p => p.id === parentId);
     if (idx !== -1) {
-      parents[idx] = {
-        ...parents[idx],
-        childIds: parents[idx].childIds.filter(id => id !== studentId),
-      };
+      const newChildIds = parents[idx].childIds.filter(id => id !== studentId);
+      parents[idx] = { ...parents[idx], childIds: newChildIds };
+      // Convex: remove this parent's link from student
+      try {
+        await convexMutation(api.people.updateStudent, {
+          id: studentId,
+          parentIds: newChildIds,
+        });
+      } catch {
+        // Local state already updated; continue
+      }
     }
   }
 

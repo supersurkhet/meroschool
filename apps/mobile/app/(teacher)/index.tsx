@@ -3,18 +3,14 @@ import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { useQuery } from "convex/react"
+import { api } from "@/lib/convex/api"
 import { useAuth } from "@/lib/auth"
 import { useTheme } from "@/lib/theme"
 import { ScreenHeader } from "@/components/shared/ScreenHeader"
 import { Card, StatCard } from "@/components/ui/Card"
 import { EmptyState } from "@/components/ui/EmptyState"
-
-const todaysClasses = [
-	{ id: "1", class: "Class 10-A", subject: "Mathematics", time: "8:00-8:45", room: "Room 201", status: "completed" },
-	{ id: "2", class: "Class 9-B", subject: "Mathematics", time: "9:00-9:45", room: "Room 105", status: "current" },
-	{ id: "3", class: "Class 10-B", subject: "Mathematics", time: "11:00-11:45", room: "Room 203", status: "upcoming" },
-	{ id: "4", class: "Class 8-A", subject: "Mathematics", time: "1:00-1:45", room: "Room 102", status: "upcoming" },
-]
+import { SkeletonList } from "@/components/ui/Skeleton"
 
 export default function TeacherDashboard() {
 	const { t } = useTranslation()
@@ -22,6 +18,16 @@ export default function TeacherDashboard() {
 	const { colors } = useTheme()
 	const router = useRouter()
 	const [refreshing, setRefreshing] = useState(false)
+
+	const subjects = useQuery(
+		api.academics.listSubjectsByTeacher,
+		user?.teacherId ? { teacherId: user.teacherId as any } : "skip"
+	)
+
+	const sectionProgress = useQuery(
+		api.progress.getSectionProgress,
+		user?.sectionId ? { sectionId: user.sectionId as any } : "skip"
+	)
 
 	const onRefresh = useCallback(() => {
 		setRefreshing(true)
@@ -33,6 +39,9 @@ export default function TeacherDashboard() {
 		current: { bg: colors.primaryLight, text: colors.primary, label: "Now" },
 		upcoming: { bg: colors.surfaceAlt, text: colors.textSecondary, label: "Upcoming" },
 	}
+
+	const todaysClasses = subjects ?? []
+	const totalStudents = sectionProgress?.totalStudents ?? 0
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -64,13 +73,13 @@ export default function TeacherDashboard() {
 				<View style={{ flexDirection: "row", gap: 12 }}>
 					<StatCard
 						label={t("teacher.todaysClasses")}
-						value={todaysClasses.length}
+						value={subjects === undefined ? "—" : todaysClasses.length}
 						icon={<Ionicons name="calendar" size={22} color="#7C3AED" />}
 						bgColor="#EDE9FE"
 					/>
 					<StatCard
 						label={t("teacher.totalStudents")}
-						value={156}
+						value={sectionProgress === undefined ? "—" : totalStudents}
 						icon={<Ionicons name="people" size={22} color={colors.primary} />}
 						bgColor={colors.primaryLight}
 					/>
@@ -112,27 +121,35 @@ export default function TeacherDashboard() {
 					<Text style={{ fontSize: 18, fontWeight: "700", color: colors.text, marginBottom: 12 }}>
 						{t("teacher.todaysClasses")}
 					</Text>
-					{todaysClasses.length === 0 ? (
+
+					{subjects === undefined ? (
+						<SkeletonList count={3} />
+					) : todaysClasses.length === 0 ? (
 						<EmptyState
 							icon="calendar-outline"
 							title="No Classes Today"
 							subtitle="Enjoy your day off!"
 						/>
 					) : (
-						todaysClasses.map((cls) => {
-							const s = statusColors[cls.status]
+						todaysClasses.map((cls: any) => {
+							const status = cls.status ?? "upcoming"
+							const s = statusColors[status] ?? statusColors.upcoming
 							return (
-								<Card key={cls.id} style={{ marginBottom: 10 }}>
+								<Card key={cls._id} style={{ marginBottom: 10 }}>
 									<View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
 										<View style={{ width: 4, height: 48, borderRadius: 2, backgroundColor: s.text }} />
 										<View style={{ flex: 1 }}>
-											<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>{cls.class}</Text>
+											<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>
+												{cls.sectionName ?? cls.class ?? "—"}
+											</Text>
 											<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
-												{cls.subject} · {cls.room}
+												{cls.subjectName ?? cls.subject ?? "—"} · {cls.room ?? ""}
 											</Text>
 										</View>
 										<View style={{ alignItems: "flex-end" }}>
-											<Text style={{ fontSize: 13, fontWeight: "600", color: colors.text }}>{cls.time}</Text>
+											<Text style={{ fontSize: 13, fontWeight: "600", color: colors.text }}>
+												{cls.time ?? ""}
+											</Text>
 											<View style={{ backgroundColor: s.bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
 												<Text style={{ fontSize: 11, fontWeight: "600", color: s.text }}>{s.label}</Text>
 											</View>

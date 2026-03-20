@@ -16,6 +16,7 @@
     Plus,
     X,
   } from 'lucide-svelte';
+  import { convexQuery, convexMutation, api } from '$lib/convex';
 
   type SalaryStatus = 'paid' | 'pending' | 'cancelled';
 
@@ -33,6 +34,36 @@
   }
 
   let selectedMonth = $state('2026-03');
+
+  // ── Convex loading (re-runs whenever selectedMonth changes) ──────────────────
+  $effect(() => {
+    const month = selectedMonth;
+    (async () => {
+      try {
+        const records = await convexQuery(
+          api.salary.listByMonth,
+          { month },
+          [],
+        );
+        if (Array.isArray(records) && records.length > 0) {
+          salaryRecords = records.map((r: any) => ({
+            id: r._id ?? r.id,
+            employeeId: r.teacherId ?? r.employeeId ?? '',
+            name: r.teacherName ?? r.name ?? '',
+            department: r.department ?? '',
+            baseSalary: r.baseSalary ?? 0,
+            deductions: r.deductions ?? 0,
+            bonuses: r.bonuses ?? 0,
+            status: r.status ?? 'pending',
+            notes: r.notes ?? '',
+            expanded: false,
+          }));
+        }
+      } catch {
+        // Keep mock data as fallback
+      }
+    })();
+  });
 
   let salaryRecords = $state<SalaryRecord[]>([
     {
@@ -181,7 +212,7 @@
     showForm = true;
   }
 
-  function saveForm() {
+  async function saveForm() {
     const base = Number(formBaseSalary) || 0;
     const ded = Number(formDeductions) || 0;
     const bon = Number(formBonuses) || 0;
@@ -200,9 +231,22 @@
           notes: formNotes,
         };
       }
+      // Convex: update the record
+      try {
+        await convexMutation(api.salary.update, {
+          id: editingId,
+          baseSalary: base,
+          deductions: ded,
+          bonuses: bon,
+          notes: formNotes || undefined,
+        });
+      } catch {
+        // Local state already updated; continue
+      }
     } else {
+      const localId = String(Date.now());
       salaryRecords.push({
-        id: String(Date.now()),
+        id: localId,
         employeeId: formEmployeeId,
         name: formName,
         department: formDepartment,
@@ -213,13 +257,32 @@
         notes: formNotes,
         expanded: false,
       });
+      // Convex: create a new record
+      try {
+        await convexMutation(api.salary.create, {
+          teacherId: formEmployeeId,
+          month: selectedMonth,
+          baseSalary: base,
+          deductions: ded,
+          bonuses: bon,
+          notes: formNotes || undefined,
+        });
+      } catch {
+        // Keep local entry as fallback
+      }
     }
     showForm = false;
   }
 
-  function markPaid(id: string) {
+  async function markPaid(id: string) {
     const idx = salaryRecords.findIndex((r) => r.id === id);
     if (idx !== -1) salaryRecords[idx].status = 'paid';
+    // Convex: persist paid status
+    try {
+      await convexMutation(api.salary.markPaid, { id });
+    } catch {
+      // Local state already updated; continue
+    }
   }
 
   function payAll() {

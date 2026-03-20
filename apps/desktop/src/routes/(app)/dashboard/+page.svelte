@@ -2,6 +2,7 @@
   import { t } from '$lib/i18n/index.svelte';
   import { getUser } from '$lib/stores/auth.svelte';
   import { getSchool } from '$lib/stores/school.svelte';
+  import { convexQuery, api } from '$lib/convex';
   import { Button } from '$lib/components/ui/button';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
@@ -45,13 +46,37 @@
     year: 'numeric',
   });
 
+  // ─── Convex live stats ────────────────────────────────────────────────────
+  let liveStudents = $state('487');
+  let liveTeachers = $state('28');
+  let liveAttendance = $state('91%');
+  let liveSalaryPending = $state('5');
+
+  $effect(() => {
+    const schoolId = getSchool()?.id;
+    if (!schoolId) return;
+    convexQuery(
+      api.reports.getSchoolDashboardStats,
+      { schoolId },
+      null,
+    ).then((data) => {
+      if (!data) return;
+      liveStudents = String(data.totalStudents ?? liveStudents);
+      liveTeachers = String(data.totalTeachers ?? liveTeachers);
+      liveAttendance = data.todayAttendance?.percent != null
+        ? `${data.todayAttendance.percent}%`
+        : liveAttendance;
+      liveSalaryPending = String(data.pendingSalaries ?? liveSalaryPending);
+    });
+  });
+
   // Stats
-  const stats = [
-    { labelKey: 'dashboard.totalStudents', value: '487', change: '+12', icon: Users, accent: 'from-indigo-500 to-violet-600', iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
-    { labelKey: 'nav.teachers', value: '28', change: '+1', icon: GraduationCap, accent: 'from-amber-500 to-orange-600', iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
-    { labelKey: 'dashboard.todaysAttendance', value: '91%', change: '+3%', icon: CheckCircle, accent: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-    { labelKey: 'dashboard.salaryPending', value: '5', change: 'NPR 1.65L', icon: DollarSign, accent: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
-  ];
+  const stats = $derived([
+    { labelKey: 'dashboard.totalStudents', value: liveStudents, change: '+12', icon: Users, accent: 'from-indigo-500 to-violet-600', iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
+    { labelKey: 'nav.teachers', value: liveTeachers, change: '+1', icon: GraduationCap, accent: 'from-amber-500 to-orange-600', iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+    { labelKey: 'dashboard.todaysAttendance', value: liveAttendance, change: '+3%', icon: CheckCircle, accent: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+    { labelKey: 'dashboard.salaryPending', value: liveSalaryPending, change: 'NPR 1.65L', icon: DollarSign, accent: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
+  ]);
 
   // Activity feed
   const activities = [
@@ -202,7 +227,7 @@
             ></div>
           {/each}
         </div>
-        <p class="mt-2 text-center text-lg font-bold text-primary">91%</p>
+        <p class="mt-2 text-center text-lg font-bold text-primary">{liveAttendance}</p>
         <p class="text-center text-[11px] text-muted-foreground">Today's attendance</p>
       </div>
 

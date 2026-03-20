@@ -12,6 +12,9 @@
     CardContent,
     CardFooter,
   } from '$lib/components/ui/card';
+  import { onMount } from 'svelte';
+  import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
+  import { getSchool } from '$lib/stores/school.svelte';
 
   // ── Types ────────────────────────────────────────────────────────────────────
   type Teacher = {
@@ -121,6 +124,39 @@
     },
   ]);
 
+  // ── Convex loading ────────────────────────────────────────────────────────────
+  onMount(async () => {
+    if (!isConvexConfigured()) return;
+    const schoolId = getSchool()?.id;
+    if (!schoolId) return;
+
+    try {
+      const convexTeachers = await convexQuery(
+        api.people.listTeachersBySchool,
+        { schoolId },
+        [] as any[],
+      );
+      if (!convexTeachers || convexTeachers.length === 0) return;
+
+      const colorIdx = (i: number) => AVATAR_COLORS[i % AVATAR_COLORS.length];
+      teachers = convexTeachers.map((ct: any, i: number) => ({
+        id: ct._id ?? ct.id ?? i,
+        name: ct.user?.name ?? '',
+        email: ct.user?.email ?? '',
+        phone: ct.user?.phone ?? '',
+        employeeId: ct.employeeId ?? '',
+        department: ct.department ?? '',
+        joinDate: ct.joinDate ?? '',
+        subjects: ct.subjects ?? [],
+        classes: ct.classes ?? [],
+        initials: makeInitials(ct.user?.name ?? '?'),
+        avatarColor: colorIdx(i),
+      }));
+    } catch (err) {
+      console.warn('[teachers] Convex load failed, using mock data:', err);
+    }
+  });
+
   // ── UI state ─────────────────────────────────────────────────────────────────
   let searchQuery = $state('');
   let showAddForm = $state(false);
@@ -186,10 +222,11 @@
     }, 50);
   }
 
-  function saveTeacher() {
+  async function saveTeacher() {
     if (!formName.trim() || !formEmail.trim() || !formEmployeeId.trim()) return;
 
     if (editingId !== null) {
+      // Edit: update local state only (no general update API)
       const idx = teachers.findIndex(t => t.id === editingId);
       if (idx !== -1) {
         teachers[idx] = {
@@ -206,23 +243,46 @@
         };
       }
     } else {
+      const optimisticId = Date.now();
       const colorIdx = teachers.length % AVATAR_COLORS.length;
-      teachers = [
-        ...teachers,
-        {
-          id: Date.now(),
-          name: formName,
-          email: formEmail,
-          phone: formPhone,
-          employeeId: formEmployeeId,
-          department: formDepartment,
-          joinDate: formJoinDate,
-          subjects: [...formSubjects],
-          classes: [...formClasses],
-          initials: makeInitials(formName),
-          avatarColor: AVATAR_COLORS[colorIdx],
-        },
-      ];
+      const newTeacher: Teacher = {
+        id: optimisticId,
+        name: formName,
+        email: formEmail,
+        phone: formPhone,
+        employeeId: formEmployeeId,
+        department: formDepartment,
+        joinDate: formJoinDate,
+        subjects: [...formSubjects],
+        classes: [...formClasses],
+        initials: makeInitials(formName),
+        avatarColor: AVATAR_COLORS[colorIdx],
+      };
+      // Optimistically add to local state
+      teachers = [...teachers, newTeacher];
+
+      const schoolId = getSchool()?.id;
+      if (isConvexConfigured() && schoolId) {
+        try {
+          const userId = await convexMutation(api.auth.upsertUser, {
+            name: formName,
+            email: formEmail,
+            workosUserId: `local-${optimisticId}`,
+            role: 'teacher',
+          });
+          const teacherId = await convexMutation(api.people.createTeacher, {
+            userId,
+            schoolId,
+            employeeId: formEmployeeId,
+            ...(formDepartment ? { department: formDepartment } : {}),
+            ...(formJoinDate ? { joinDate: formJoinDate } : {}),
+          });
+          // Replace optimistic ID with real Convex ID
+          teachers = teachers.map(t => t.id === optimisticId ? { ...t, id: teacherId } : t);
+        } catch (err) {
+          console.warn('[teachers] Convex createTeacher failed, keeping local entry:', err);
+        }
+      }
     }
 
     showAddForm = false;

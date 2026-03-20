@@ -9,6 +9,9 @@
   import Badge from '$lib/components/ui/badge/Badge.svelte';
   import Label from '$lib/components/ui/label/Label.svelte';
   import Separator from '$lib/components/ui/separator/Separator.svelte';
+  import { onMount } from 'svelte';
+  import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
+  import { getSchool } from '$lib/stores/school.svelte';
 
   // ─── Types ────────────────────────────────────────────────────────────────
   type Student = {
@@ -25,15 +28,15 @@
   type ClassEntry = { id: string; name: string; grade: number };
   type SectionEntry = { id: string; classId: string; name: string };
 
-  // ─── Sample class/section data ────────────────────────────────────────────
-  const CLASSES: ClassEntry[] = [
+  // ─── Sample class/section data (fallback) ────────────────────────────────
+  let CLASSES = $state<ClassEntry[]>([
     { id: 'cls1', name: 'Class 1', grade: 1 },
     { id: 'cls5', name: 'Class 5', grade: 5 },
     { id: 'cls8', name: 'Class 8', grade: 8 },
     { id: 'cls10', name: 'Class 10', grade: 10 },
-  ];
+  ]);
 
-  const SECTIONS: SectionEntry[] = [
+  let SECTIONS = $state<SectionEntry[]>([
     { id: 'sec1a', classId: 'cls1', name: 'A' },
     { id: 'sec1b', classId: 'cls1', name: 'B' },
     { id: 'sec5a', classId: 'cls5', name: 'A' },
@@ -42,9 +45,9 @@
     { id: 'sec10a', classId: 'cls10', name: 'A' },
     { id: 'sec10b', classId: 'cls10', name: 'B' },
     { id: 'sec10c', classId: 'cls10', name: 'C' },
-  ];
+  ]);
 
-  // ─── Sample student data ──────────────────────────────────────────────────
+  // ─── Sample student data (fallback) ──────────────────────────────────────
   let students = $state<Student[]>([
     { id: 's1', rollNumber: '001', name: 'Aarav Sharma', email: 'aarav.sharma@student.edu.np', classId: 'cls10', sectionId: 'sec10a', dateOfBirth: '2008-03-15', admissionDate: '2023-04-01' },
     { id: 's2', rollNumber: '002', name: 'Priya Thapa', email: 'priya.thapa@student.edu.np', classId: 'cls10', sectionId: 'sec10a', dateOfBirth: '2008-07-22', admissionDate: '2023-04-01' },
@@ -57,6 +60,59 @@
     { id: 's9', rollNumber: '302', name: 'Saroj Shrestha', email: 'saroj.shrestha@student.edu.np', classId: 'cls1', sectionId: 'sec1b', dateOfBirth: '2017-09-12', admissionDate: '2024-04-02' },
     { id: 's10', rollNumber: '004', name: 'Kabita Adhikari', email: 'kabita.adhikari@student.edu.np', classId: 'cls10', sectionId: 'sec10c', dateOfBirth: '2008-12-05', admissionDate: '2023-04-01' },
   ]);
+
+  // ─── Convex loading ───────────────────────────────────────────────────────
+  onMount(async () => {
+    if (!isConvexConfigured()) return;
+    const schoolId = getSchool()?.id;
+    if (!schoolId) return;
+
+    try {
+      const hierarchy = await convexQuery(
+        api.schools.getSchoolHierarchy,
+        { schoolId },
+        null,
+      );
+      if (!hierarchy) return;
+
+      // Build flat CLASSES and SECTIONS from hierarchy
+      const loadedClasses: ClassEntry[] = [];
+      const loadedSections: SectionEntry[] = [];
+      const loadedStudents: Student[] = [];
+
+      for (const cls of hierarchy.classes ?? []) {
+        loadedClasses.push({ id: cls._id, name: cls.name, grade: cls.grade ?? 0 });
+        for (const sec of cls.sections ?? []) {
+          loadedSections.push({ id: sec._id, classId: cls._id, name: sec.name });
+
+          // Load students per section
+          const sectionStudents = await convexQuery(
+            api.people.listStudentsBySection,
+            { sectionId: sec._id },
+            [] as any[],
+          );
+          for (const s of sectionStudents) {
+            loadedStudents.push({
+              id: s._id,
+              rollNumber: s.rollNumber ?? '',
+              name: s.user?.name ?? '',
+              email: s.user?.email ?? '',
+              classId: cls._id,
+              sectionId: sec._id,
+              dateOfBirth: s.dateOfBirth ?? '',
+              admissionDate: s.admissionDate ?? '',
+            });
+          }
+        }
+      }
+
+      if (loadedClasses.length > 0) CLASSES = loadedClasses;
+      if (loadedSections.length > 0) SECTIONS = loadedSections;
+      if (loadedStudents.length > 0) students = loadedStudents;
+    } catch (err) {
+      console.warn('[students] Convex load failed, using mock data:', err);
+    }
+  });
 
   // ─── Filter & search state ────────────────────────────────────────────────
   let searchQuery = $state('');
@@ -172,29 +228,52 @@
     return Object.keys(errors).length === 0;
   }
 
-  function saveStudent() {
+  async function saveStudent() {
     if (!validateForm()) return;
 
     if (editingStudent) {
+      // Edit: update local state only (no update API)
       students = students.map(s =>
         s.id === editingStudent!.id
           ? { ...s, name: formName, email: formEmail, rollNumber: formRollNumber, dateOfBirth: formDob, admissionDate: formAdmissionDate, classId: formClassId, sectionId: formSectionId }
           : s
       );
     } else {
-      students = [
-        ...students,
-        {
-          id: crypto.randomUUID(),
-          name: formName,
-          email: formEmail,
-          rollNumber: formRollNumber,
-          dateOfBirth: formDob,
-          admissionDate: formAdmissionDate,
-          classId: formClassId,
-          sectionId: formSectionId,
+      const optimisticId = crypto.randomUUID();
+      const newStudent: Student = {
+        id: optimisticId,
+        name: formName,
+        email: formEmail,
+        rollNumber: formRollNumber,
+        dateOfBirth: formDob,
+        admissionDate: formAdmissionDate,
+        classId: formClassId,
+        sectionId: formSectionId,
+      };
+      // Optimistically add to local state
+      students = [...students, newStudent];
+
+      if (isConvexConfigured()) {
+        try {
+          const userId = await convexMutation(api.auth.upsertUser, {
+            name: formName,
+            email: formEmail,
+            workosUserId: `local-${optimisticId}`,
+            role: 'student',
+          });
+          const studentId = await convexMutation(api.people.createStudent, {
+            userId,
+            sectionId: formSectionId,
+            rollNumber: formRollNumber,
+            ...(formDob ? { dateOfBirth: formDob } : {}),
+            ...(formAdmissionDate ? { admissionDate: formAdmissionDate } : {}),
+          });
+          // Replace the optimistic entry with the real Convex ID
+          students = students.map(s => s.id === optimisticId ? { ...s, id: studentId } : s);
+        } catch (err) {
+          console.warn('[students] Convex createStudent failed, keeping local entry:', err);
         }
-      ];
+      }
     }
     showAddForm = false;
     editingStudent = null;
@@ -250,12 +329,16 @@
     if (file) handleCsvFile(file);
   }
 
-  function importCsvStudents() {
+  async function importCsvStudents() {
     // Map CSV rows to students using heuristic column matching
     const nameIdx = csvHeaders.findIndex(h => /name/i.test(h));
     const emailIdx = csvHeaders.findIndex(h => /email/i.test(h));
     const rollIdx = csvHeaders.findIndex(h => /roll/i.test(h));
     const dobIdx = csvHeaders.findIndex(h => /birth|dob/i.test(h));
+
+    const defaultSectionId = SECTIONS[0]?.id ?? '';
+    const defaultClassId = CLASSES[0]?.id ?? '';
+    const today = new Date().toISOString().slice(0, 10);
 
     const newStudents: Student[] = csvPreviewRows
       .filter(row => row.some(cell => cell.trim()))
@@ -265,12 +348,43 @@
         email: emailIdx >= 0 ? row[emailIdx] : '',
         rollNumber: rollIdx >= 0 ? row[rollIdx] : '',
         dateOfBirth: dobIdx >= 0 ? row[dobIdx] : '',
-        admissionDate: new Date().toISOString().slice(0, 10),
-        classId: CLASSES[0]?.id ?? '',
-        sectionId: SECTIONS[0]?.id ?? '',
+        admissionDate: today,
+        classId: defaultClassId,
+        sectionId: defaultSectionId,
       }));
 
+    // Optimistically add to local state
     students = [...students, ...newStudents];
+
+    const schoolId = getSchool()?.id;
+    if (isConvexConfigured() && schoolId && defaultSectionId) {
+      try {
+        const payload = newStudents.map(s => ({
+          name: s.name,
+          email: s.email,
+          rollNumber: s.rollNumber,
+          sectionId: defaultSectionId,
+          ...(s.dateOfBirth ? { dateOfBirth: s.dateOfBirth } : {}),
+          admissionDate: today,
+        }));
+        const ids: string[] = await convexMutation(api.csv.bulkEnrollStudents, {
+          students: payload,
+          schoolId,
+        });
+        // Replace optimistic IDs with real Convex IDs
+        const optimisticIds = newStudents.map(s => s.id);
+        students = students.map(s => {
+          const optimisticIdx = optimisticIds.indexOf(s.id);
+          if (optimisticIdx >= 0 && ids[optimisticIdx]) {
+            return { ...s, id: ids[optimisticIdx] };
+          }
+          return s;
+        });
+      } catch (err) {
+        console.warn('[students] Convex bulkEnrollStudents failed, keeping local entries:', err);
+      }
+    }
+
     showImport = false;
     csvPreviewRows = [];
     csvHeaders = [];

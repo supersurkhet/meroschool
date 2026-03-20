@@ -1,6 +1,7 @@
 <script lang="ts">
   import { t } from '$lib/i18n/index.svelte';
   import { setSchool } from '$lib/stores/school.svelte';
+  import { convexMutation, isConvexConfigured, api } from '$lib/convex';
   import Button from '$lib/components/ui/button/Button.svelte';
   import Input from '$lib/components/ui/input/Input.svelte';
   import Card from '$lib/components/ui/card/Card.svelte';
@@ -15,6 +16,11 @@
   // ─── Step state ───────────────────────────────────────────────────────────
   let currentStep = $state(1);
   const TOTAL_STEPS = 4;
+
+  // ─── Convex IDs (populated as wizard progresses) ──────────────────────────
+  let convexSchoolId = $state<string | null>(null);
+  // Map local class id → Convex class id
+  let convexClassIds = $state<Record<string, string>>({});
 
   // ─── Step 1: School Info ──────────────────────────────────────────────────
   let schoolName = $state('');
@@ -77,12 +83,21 @@
       return;
     }
     classError = '';
-    classes = [
-      ...classes,
-      { id: crypto.randomUUID(), name: newClassName.trim(), grade: Number(newClassGrade) }
-    ];
+    const localId = crypto.randomUUID();
+    const name = newClassName.trim();
+    const grade = Number(newClassGrade);
+    classes = [...classes, { id: localId, name, grade }];
     newClassName = '';
     newClassGrade = '';
+
+    // Convex: create class if school was persisted
+    if (isConvexConfigured() && convexSchoolId) {
+      convexMutation(api.schools.createClass, { schoolId: convexSchoolId, name, grade })
+        .then((convexId: string) => {
+          convexClassIds = { ...convexClassIds, [localId]: convexId };
+        })
+        .catch(() => { /* silently ignore — local state is source of truth */ });
+    }
   }
 
   function deleteClass(id: string) {
@@ -113,6 +128,13 @@
     if (alreadyExists) return;
     sections = [...sections, { id: crypto.randomUUID(), classId, name: trimmed }];
     newSectionNames = { ...newSectionNames, [classId]: '' };
+
+    // Convex: create section using resolved Convex class id
+    const convexClassId = convexClassIds[classId];
+    if (isConvexConfigured() && convexClassId) {
+      convexMutation(api.schools.createSection, { classId: convexClassId, name: trimmed })
+        .catch(() => { /* silently ignore */ });
+    }
   }
 
   function deleteSection(id: string) {
@@ -152,12 +174,21 @@
     const subjectName = name ?? newSubjectNames[classId];
     const subjectCode = code ?? newSubjectCodes[classId];
     if (!subjectName?.trim()) return;
+    const trimmedName = subjectName.trim();
+    const trimmedCode = (subjectCode ?? '').trim().toUpperCase();
     subjects = [
       ...subjects,
-      { id: crypto.randomUUID(), classId, name: subjectName.trim(), code: (subjectCode ?? '').trim().toUpperCase() }
+      { id: crypto.randomUUID(), classId, name: trimmedName, code: trimmedCode }
     ];
     newSubjectNames = { ...newSubjectNames, [classId]: '' };
     newSubjectCodes = { ...newSubjectCodes, [classId]: '' };
+
+    // Convex: create subject using resolved Convex class id
+    const convexClassId = convexClassIds[classId];
+    if (isConvexConfigured() && convexClassId) {
+      convexMutation(api.academics.createSubject, { classId: convexClassId, name: trimmedName, code: trimmedCode })
+        .catch(() => { /* silently ignore */ });
+    }
   }
 
   function deleteSubject(id: string) {
@@ -179,6 +210,20 @@
       // Expand all classes by default in step 3
       expandedClasses = new Set(classes.map(c => c.id));
       expandedSubjectClasses = new Set(classes.map(c => c.id));
+
+      // Convex: persist the school and capture the returned id
+      if (isConvexConfigured()) {
+        convexMutation(api.schools.create, {
+          name: schoolName.trim(),
+          address: schoolAddress.trim(),
+          phone: schoolPhone.trim(),
+          email: schoolEmail.trim(),
+          establishedYear: establishedYear.trim(),
+          academicYear: selectedYear,
+        })
+          .then((id: string) => { convexSchoolId = id; })
+          .catch(() => { /* silently ignore — wizard continues with local state */ });
+      }
     }
     if (currentStep === 2 && classes.length === 0) {
       classError = 'Please add at least one class before proceeding';
@@ -194,13 +239,13 @@
 
   function finish() {
     setSchool({
-      id: crypto.randomUUID(),
+      id: convexSchoolId ?? crypto.randomUUID(),
       name: schoolName,
       academicYear: selectedYear,
       address: schoolAddress,
       setupCompletedAt: new Date().toISOString(),
     });
-    alert(`School "${schoolName}" setup complete! 🎉\nClasses: ${classes.length}, Sections: ${sections.length}, Subjects: ${subjects.length}`);
+    alert(`School "${schoolName}" setup complete!\nClasses: ${classes.length}, Sections: ${sections.length}, Subjects: ${subjects.length}`);
   }
 
   const stepLabels = ['School Info', 'Academic Year & Classes', 'Sections', 'Subjects'];

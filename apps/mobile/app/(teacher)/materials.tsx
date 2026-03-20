@@ -1,7 +1,10 @@
 import { useState, useCallback } from "react"
-import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native"
+import { View, Text, ScrollView, Pressable, RefreshControl, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/lib/convex/api"
+import { useAuth } from "@/lib/auth"
 import { useTheme } from "@/lib/theme"
 import { ScreenHeader } from "@/components/shared/ScreenHeader"
 import { Card } from "@/components/ui/Card"
@@ -9,21 +12,35 @@ import { Badge } from "@/components/ui/Badge"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { EmptyState } from "@/components/ui/EmptyState"
-
-const uploadedMaterials = [
-	{ id: "1", title: "Algebra Introduction", type: "video", subject: "Mathematics", class: "Class 10-A", date: "Mar 15", views: 28 },
-	{ id: "2", title: "Periodic Table Notes", type: "pdf", subject: "Science", class: "Class 10-A", date: "Mar 14", views: 35 },
-	{ id: "3", title: "Grammar Exercises", type: "link", subject: "English", class: "Class 9-B", date: "Mar 13", views: 22 },
-]
+import { SkeletonList } from "@/components/ui/Skeleton"
 
 type UploadType = "video" | "pdf" | "link"
 
 export default function TeacherMaterialsScreen() {
 	const { t } = useTranslation()
+	const { user } = useAuth()
 	const { colors } = useTheme()
 	const [showUpload, setShowUpload] = useState(false)
 	const [uploadType, setUploadType] = useState<UploadType>("pdf")
 	const [refreshing, setRefreshing] = useState(false)
+	const [uploadTitle, setUploadTitle] = useState("")
+	const [uploadClass, setUploadClass] = useState("")
+	const [uploadSubject, setUploadSubject] = useState("")
+	const [uploadUrl, setUploadUrl] = useState("")
+	const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null)
+	const [uploading, setUploading] = useState(false)
+
+	const subjects = useQuery(
+		api.academics.listSubjectsByTeacher,
+		user?.teacherId ? { teacherId: user.teacherId as any } : "skip"
+	)
+
+	const materials = useQuery(
+		api.materials.listByModule,
+		selectedSubjectId ? { moduleId: selectedSubjectId as any } : "skip"
+	)
+
+	const uploadMaterial = useMutation(api.materials.upload)
 
 	const onRefresh = useCallback(() => {
 		setRefreshing(true)
@@ -35,6 +52,34 @@ export default function TeacherMaterialsScreen() {
 		pdf: { icon: "document", color: "#1A73E8", bg: "#E8F0FE" },
 		link: { icon: "link", color: "#059669", bg: "#D1FAE5" },
 	}
+
+	const handleUpload = useCallback(async () => {
+		if (!uploadTitle.trim()) {
+			Alert.alert("Missing Title", "Please enter a title for the material.")
+			return
+		}
+		setUploading(true)
+		try {
+			await uploadMaterial({
+				title: uploadTitle,
+				type: uploadType,
+				url: uploadUrl || undefined,
+				subjectId: selectedSubjectId as any,
+				teacherId: user?.teacherId as any,
+			} as any)
+			setShowUpload(false)
+			setUploadTitle("")
+			setUploadClass("")
+			setUploadSubject("")
+			setUploadUrl("")
+		} catch (err: any) {
+			Alert.alert("Upload Failed", err?.message ?? "Could not upload material.")
+		} finally {
+			setUploading(false)
+		}
+	}, [uploadTitle, uploadType, uploadUrl, selectedSubjectId, user?.teacherId, uploadMaterial])
+
+	const materialList: any[] = materials ?? []
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -88,21 +133,80 @@ export default function TeacherMaterialsScreen() {
 						</View>
 
 						<View style={{ gap: 10 }}>
-							<Input placeholder="Title" />
-							<Input placeholder="Select class" />
-							<Input placeholder="Select subject / module" />
-							{uploadType === "link" && <Input placeholder="URL" keyboardType="url" />}
+							<Input
+								placeholder="Title"
+								value={uploadTitle}
+								onChangeText={setUploadTitle}
+							/>
+							<Input
+								placeholder="Class"
+								value={uploadClass}
+								onChangeText={setUploadClass}
+							/>
+							{/* Subject picker — shows loaded subjects */}
+							{subjects === undefined ? (
+								<View style={{ height: 44, backgroundColor: colors.surfaceAlt, borderRadius: 10, justifyContent: "center", paddingHorizontal: 14 }}>
+									<Text style={{ color: colors.textMuted, fontSize: 14 }}>Loading subjects…</Text>
+								</View>
+							) : (
+								<ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 44 }}
+									contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+									{(subjects as any[]).map((subj) => (
+										<Pressable
+											key={subj._id}
+											onPress={() => {
+												setSelectedSubjectId(subj._id)
+												setUploadSubject(subj.subjectName ?? subj.name ?? "")
+											}}
+											style={{
+												paddingHorizontal: 14,
+												paddingVertical: 8,
+												borderRadius: 10,
+												backgroundColor: selectedSubjectId === subj._id ? "#EDE9FE" : colors.surfaceAlt,
+												borderWidth: selectedSubjectId === subj._id ? 1.5 : 0,
+												borderColor: "#7C3AED",
+											}}
+										>
+											<Text style={{ fontSize: 13, fontWeight: "600", color: selectedSubjectId === subj._id ? "#7C3AED" : colors.textSecondary }}>
+												{subj.subjectName ?? subj.name ?? "—"}
+											</Text>
+										</Pressable>
+									))}
+								</ScrollView>
+							)}
+							{uploadType === "link" && (
+								<Input
+									placeholder="URL"
+									keyboardType="url"
+									value={uploadUrl}
+									onChangeText={setUploadUrl}
+								/>
+							)}
 							<Button
-								title={uploadType === "link" ? t("common.save") : "Choose File & Upload"}
-								onPress={() => setShowUpload(false)}
-								icon={<Ionicons name="cloud-upload" size={18} color="#FFF" />}
+								title={uploading ? "Uploading…" : uploadType === "link" ? t("common.save") : "Choose File & Upload"}
+								onPress={handleUpload}
+								loading={uploading}
+								icon={!uploading ? <Ionicons name="cloud-upload" size={18} color="#FFF" /> : undefined}
 							/>
 						</View>
 					</Card>
 				)}
 
+				{/* Loading state */}
+				{!showUpload && materials === undefined && selectedSubjectId && (
+					<SkeletonList count={3} />
+				)}
+
 				{/* Empty state */}
-				{uploadedMaterials.length === 0 && !showUpload && (
+				{!showUpload && !selectedSubjectId && (
+					<EmptyState
+						icon="cloud-upload-outline"
+						title="Select a Subject"
+						subtitle="Pick a subject above to view its materials"
+					/>
+				)}
+
+				{!showUpload && selectedSubjectId && materials !== undefined && materialList.length === 0 && (
 					<EmptyState
 						icon="cloud-upload-outline"
 						title="No Materials Yet"
@@ -110,11 +214,35 @@ export default function TeacherMaterialsScreen() {
 					/>
 				)}
 
+				{/* Subject filter chips (shown outside upload form too) */}
+				{!showUpload && subjects !== undefined && (subjects as any[]).length > 0 && (
+					<ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 44, marginBottom: -4 }}
+						contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+						{(subjects as any[]).map((subj) => (
+							<Pressable
+								key={subj._id}
+								onPress={() => setSelectedSubjectId(subj._id)}
+								style={{
+									paddingHorizontal: 14,
+									paddingVertical: 8,
+									borderRadius: 10,
+									backgroundColor: selectedSubjectId === subj._id ? "#7C3AED" : colors.surfaceAlt,
+								}}
+							>
+								<Text style={{ fontSize: 13, fontWeight: "600", color: selectedSubjectId === subj._id ? "#FFF" : colors.textSecondary }}>
+									{subj.subjectName ?? subj.name ?? "—"}
+								</Text>
+							</Pressable>
+						))}
+					</ScrollView>
+				)}
+
 				{/* Existing materials */}
-				{uploadedMaterials.map((mat) => {
-					const cfg = typeConfig[mat.type as UploadType]
+				{materialList.map((mat: any) => {
+					const matType: UploadType = (mat.type as UploadType) ?? "pdf"
+					const cfg = typeConfig[matType] ?? typeConfig.pdf
 					return (
-						<Card key={mat.id}>
+						<Card key={mat._id}>
 							<View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
 								<View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: cfg.bg, alignItems: "center", justifyContent: "center" }}>
 									<Ionicons name={cfg.icon} size={22} color={cfg.color} />
@@ -122,14 +250,19 @@ export default function TeacherMaterialsScreen() {
 								<View style={{ flex: 1 }}>
 									<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>{mat.title}</Text>
 									<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
-										{mat.subject} · {mat.class} · {mat.date}
+										{mat.subjectName ?? mat.subject ?? "—"} · {mat.sectionName ?? mat.class ?? "—"} · {mat.uploadedAt ?? mat.date ?? ""}
 									</Text>
 								</View>
 								<View style={{ alignItems: "flex-end" }}>
-									<Badge text={mat.type.toUpperCase()} variant={mat.type === "video" ? "danger" : mat.type === "pdf" ? "primary" : "success"} />
-									<Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>
-										{mat.views} views
-									</Text>
+									<Badge
+										text={matType.toUpperCase()}
+										variant={matType === "video" ? "danger" : matType === "pdf" ? "primary" : "success"}
+									/>
+									{mat.views != null && (
+										<Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>
+											{mat.views} views
+										</Text>
+									)}
 								</View>
 							</View>
 						</Card>

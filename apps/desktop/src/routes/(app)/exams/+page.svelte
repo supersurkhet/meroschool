@@ -13,6 +13,7 @@
     CardContent,
     CardFooter,
   } from '$lib/components/ui/card';
+  import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
 
   // ── Types ────────────────────────────────────────────────────────────────────
   type ExamEntry = {
@@ -72,6 +73,12 @@
   function subjectColor(subject: string) {
     return SUBJECT_COLORS[subject] ?? DEFAULT_COLOR;
   }
+
+  // ── Convex state ─────────────────────────────────────────────────────────────
+  // Convex IDs for the currently selected class; populated after hierarchy loads
+  let convexClassId = $state<string | null>(null);
+  let convexSubjectIds = $state<Record<string, string>>({}); // subject name → convex id
+  let convexSchoolId = $state<string | null>(null);
 
   // ── Sample data ──────────────────────────────────────────────────────────────
   let exams = $state<ExamEntry[]>([
@@ -168,7 +175,7 @@
     formEntries = [];
   }
 
-  function saveExamSchedule() {
+  async function saveExamSchedule() {
     const validEntries = formEntries.filter(e => e.date);
     if (validEntries.length === 0) return;
 
@@ -184,11 +191,37 @@
       subjectColor: '',
     }));
 
-    // Remove old entries for same examType + class, then add new
+    // Remove old entries for same examType + class, then add new (local fallback)
     exams = [
       ...exams.filter(e => !(e.examType === formExamType && e.className === formClass)),
       ...newEntries,
     ];
+
+    // Persist to Convex if configured
+    if (isConvexConfigured()) {
+      for (const entry of validEntries) {
+        const subjectId = convexSubjectIds[entry.subject];
+        if (!subjectId) continue;
+        const durationMinutes =
+          (() => {
+            const [sh, sm] = entry.startTime.split(':').map(Number);
+            const [eh, em] = entry.endTime.split(':').map(Number);
+            return Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
+          })();
+        try {
+          await convexMutation(api.tests.createTest, {
+            subjectId,
+            title: `${formExamType} — ${entry.subject}`,
+            durationMinutes,
+            totalMarks: parseInt(entry.totalMarks) || 100,
+            createdBy: 'admin',
+            description: `${formClass} ${formExamType} scheduled on ${entry.date}`,
+          });
+        } catch (err) {
+          console.warn('[exams] createTest failed for', entry.subject, err);
+        }
+      }
+    }
 
     activeExamType = formExamType;
     selectedClass = formClass;
@@ -212,6 +245,68 @@
     if (!availableClasses.includes(selectedClass) && availableClasses.length > 0) {
       selectedClass = availableClasses[0];
     }
+  });
+
+  // ── Convex: load school hierarchy + subjects + tests on mount ─────────────────
+  $effect(() => {
+    if (!isConvexConfigured()) return;
+
+    (async () => {
+      // 1. Load school hierarchy to get real class/section IDs
+      const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId: 'default' }, null as any);
+      if (hierarchy?.schoolId) convexSchoolId = hierarchy.schoolId;
+
+      const schoolId = hierarchy?.schoolId ?? 'default';
+
+      // 2. Load classes
+      const convexClasses = await convexQuery(api.schools.listClasses, { schoolId }, [] as any[]);
+
+      // 3. For each class, load subjects and tests, map into ExamEntry[]
+      const convexEntries: ExamEntry[] = [];
+      const newSubjectIds: Record<string, string> = {};
+
+      for (const cls of (convexClasses ?? [])) {
+        const subjects = await convexQuery(
+          api.academics.listSubjectsByClass,
+          { classId: cls._id },
+          [] as any[]
+        );
+
+        for (const subject of (subjects ?? [])) {
+          const tests = await convexQuery(
+            api.tests.listTestsBySubject,
+            { subjectId: subject._id },
+            [] as any[]
+          );
+
+          newSubjectIds[subject.name] = subject._id;
+
+          for (const test of (tests ?? [])) {
+            convexEntries.push({
+              id: test._id,
+              examType: test.title?.includes('Mid') ? 'Mid Term' : test.title?.includes('Final') ? 'Final' : 'First Term',
+              className: cls.name,
+              subject: subject.name,
+              date: test.scheduledDate ?? '',
+              startTime: test.startTime ?? '10:00',
+              endTime: test.endTime ?? '13:00',
+              totalMarks: test.totalMarks ?? 100,
+              subjectColor: '',
+            });
+          }
+        }
+
+        // Track the convex class ID for the currently selected class
+        if (cls.name === selectedClass) {
+          convexClassId = cls._id;
+        }
+      }
+
+      if (convexEntries.length > 0) {
+        exams = convexEntries;
+      }
+      convexSubjectIds = newSubjectIds;
+    })();
   });
 </script>
 

@@ -1,15 +1,14 @@
-import { View, Text, ScrollView, Pressable } from "react-native"
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
+import { useQuery } from "convex/react"
+import { api } from "@/lib/convex/api"
 import { useAuth } from "@/lib/auth"
 import { useTheme } from "@/lib/theme"
 import { ScreenHeader } from "@/components/shared/ScreenHeader"
 import { Card, StatCard } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
-// Convex data hooks — uncomment when backend is wired up:
-// import { useQuery, useMutation } from '@/lib/convex/hooks'
-// import { api } from '../../../convex/_generated/api'
 
 function CircularProgress({ percentage, size = 80 }: { percentage: number; size?: number }) {
 	const { colors } = useTheme()
@@ -56,35 +55,39 @@ export default function StudentDashboard() {
 	const { colors } = useTheme()
 	const router = useRouter()
 
-	// Convex query patterns — replace mock data when backend is available:
-	// const attendance = useQuery(api.attendance.getStudentAttendance, { studentId: user?.id })
-	// const tests = useQuery(api.tests.getStudentTestHistory, { studentId: user?.id })
-	// const assignments = useQuery(api.assignments.getStudentAssignments, { studentId: user?.id })
+	const progress = useQuery(
+		api.progress.getStudentProgress,
+		user?.studentId ? { studentId: user.studentId as any } : "skip"
+	)
 
-	const attendancePercentage = 94
+	const testHistory = useQuery(
+		api.tests.getStudentTestHistory,
+		user?.studentId ? { studentId: user.studentId as any } : "skip"
+	)
 
-	const upcomingTests = [
-		{ id: "1", subject: "Mathematics", date: "Mar 25", time: "10:00 AM", chapter: "Algebra" },
-		{ id: "2", subject: "Science", date: "Mar 27", time: "11:00 AM", chapter: "Physics - Motion" },
-		{ id: "3", subject: "English", date: "Mar 28", time: "9:00 AM", chapter: "Grammar" },
-	]
+	const assignmentsData = useQuery(
+		api.assignments.getStudentAssignments,
+		user?.studentId && user?.sectionId
+			? { studentId: user.studentId as any, sectionId: user.sectionId as any }
+			: "skip"
+	)
 
-	const pendingAssignments = [
-		{ id: "1", title: "Quadratic Equations Practice", subject: "Mathematics", dueDate: "Mar 24", status: "pending" as const },
-		{ id: "2", title: "Essay: My Village", subject: "English", dueDate: "Mar 26", status: "pending" as const },
-		{ id: "3", title: "Lab Report: Acids & Bases", subject: "Science", dueDate: "Mar 29", status: "in-progress" as const },
-	]
+	const attendancePercentage = progress?.attendancePercentage ?? 0
 
-	const recentResults = [
-		{ id: "1", subject: "Nepali", score: 85, total: 100, grade: "A", date: "Mar 18" },
-		{ id: "2", subject: "Social Studies", score: 72, total: 100, grade: "B+", date: "Mar 15" },
-		{ id: "3", subject: "Mathematics", score: 91, total: 100, grade: "A+", date: "Mar 12" },
-	]
+	// Filter to only pending/in-progress assignments
+	const pendingAssignments = (assignmentsData ?? []).filter(
+		(a: any) => a.submissionStatus === "pending" || a.submissionStatus === "in-progress"
+	)
+
+	// Recent results from test history
+	const recentResults = (testHistory ?? []).slice(0, 5)
 
 	const statusColors: Record<string, { bg: string; text: string; label: string }> = {
 		"pending": { bg: colors.warningLight, text: colors.warning, label: "Pending" },
 		"in-progress": { bg: colors.primaryLight, text: colors.primary, label: "In Progress" },
 	}
+
+	const isLoading = progress === undefined || testHistory === undefined || assignmentsData === undefined
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -134,10 +137,14 @@ export default function StudentDashboard() {
 								{user?.name ?? "Student"}
 							</Text>
 							<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
-								Class 10-A
+								{progress?.sectionName ?? "—"}
 							</Text>
 						</View>
-						<CircularProgress percentage={attendancePercentage} size={72} />
+						{isLoading ? (
+							<ActivityIndicator size="small" color={colors.primary} />
+						) : (
+							<CircularProgress percentage={attendancePercentage} size={72} />
+						)}
 					</View>
 				</Card>
 
@@ -145,43 +152,16 @@ export default function StudentDashboard() {
 				<View style={{ flexDirection: "row", gap: 12 }}>
 					<StatCard
 						label={t("student.attendanceRate")}
-						value={`${attendancePercentage}%`}
+						value={isLoading ? "—" : `${attendancePercentage}%`}
 						icon={<Ionicons name="checkmark-circle" size={22} color={colors.success} />}
 						bgColor={colors.successLight}
 					/>
 					<StatCard
 						label={t("student.upcomingTests")}
-						value={upcomingTests.length}
+						value={isLoading ? "—" : (progress?.upcomingTestCount ?? 0)}
 						icon={<Ionicons name="document-text" size={22} color={colors.primary} />}
 						bgColor={colors.primaryLight}
 					/>
-				</View>
-
-				{/* Upcoming Tests */}
-				<View>
-					<Text style={{ fontSize: 18, fontWeight: "700", color: colors.text, marginBottom: 12 }}>
-						{t("student.upcomingTests")}
-					</Text>
-					{upcomingTests.map((test) => (
-						<Card key={test.id} style={{ marginBottom: 10 }}>
-							<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-								<View style={{ flex: 1 }}>
-									<Text style={{ fontSize: 16, fontWeight: "600", color: colors.text }}>
-										{test.subject}
-									</Text>
-									<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
-										{test.chapter}
-									</Text>
-								</View>
-								<View style={{ alignItems: "flex-end" }}>
-									<Badge text={test.date} variant="primary" />
-									<Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>
-										{test.time}
-									</Text>
-								</View>
-							</View>
-						</Card>
-					))}
 				</View>
 
 				{/* Pending Assignments */}
@@ -189,21 +169,34 @@ export default function StudentDashboard() {
 					<Text style={{ fontSize: 18, fontWeight: "700", color: colors.text, marginBottom: 12 }}>
 						{t("student.assignments")} — {t("student.pending")}
 					</Text>
-					{pendingAssignments.map((assignment) => {
-						const sc = statusColors[assignment.status]
+
+					{assignmentsData === undefined && (
+						<ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 16 }} />
+					)}
+
+					{assignmentsData !== undefined && pendingAssignments.length === 0 && (
+						<Card>
+							<Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: "center", paddingVertical: 8 }}>
+								No pending assignments
+							</Text>
+						</Card>
+					)}
+
+					{pendingAssignments.map((assignment: any) => {
+						const sc = statusColors[assignment.submissionStatus] ?? statusColors["pending"]
 						return (
-							<Card key={assignment.id} style={{ marginBottom: 10 }}>
+							<Card key={assignment._id} style={{ marginBottom: 10 }}>
 								<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
 									<View style={{ flex: 1 }}>
 										<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>
 											{assignment.title}
 										</Text>
 										<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
-											{assignment.subject}
+											{assignment.subjectName ?? assignment.subject}
 										</Text>
 									</View>
 									<View style={{ alignItems: "flex-end", gap: 4 }}>
-										<Badge text={assignment.dueDate} variant="warning" />
+										<Badge text={assignment.dueDate ?? assignment.dueDateLabel ?? "—"} variant="warning" />
 										<View
 											style={{
 												backgroundColor: sc.bg,
@@ -228,15 +221,28 @@ export default function StudentDashboard() {
 					<Text style={{ fontSize: 18, fontWeight: "700", color: colors.text, marginBottom: 12 }}>
 						{t("student.recentResults")}
 					</Text>
-					{recentResults.map((result) => (
-						<Card key={result.id} style={{ marginBottom: 10 }}>
+
+					{testHistory === undefined && (
+						<ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 16 }} />
+					)}
+
+					{testHistory !== undefined && recentResults.length === 0 && (
+						<Card>
+							<Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: "center", paddingVertical: 8 }}>
+								No test results yet
+							</Text>
+						</Card>
+					)}
+
+					{recentResults.map((result: any) => (
+						<Card key={result._id ?? result.id} style={{ marginBottom: 10 }}>
 							<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
 								<View>
 									<Text style={{ fontSize: 16, fontWeight: "600", color: colors.text }}>
-										{result.subject}
+										{result.subjectName ?? result.subject}
 									</Text>
 									<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
-										{result.score}/{result.total} — {result.date}
+										{result.score}/{result.totalMarks ?? result.total} — {result.submittedAt ?? result.date}
 									</Text>
 								</View>
 								<View
@@ -250,7 +256,7 @@ export default function StudentDashboard() {
 									}}
 								>
 									<Text style={{ fontSize: 16, fontWeight: "700", color: colors.success }}>
-										{result.grade}
+										{result.grade ?? `${Math.round(((result.score ?? 0) / (result.totalMarks ?? result.total ?? 100)) * 100)}%`}
 									</Text>
 								</View>
 							</View>

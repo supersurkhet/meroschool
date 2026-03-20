@@ -5,6 +5,7 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Download, Printer, QrCode, ChevronLeft } from 'lucide-svelte';
   import QRCodeLib from 'qrcode';
+  import { convexQuery, isConvexConfigured, api } from '$lib/convex';
 
   interface Section {
     name: string;
@@ -18,7 +19,7 @@
     color: string;
   }
 
-  const classes = $state<SchoolClass[]>([
+  let classes = $state<SchoolClass[]>([
     { id: 'cls-6', name: 'Grade 6', sections: [{ id: 'sec-6a', name: 'Section A' }, { id: 'sec-6b', name: 'Section B' }], color: 'bg-purple-500' },
     { id: 'cls-7', name: 'Grade 7', sections: [{ id: 'sec-7a', name: 'Section A' }, { id: 'sec-7b', name: 'Section B' }], color: 'bg-blue-500' },
     { id: 'cls-8', name: 'Grade 8', sections: [{ id: 'sec-8a', name: 'Section A' }, { id: 'sec-8b', name: 'Section B' }, { id: 'sec-8c', name: 'Section C' }], color: 'bg-cyan-500' },
@@ -162,6 +163,49 @@
   }
 
   const firstThumbKey = (cls: SchoolClass) => `thumb-${cls.id}/${cls.sections[0]?.id}`;
+
+  // ── Convex: load real class/section hierarchy on mount ───────────────────────
+  // Colour palette cycled for classes that come from Convex
+  const CLASS_COLORS = [
+    'bg-purple-500', 'bg-blue-500', 'bg-cyan-500', 'bg-teal-500',
+    'bg-green-500', 'bg-yellow-500', 'bg-orange-500', 'bg-pink-500',
+    'bg-rose-500', 'bg-indigo-500',
+  ];
+
+  $effect(() => {
+    if (!isConvexConfigured()) return;
+
+    (async () => {
+      const hierarchy = await convexQuery(
+        api.schools.getSchoolHierarchy,
+        { schoolId: 'default' },
+        null as any
+      );
+
+      if (!hierarchy?.classes?.length) return;
+
+      const realClasses: SchoolClass[] = hierarchy.classes.map(
+        (cls: any, idx: number) => ({
+          id: cls._id ?? cls.id,
+          name: cls.name,
+          color: CLASS_COLORS[idx % CLASS_COLORS.length],
+          sections: (cls.sections ?? []).map((sec: any) => ({
+            id: sec._id ?? sec.id,
+            name: sec.name,
+          })),
+        })
+      );
+
+      classes = realClasses;
+
+      // Reset selection state since IDs changed
+      selectedClass = null;
+      selectedSection = null;
+      currentQrUrl = '';
+      qrDataUrls = {};
+      thumbUrls = {};
+    })();
+  });
 </script>
 
 <div class="flex flex-col gap-6 p-6">
