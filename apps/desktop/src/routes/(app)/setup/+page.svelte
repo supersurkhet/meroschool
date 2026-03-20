@@ -268,13 +268,14 @@
           <!-- Logo upload -->
           <div class="space-y-2">
             <Label>School Logo <span class="text-muted-foreground text-xs">(optional)</span></Label>
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
-              class="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer {isDraggingLogo ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}"
+            <button
+              type="button"
+              class="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer w-full {isDraggingLogo ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}"
               ondrop={handleLogoDrop}
               ondragover={(e) => { e.preventDefault(); isDraggingLogo = true; }}
               ondragleave={() => { isDraggingLogo = false; }}
               onclick={() => document.getElementById('logo-input')?.click()}
+              aria-label="Upload school logo"
             >
               {#if logoPreview}
                 <img src={logoPreview} alt="School logo preview" class="w-24 h-24 object-cover rounded-xl shadow-md" />
@@ -290,7 +291,7 @@
                   <p class="text-xs text-muted-foreground mt-1">PNG, JPG, SVG up to 2MB</p>
                 </div>
               {/if}
-            </div>
+            </button>
             <input id="logo-input" type="file" accept="image/*" class="hidden" onchange={handleLogoInput} />
           </div>
 
@@ -653,6 +654,7 @@
                                 type="button"
                                 class="text-muted-foreground hover:text-destructive transition-colors"
                                 onclick={() => deleteSection(sec.id)}
+                                aria-label="Delete section {sec.name}"
                               >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -798,6 +800,7 @@
                                 type="button"
                                 class="text-muted-foreground hover:text-destructive transition-colors"
                                 onclick={() => deleteSubject(subj.id)}
+                                aria-label="Delete subject {subj.name}"
                               >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

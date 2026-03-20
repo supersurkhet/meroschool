@@ -330,6 +330,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
             type="button"
             class="text-muted-foreground hover:text-foreground transition-colors"
             onclick={() => { showAddForm = false; editingStudent = null; }}
+            aria-label="Close form"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
