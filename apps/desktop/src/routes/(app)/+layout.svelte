@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { getIsAuthenticated, getUser, isAdmin, logout } from '$lib/stores/auth.svelte';
+  import { getSchool } from '$lib/stores/school.svelte';
   import { toggleTheme, getResolvedTheme } from '$lib/stores/theme.svelte';
   import { t, setLocale, getLocale } from '$lib/i18n/index.svelte';
   import { Button } from '$lib/components/ui/button';
@@ -230,7 +231,7 @@
     <!-- Top bar -->
     <header class="flex h-12 shrink-0 items-center justify-between border-b border-border/40 px-6">
       <div class="flex items-center gap-2 text-[13px]">
-        <span class="font-medium text-muted-foreground/40">MeroSchool</span>
+        <span class="font-medium text-muted-foreground/40">{getSchool()?.name ?? 'MeroSchool'}</span>
         <span class="text-muted-foreground/20">/</span>
         <span class="font-semibold">{pageTitle}</span>
       </div>

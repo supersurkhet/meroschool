@@ -7,6 +7,7 @@
   import { t } from '$lib/i18n/index.svelte';
   import { Download, FileText, FileSpreadsheet, Printer, CheckCircle2, Users } from 'lucide-svelte';
   import { convexQuery, isConvexConfigured, api } from '$lib/convex';
+  import { getSchool } from '$lib/stores/school.svelte';
 
   type ExportFormat = 'csv' | 'pdf';
   type ExportScope = 'class' | 'student';
@@ -129,12 +130,14 @@
   // ── Convex: load hierarchy + tests; reload results when selection changes ─────
   $effect(() => {
     if (!isConvexConfigured()) return;
+    const schoolId = getSchool()?.id;
+    if (!schoolId) return;
 
     (async () => {
       // Load school hierarchy to get real class/section IDs
       const hierarchy = await convexQuery(
         api.schools.getSchoolHierarchy,
-        { schoolId: 'default' },
+        { schoolId },
         null as any
       );
 

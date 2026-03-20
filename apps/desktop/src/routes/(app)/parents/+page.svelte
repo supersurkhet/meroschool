@@ -13,30 +13,32 @@
     CardFooter,
   } from '$lib/components/ui/card';
   import { convexQuery, convexMutation, api } from '$lib/convex';
+  import { getSchool } from '$lib/stores/school.svelte';
 
   // ── Types ────────────────────────────────────────────────────────────────────
   type Student = {
-    id: number;
+    id: any;
     name: string;
+    email?: string;
     rollNumber: string;
     class: string;
     section: string;
   };
 
   type Parent = {
-    id: number;
+    id: any;
     name: string;
     email: string;
     phone: string;
     occupation: string;
     address: string;
-    childIds: number[];
+    childIds: any[];
     initials: string;
     avatarColor: string;
   };
 
   // ── Sample students pool (for linking) ───────────────────────────────────────
-  const STUDENTS: Student[] = [
+  let STUDENTS = $state<Student[]>([
     { id: 101, name: 'Aarav Sharma', rollNumber: 'R001', class: 'Class 9', section: 'A' },
     { id: 102, name: 'Priya Sharma', rollNumber: 'R002', class: 'Class 7', section: 'B' },
     { id: 103, name: 'Arjun Thapa', rollNumber: 'R003', class: 'Class 10', section: 'A' },
@@ -45,7 +47,39 @@
     { id: 106, name: 'Anita Maharjan', rollNumber: 'R006', class: 'Class 6', section: 'B' },
     { id: 107, name: 'Rohan Basnet', rollNumber: 'R007', class: 'Class 3', section: 'A' },
     { id: 108, name: 'Kritika Shrestha', rollNumber: 'R008', class: 'Class 4', section: 'A' },
-  ];
+  ]);
+
+  // Load real students from Convex school hierarchy
+  $effect(() => {
+    const schoolId = getSchool()?.id;
+    if (!schoolId) return;
+    (async () => {
+      try {
+        const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId });
+        if (hierarchy?.classes) {
+          const allStudents: typeof STUDENTS = [];
+          for (const cls of hierarchy.classes) {
+            for (const sec of cls.sections ?? []) {
+              const students = await convexQuery(api.people.listStudentsBySection, { sectionId: sec._id });
+              if (students) {
+                for (const s of students) {
+                  allStudents.push({
+                    id: s._id ?? s.id,
+                    name: s.user?.name ?? 'Unknown',
+                    email: s.user?.email ?? '',
+                    class: cls.name,
+                    section: sec.name,
+                    rollNumber: s.rollNumber ?? '',
+                  });
+                }
+              }
+            }
+          }
+          if (allStudents.length > 0) STUDENTS = allStudents;
+        }
+      } catch {}
+    })();
+  });
 
   const AVATAR_COLORS = [
     'bg-indigo-500', 'bg-teal-500', 'bg-orange-500',
@@ -56,7 +90,7 @@
     return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
   }
 
-  function getStudent(id: number): Student | undefined {
+  function getStudent(id: string | number): Student | undefined {
     return STUDENTS.find(s => s.id === id);
   }
 
@@ -146,9 +180,9 @@
   // UI state
   let searchQuery = $state('');
   let showAddForm = $state(false);
-  let linkingParentId = $state<number | null>(null);
+  let linkingParentId = $state<string | number | null>(null);
   let linkSearchQuery = $state('');
-  let editingId = $state<number | null>(null);
+  let editingId = $state<string | number | null>(null);
 
   // Form fields
   let formName = $state('');
@@ -156,7 +190,7 @@
   let formPhone = $state('');
   let formOccupation = $state('');
   let formAddress = $state('');
-  let formChildIds = $state<number[]>([]);
+  let formChildIds = $state<(string | number)[]>([]);
 
   // ── Derived ──────────────────────────────────────────────────────────────────
   let filteredParents = $derived(
@@ -305,7 +339,7 @@
     linkSearchQuery = '';
   }
 
-  async function linkStudent(parentId: number, studentId: number) {
+  async function linkStudent(parentId: any, studentId: any) {
     const idx = parents.findIndex(p => p.id === parentId);
     if (idx !== -1 && !parents[idx].childIds.includes(studentId)) {
       const newChildIds = [...parents[idx].childIds, studentId];
@@ -322,7 +356,7 @@
     }
   }
 
-  async function unlinkStudent(parentId: number, studentId: number) {
+  async function unlinkStudent(parentId: any, studentId: any) {
     const idx = parents.findIndex(p => p.id === parentId);
     if (idx !== -1) {
       const newChildIds = parents[idx].childIds.filter(id => id !== studentId);

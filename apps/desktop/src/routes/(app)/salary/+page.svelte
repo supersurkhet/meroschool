@@ -16,7 +16,7 @@
     Plus,
     X,
   } from 'lucide-svelte';
-  import { convexQuery, convexMutation, api } from '$lib/convex';
+  import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
 
   type SalaryStatus = 'paid' | 'pending' | 'cancelled';
 
@@ -285,10 +285,14 @@
     }
   }
 
-  function payAll() {
-    for (let i = 0; i < salaryRecords.length; i++) {
-      if (salaryRecords[i].status === 'pending') {
-        salaryRecords[i].status = 'paid';
+  async function payAll() {
+    const pending = salaryRecords.filter(r => r.status === 'pending');
+    // Update local state immediately
+    for (const r of pending) r.status = 'paid';
+    // Persist to Convex
+    if (isConvexConfigured()) {
+      for (const r of pending) {
+        try { await convexMutation(api.salary.markPaid, { id: r.id }); } catch {}
       }
     }
   }

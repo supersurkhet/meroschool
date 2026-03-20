@@ -14,6 +14,7 @@
     CardFooter,
   } from '$lib/components/ui/card';
   import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
+  import { getSchool } from '$lib/stores/school.svelte';
 
   // ── Types ────────────────────────────────────────────────────────────────────
   type ExamEntry = {
@@ -250,16 +251,16 @@
   // ── Convex: load school hierarchy + subjects + tests on mount ─────────────────
   $effect(() => {
     if (!isConvexConfigured()) return;
+    const schoolId = getSchool()?.id;
+    if (!schoolId) return;
 
     (async () => {
       // 1. Load school hierarchy to get real class/section IDs
-      const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId: 'default' }, null as any);
+      const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId }, null as any);
       if (hierarchy?.schoolId) convexSchoolId = hierarchy.schoolId;
 
-      const schoolId = hierarchy?.schoolId ?? 'default';
-
       // 2. Load classes
-      const convexClasses = await convexQuery(api.schools.listClasses, { schoolId }, [] as any[]);
+      const convexClasses = await convexQuery(api.schools.listClasses, { schoolId: hierarchy?.schoolId ?? schoolId }, [] as any[]);
 
       // 3. For each class, load subjects and tests, map into ExamEntry[]
       const convexEntries: ExamEntry[] = [];

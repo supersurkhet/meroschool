@@ -12,9 +12,31 @@ export interface SchoolContext {
   setupCompletedAt?: string;
 }
 
+// ─── Persistence key ─────────────────────────────────────────────────────────
+
+const SCHOOL_STORAGE_KEY = 'meroschool_school';
+
 // ─── Reactive state (Svelte 5 runes) ─────────────────────────────────────────
 
 let school = $state<SchoolContext | null>(null);
+
+// Restore from localStorage on module load
+if (typeof window !== 'undefined') {
+  try {
+    const saved = localStorage.getItem(SCHOOL_STORAGE_KEY);
+    if (saved) school = JSON.parse(saved);
+  } catch {}
+}
+
+function persistSchool(): void {
+  if (typeof window !== 'undefined') {
+    if (school) {
+      localStorage.setItem(SCHOOL_STORAGE_KEY, JSON.stringify(school));
+    } else {
+      localStorage.removeItem(SCHOOL_STORAGE_KEY);
+    }
+  }
+}
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -24,6 +46,7 @@ let school = $state<SchoolContext | null>(null);
  */
 export function setSchool(context: SchoolContext): void {
   school = { ...context };
+  persistSchool();
 }
 
 /**
@@ -46,6 +69,7 @@ export function isSetupComplete(): boolean {
  */
 export function clearSchool(): void {
   school = null;
+  persistSchool();
 }
 
 /**
@@ -57,4 +81,5 @@ export function updateSchool(patch: Partial<SchoolContext>): void {
     throw new Error('Cannot update school context before setup is complete.');
   }
   school = { ...school, ...patch };
+  persistSchool();
 }

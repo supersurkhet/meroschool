@@ -58,9 +58,10 @@ const en = {
 		welcomeBack: 'Welcome back',
 		adminPanel: 'Admin Panel',
 		signIn: 'Sign in to manage your school',
-		signOut: 'Sign out',
+		signOut: 'Sign Out',
 		accessDenied: 'Access Denied',
-		noAdminPrivileges: 'You do not have admin privileges to access this application. Please contact your administrator.',
+		noAdminPrivileges: 'You do not have admin privileges to access this panel.',
+		password: 'Password',
 	},
 	setup: {
 		schoolSetup: 'School Setup',

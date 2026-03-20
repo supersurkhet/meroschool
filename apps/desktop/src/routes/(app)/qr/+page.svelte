@@ -6,6 +6,7 @@
   import { Download, Printer, QrCode, ChevronLeft } from 'lucide-svelte';
   import QRCodeLib from 'qrcode';
   import { convexQuery, isConvexConfigured, api } from '$lib/convex';
+  import { getSchool } from '$lib/stores/school.svelte';
 
   interface Section {
     name: string;
@@ -174,11 +175,13 @@
 
   $effect(() => {
     if (!isConvexConfigured()) return;
+    const schoolId = getSchool()?.id;
+    if (!schoolId) return;
 
     (async () => {
       const hierarchy = await convexQuery(
         api.schools.getSchoolHierarchy,
-        { schoolId: 'default' },
+        { schoolId },
         null as any
       );
 

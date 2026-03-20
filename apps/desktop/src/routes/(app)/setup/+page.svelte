@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { t } from '$lib/i18n/index.svelte';
   import { setSchool } from '$lib/stores/school.svelte';
   import { convexMutation, isConvexConfigured, api } from '$lib/convex';
@@ -245,7 +246,7 @@
       address: schoolAddress,
       setupCompletedAt: new Date().toISOString(),
     });
-    alert(`School "${schoolName}" setup complete!\nClasses: ${classes.length}, Sections: ${sections.length}, Subjects: ${subjects.length}`);
+    goto('/dashboard');
   }
 
   const stepLabels = ['School Info', 'Academic Year & Classes', 'Sections', 'Subjects'];

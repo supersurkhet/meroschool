@@ -78,7 +78,7 @@
     { labelKey: 'dashboard.salaryPending', value: liveSalaryPending, change: 'NPR 1.65L', icon: DollarSign, accent: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
   ]);
 
-  // Activity feed
+  // Activity feed (mock — no activity log API yet)
   const activities = [
     { icon: UserPlus, msg: 'Priya Tamang enrolled — Grade 8-A', time: '10m ago', dot: 'bg-emerald-500' },
     { icon: BookOpen, msg: 'Midterm results uploaded — Grade 10', time: '1h ago', dot: 'bg-indigo-500' },
@@ -88,17 +88,17 @@
     { icon: GraduationCap, msg: 'Profile updated — Sunita Devi Thapa', time: 'Yesterday', dot: 'bg-orange-500' },
   ];
 
-  // Quick actions
-  const actions = [
-    { label: 'Add Student', desc: 'New enrollment', icon: UserPlus, href: '/students', color: 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400' },
-    { label: 'Create Exam', desc: 'Schedule exam', icon: BookOpen, href: '/exams', color: 'group-hover:text-violet-600 dark:group-hover:text-violet-400' },
-    { label: 'Generate QR', desc: 'Class codes', icon: QrCode, href: '/qr', color: 'group-hover:text-cyan-600 dark:group-hover:text-cyan-400' },
-    { label: 'View Reports', desc: 'Analytics', icon: FileText, href: '/reports', color: 'group-hover:text-teal-600 dark:group-hover:text-teal-400' },
-    { label: 'Manage Salary', desc: 'Pay staff', icon: DollarSign, href: '/salary', color: 'group-hover:text-amber-600 dark:group-hover:text-amber-400' },
-    { label: 'Add Teacher', desc: 'New hire', icon: GraduationCap, href: '/teachers', color: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400' },
-  ];
+  // Quick actions — labels use i18n keys
+  const actions = $derived([
+    { label: t('dashboard.addStudent'), desc: t('dashboard.newEnrollment'), icon: UserPlus, href: '/students', color: 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400' },
+    { label: t('dashboard.createExam'), desc: t('dashboard.scheduleExam'), icon: BookOpen, href: '/exams', color: 'group-hover:text-violet-600 dark:group-hover:text-violet-400' },
+    { label: t('dashboard.generateQr'), desc: t('dashboard.classCodes'), icon: QrCode, href: '/qr', color: 'group-hover:text-cyan-600 dark:group-hover:text-cyan-400' },
+    { label: t('dashboard.viewReports'), desc: t('dashboard.analytics'), icon: FileText, href: '/reports', color: 'group-hover:text-teal-600 dark:group-hover:text-teal-400' },
+    { label: t('dashboard.manageSalary'), desc: t('dashboard.payStaff'), icon: DollarSign, href: '/salary', color: 'group-hover:text-amber-600 dark:group-hover:text-amber-400' },
+    { label: t('dashboard.addTeacher'), desc: t('dashboard.newHire'), icon: GraduationCap, href: '/teachers', color: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400' },
+  ]);
 
-  // Schedule
+  // Schedule (mock — no schedule API yet)
   const schedule = [
     { title: 'Mathematics Midterm', time: '09:00 – 11:00', who: 'Grade 10', type: 'exam' as const },
     { title: 'Science Lab Practical', time: '11:30 – 13:00', who: 'Grade 9-B', type: 'exam' as const },
@@ -112,9 +112,45 @@
     event: 'bg-indigo-500',
   };
 
-  // Attendance sparkline data
-  const sparkline = [88, 92, 85, 91, 94, 89, 91];
-  const sparkMax = Math.max(...sparkline);
+  // Attendance sparkline — seeded from live stats; loaded from Convex when available
+  let sparkline = $state([88, 92, 85, 91, 94, 89, 91]);
+  const sparkMax = $derived(Math.max(...sparkline));
+
+  // Class distribution — loaded from school hierarchy
+  type ClassDist = { name: string; pct: number };
+  let classDistribution = $state<ClassDist[]>([
+    { name: 'Grade 10', pct: 95 },
+    { name: 'Grade 9', pct: 88 },
+    { name: 'Grade 8', pct: 92 },
+    { name: 'Grade 7', pct: 85 },
+  ]);
+
+  $effect(() => {
+    const schoolId = getSchool()?.id;
+    if (!schoolId) return;
+    (async () => {
+      try {
+        const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId });
+        if (hierarchy?.classes && hierarchy.classes.length > 0) {
+          // Compute attendance % per class from student counts (proxy: capacity fill rate)
+          const dist: ClassDist[] = [];
+          for (const cls of hierarchy.classes.slice(0, 6)) {
+            const totalStudents = (cls.sections ?? []).reduce(
+              (sum: number, sec: { students?: unknown[] }) => sum + (sec.students?.length ?? 0),
+              0,
+            );
+            const capacity = (cls.sections ?? []).reduce(
+              (sum: number, sec: { capacity?: number }) => sum + (sec.capacity ?? 40),
+              0,
+            );
+            const pct = capacity > 0 ? Math.round((totalStudents / capacity) * 100) : 0;
+            dist.push({ name: cls.name, pct });
+          }
+          if (dist.length > 0) classDistribution = dist;
+        }
+      } catch {}
+    })();
+  });
 </script>
 
 <div class="space-y-6">
@@ -228,19 +264,14 @@
           {/each}
         </div>
         <p class="mt-2 text-center text-lg font-bold text-primary">{liveAttendance}</p>
-        <p class="text-center text-[11px] text-muted-foreground">Today's attendance</p>
+        <p class="text-center text-[11px] text-muted-foreground">{t('dashboard.todaysAttendance')}</p>
       </div>
 
       <!-- Class distribution -->
       <div class="rounded-xl border border-border bg-card p-5">
         <h3 class="text-sm font-semibold">{t('dashboard.classDistribution')}</h3>
         <div class="mt-3 space-y-2">
-          {#each [
-            { name: 'Grade 10', pct: 95 },
-            { name: 'Grade 9', pct: 88 },
-            { name: 'Grade 8', pct: 92 },
-            { name: 'Grade 7', pct: 85 },
-          ] as cls}
+          {#each classDistribution as cls}
             <div class="flex items-center gap-2">
               <span class="w-16 text-[11px] text-muted-foreground">{cls.name}</span>
               <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">

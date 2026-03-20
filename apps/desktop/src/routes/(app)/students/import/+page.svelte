@@ -23,6 +23,31 @@
 	let fileName = $state('')
 	let isDragging = $state(false)
 
+	// ── Section picker state ────────────────────────────────────────────
+	type SectionOption = { id: string; label: string }
+	let sections = $state<SectionOption[]>([])
+	let selectedSectionId = $state<string>('')
+
+	$effect(() => {
+		const schoolId = getSchool()?.id
+		if (!schoolId) return
+		;(async () => {
+			try {
+				const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId })
+				if (hierarchy?.classes) {
+					const opts: SectionOption[] = []
+					for (const cls of hierarchy.classes) {
+						for (const sec of cls.sections ?? []) {
+							opts.push({ id: sec._id, label: `${cls.name} — ${sec.name}` })
+						}
+					}
+					sections = opts
+					if (opts.length > 0 && !selectedSectionId) selectedSectionId = opts[0].id
+				}
+			} catch {}
+		})()
+	})
+
 	// ── Computed ───────────────────────────────────────────────────────
 	let errorRowSet = $derived(new Set(errors.map((e) => e.row)))
 	let validCount = $derived(parsedRows.length - errorRowSet.size)
@@ -123,7 +148,7 @@
 					name: row['name'] ?? row['Name'] ?? '',
 					email: row['email'] ?? row['Email'] ?? `${(row['name'] ?? 'student').toLowerCase().replace(/\s+/g, '.')}@import.local`,
 					rollNumber: row['roll_number'] ?? row['Roll Number'] ?? row['roll'] ?? '',
-					sectionId: row['section_id'] ?? 'default', // Will need a real section ID
+					sectionId: row['section_id'] ?? selectedSectionId,
 					...(row['date_of_birth'] || row['dob'] ? { dateOfBirth: row['date_of_birth'] ?? row['dob'] } : {}),
 					admissionDate: new Date().toISOString().slice(0, 10),
 				}))
@@ -271,12 +296,28 @@
 					{errorCount} {t('csv.withErrors')}
 				</Badge>
 			{/if}
-			<div class="ml-auto flex gap-2">
+			<div class="ml-auto flex items-center gap-2">
+				{#if sections.length > 0}
+					<div class="flex items-center gap-2">
+						<label for="section-picker" class="text-sm font-medium text-muted-foreground whitespace-nowrap">
+							{t('students.assignSection')}:
+						</label>
+						<select
+							id="section-picker"
+							bind:value={selectedSectionId}
+							class="rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+						>
+							{#each sections as sec}
+								<option value={sec.id}>{sec.label}</option>
+							{/each}
+						</select>
+					</div>
+				{/if}
 				<Button variant="ghost" size="sm" onclick={clearFile} class="gap-1">
 					<X class="h-4 w-4" />
 					{t('common.clear')}
 				</Button>
-				<Button onclick={importValid} class="gap-2" disabled={validCount === 0}>
+				<Button onclick={importValid} class="gap-2" disabled={validCount === 0 || !selectedSectionId}>
 					<Upload class="h-4 w-4" />
 					{t('csv.importStudents')} ({validCount})
 				</Button>
