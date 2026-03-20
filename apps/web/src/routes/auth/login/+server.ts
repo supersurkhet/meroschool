@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
-import { workos, clientId } from '$lib/server/auth'
+import { workos, getClientId } from '$lib/server/auth'
 
 export const GET: RequestHandler = async ({ url }) => {
 	const redirectUri = `${url.origin}/auth/callback`
@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const authorizationUrl = workos.userManagement.getAuthorizationUrl({
 		provider: 'authkit',
 		redirectUri,
-		clientId,
+		clientId: getClientId(),
 	})
 
 	throw redirect(302, authorizationUrl)

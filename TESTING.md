@@ -570,3 +570,50 @@
 - [ ] `bulkEnrollStudents` validates email format, dateOfBirth, and admissionDate format
 - [ ] `bulkCreateTeachers` validates email format
 - [ ] `exportAttendance` validates startDate and endDate format (YYYY-MM-DD)
+
+## Phase 3 — Web Verification
+
+### Onboarding Flow (Web)
+- [ ] Step 1: School info form renders with name, address, phone, email, province, district, school type
+- [ ] Step 2: Add Classes form renders with text input and Add button
+- [ ] Step 2: Adding class appends to list, remove button removes it
+- [ ] Step 3: For each class, section inputs render with add/remove
+- [ ] Step 3: Section badges display with X remove button
+- [ ] Step 4: Teacher email input with invite button renders
+- [ ] Step 4: Adding teacher email appends to invited list
+- [ ] Step 4: Send Invites button appears when teachers are added
+- [ ] Visual stepper shows 4 steps with current highlighted, completed steps show checkmark
+- [ ] Back/Next navigation works across all 4 steps
+- [ ] Final success screen shows "Your school is ready!" with summary stats
+- [ ] Success screen links to dashboard
+
+### Student Progress Page (Web)
+- [ ] Section selector dropdown renders with class options
+- [ ] Progress table shows 15 sample students with all columns
+- [ ] Attendance % cells are color-coded: green >70%, yellow 40-70%, red <40%
+- [ ] Test Average % cells are color-coded correctly
+- [ ] Overall rating is calculated and color-coded
+- [ ] Click row expands detail card with attendance trend and test scores
+- [ ] Attendance trend shows bar chart for last 6 months with correct heights
+- [ ] Test scores show subject name, progress bar, and percentage
+- [ ] Click expanded row again collapses it
+- [ ] Export CSV button downloads valid CSV file
+- [ ] Dark mode renders correctly on progress page
+
+### i18n Completion (Web)
+- [ ] All onboarding step 2-4 keys exist in English
+- [ ] All onboarding step 2-4 keys exist in Nepali
+- [ ] All progress page keys exist in English
+- [ ] All progress page keys exist in Nepali
+- [ ] Language switcher updates all new labels correctly
+
+### Type Checking & Build (Web)
+- [ ] svelte-check runs with 0 errors
+- [ ] vite build succeeds with adapter-cloudflare
+- [ ] Input, Select, Textarea components support bind:value
+
+### Deploy Preparation (Web)
+- [ ] svelte.config.js uses @sveltejs/adapter-cloudflare
+- [ ] wrangler.jsonc exists with correct config
+- [ ] .env.example lists required environment variables
+- [ ] WorkOS auth initializes lazily (no build-time crash)

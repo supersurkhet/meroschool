@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
-import { workos, clientId } from '$lib/server/auth'
+import { workos, getClientId } from '$lib/server/auth'
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	const code = url.searchParams.get('code')
@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 	const { accessToken, user } = await workos.userManagement.authenticateWithCode({
 		code,
-		clientId,
+		clientId: getClientId(),
 	})
 
 	cookies.set('session', accessToken, {
@@ -23,7 +23,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	})
 
 	// Determine redirect based on user role from metadata
-	const role = (user as Record<string, unknown>).role as string | undefined
+	const role = (user as unknown as Record<string, unknown>).role as string | undefined
 		?? 'teacher'
 
 	const roleRedirects: Record<string, string> = {
