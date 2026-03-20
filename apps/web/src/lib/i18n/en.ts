@@ -327,7 +327,7 @@ export default {
 	"onboard.inviteTeacher": "Invite Teacher",
 	"onboard.signInFirst": "Sign in to register your school",
 	"onboard.signInDesc": "Create your admin account first. You'll use this to manage your school on MeroSchool.",
-	"onboard.signInCta": "Sign in with WorkOS",
+	"onboard.signInCta": "Sign In to Get Started",
 	"onboard.signInNote": "Free to create — no credit card required",
 	"onboard.schoolReady": "Your school is ready!",
 	"onboard.goToDashboard": "Go to Dashboard",

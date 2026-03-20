@@ -327,7 +327,7 @@ export default {
 	"onboard.inviteTeacher": "शिक्षक निमन्त्रणा",
 	"onboard.signInFirst": "आफ्नो विद्यालय दर्ता गर्न साइन इन गर्नुहोस्",
 	"onboard.signInDesc": "पहिले आफ्नो एडमिन खाता बनाउनुहोस्। तपाईं यसलाई मेरो स्कूलमा आफ्नो विद्यालय व्यवस्थापन गर्न प्रयोग गर्नुहुनेछ।",
-	"onboard.signInCta": "WorkOS मार्फत साइन इन गर्नुहोस्",
+	"onboard.signInCta": "सुरु गर्न साइन इन गर्नुहोस्",
 	"onboard.signInNote": "निःशुल्क — क्रेडिट कार्ड आवश्यक छैन",
 	"onboard.schoolReady": "तपाईंको विद्यालय तयार छ!",
 	"onboard.goToDashboard": "ड्यासबोर्डमा जानुहोस्",

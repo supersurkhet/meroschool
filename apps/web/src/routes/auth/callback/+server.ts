@@ -1,21 +1,29 @@
-import { redirect } from '@sveltejs/kit'
+import { redirect, error } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
-import { workos, getClientId } from '$lib/server/auth'
+import { WorkOS } from '@workos-inc/node'
+import { env } from '$env/dynamic/private'
 import { mutate } from '$lib/server/convex'
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	const code = url.searchParams.get('code')
-
 	if (!code) {
 		throw redirect(302, '/auth/login')
 	}
 
+	const apiKey = env.WORKOS_API_KEY
+	const clientId = env.WORKOS_CLIENT_ID
+	if (!apiKey || !clientId) {
+		throw error(500, 'WorkOS credentials not configured')
+	}
+
+	const workos = new WorkOS(apiKey)
+
 	const { accessToken, user } = await workos.userManagement.authenticateWithCode({
 		code,
-		clientId: getClientId(),
+		clientId,
 	})
 
-	// Read return_to from cookie (set by login route)
+	// Read return_to from cookie
 	const returnTo = cookies.get('auth_return_to') ?? ''
 	cookies.delete('auth_return_to', { path: '/' })
 
@@ -32,19 +40,17 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			avatarUrl: user.profilePictureUrl ?? undefined,
 		})
 	} catch {
-		// Convex not configured — continue with session-only auth
+		// Convex not configured — session-only auth
 	}
 
-	// Set session cookie with JWT
 	cookies.set('session', accessToken, {
 		httpOnly: true,
-		secure: false, // allow http://localhost
+		secure: false,
 		sameSite: 'lax',
 		path: '/',
 		maxAge: 60 * 60 * 24 * 7,
 	})
 
-	// Set user info cookie for client-side access
 	cookies.set('user_info', JSON.stringify({
 		id: user.id,
 		name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
@@ -58,7 +64,6 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		maxAge: 60 * 60 * 24 * 7,
 	})
 
-	// Redirect to return_to or role-based dashboard
 	if (returnTo) {
 		throw redirect(302, returnTo)
 	}
