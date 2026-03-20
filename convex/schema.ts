@@ -18,7 +18,9 @@ export default defineSchema({
     schoolId: v.optional(v.id("schools")),
   })
     .index("by_workos_id", ["workosUserId"])
-    .index("by_role", ["role"]),
+    .index("by_email", ["email"])
+    .index("by_role", ["role"])
+    .index("by_school", ["schoolId"]),
 
   // ─── School Structure ───────────────────────────────────────────
   schools: defineTable({
@@ -35,7 +37,9 @@ export default defineSchema({
     schoolId: v.id("schools"),
     name: v.string(), // e.g. "Class 10"
     grade: v.number(),
-  }).index("by_school", ["schoolId"]),
+  })
+    .index("by_school", ["schoolId"])
+    .index("by_grade", ["grade"]),
 
   sections: defineTable({
     classId: v.id("classes"),
@@ -163,6 +167,7 @@ export default defineSchema({
   })
     .index("by_section", ["sectionId"])
     .index("by_student", ["studentId"])
+    .index("by_student_date", ["studentId", "date"])
     .index("by_section_date", ["sectionId", "date"]),
 
   // ─── Assignments ────────────────────────────────────────────────
@@ -177,7 +182,8 @@ export default defineSchema({
     fileId: v.optional(v.id("_storage")),
   })
     .index("by_subject", ["subjectId"])
-    .index("by_section", ["sectionId"]),
+    .index("by_section", ["sectionId"])
+    .index("by_due_date", ["dueDate"]),
 
   submissions: defineTable({
     assignmentId: v.id("assignments"),

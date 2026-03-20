@@ -17,6 +17,13 @@ export const upload = mutation({
     uploadedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    if (!args.title.trim()) throw new Error("Material title cannot be empty");
+    if (args.type === "link" && !args.url) {
+      throw new Error("URL is required for link-type materials");
+    }
+    if ((args.type === "pdf" || args.type === "video" || args.type === "document") && !args.fileId && !args.url) {
+      throw new Error("fileId or url is required for file-type materials");
+    }
     return await ctx.db.insert("materials", args);
   },
 });
@@ -84,18 +91,6 @@ export const reorderMaterials = mutation({
     for (const item of args.items) {
       await ctx.db.patch(item.id, { order: item.order });
     }
-  },
-});
-
-// Delete material and its storage file if present
-export const deleteMaterial = mutation({
-  args: { id: v.id("materials") },
-  handler: async (ctx, args) => {
-    const material = await ctx.db.get(args.id);
-    if (material?.fileId) {
-      await ctx.storage.delete(material.fileId);
-    }
-    await ctx.db.delete(args.id);
   },
 });
 

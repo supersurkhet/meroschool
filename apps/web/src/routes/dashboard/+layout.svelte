@@ -1,5 +1,4 @@
 <script lang="ts">
-	import '$lib/../app.css'
 	import { t } from '$lib/i18n/index.js'
 	import { locale, setLocale, type Locale } from '$lib/i18n/index.js'
 	import { theme, setTheme, type Theme } from '$lib/theme.js'
@@ -43,6 +42,7 @@
 		{ key: 'dashboard.nav.tests', href: '/dashboard/teacher/tests', icon: 'pencil' },
 		{ key: 'dashboard.nav.materials', href: '/dashboard/teacher/materials', icon: 'upload' },
 		{ key: 'dashboard.nav.assignments', href: '/dashboard/teacher/assignments', icon: 'file' },
+		{ key: 'dashboard.nav.progress', href: '/dashboard/teacher/progress', icon: 'chart' },
 	]
 
 	let sidebarOpen = $state(false)

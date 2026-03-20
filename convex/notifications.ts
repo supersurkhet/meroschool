@@ -207,11 +207,11 @@ export const sendAssignmentDueReminder = internalMutation({
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-    // Find all assignments due tomorrow
-    const allAssignments = await ctx.db.query("assignments").collect();
-    const dueAssignments = allAssignments.filter(
-      (a) => a.dueDate === tomorrowStr
-    );
+    // Find all assignments due tomorrow using index
+    const dueAssignments = await ctx.db
+      .query("assignments")
+      .withIndex("by_due_date", (q) => q.eq("dueDate", tomorrowStr))
+      .collect();
 
     for (const assignment of dueAssignments) {
       // Get all students in the assignment's section

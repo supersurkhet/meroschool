@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 // Get the current user from their WorkOS ID
 export const currentUser = query({

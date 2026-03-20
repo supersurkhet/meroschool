@@ -180,6 +180,7 @@ export default {
 	"dashboard.nav.tests": "Tests",
 	"dashboard.nav.materials": "Materials",
 	"dashboard.nav.assignments": "Assignments",
+	"dashboard.nav.progress": "Student Progress",
 	"dashboard.nav.logout": "Sign Out",
 
 	// Teacher dashboard

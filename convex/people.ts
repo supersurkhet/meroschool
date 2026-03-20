@@ -10,7 +10,7 @@ export const createStudent = mutation({
     rollNumber: v.string(),
     dateOfBirth: v.optional(v.string()),
     admissionDate: v.optional(v.string()),
-    parentIds: v.array(v.id("parents")),
+    parentIds: v.optional(v.array(v.id("parents"))),
   },
   handler: async (ctx, args) => {
     const dateFormat = /^\d{4}-\d{2}-\d{2}$/;

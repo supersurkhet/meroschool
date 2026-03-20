@@ -11,6 +11,7 @@ export const createSubject = mutation({
     teacherId: v.optional(v.id("teachers")),
   },
   handler: async (ctx, args) => {
+    if (!args.name.trim()) throw new Error("Subject name cannot be empty");
     return await ctx.db.insert("subjects", args);
   },
 });
@@ -61,6 +62,8 @@ export const createModule = mutation({
     order: v.number(),
   },
   handler: async (ctx, args) => {
+    if (!args.name.trim()) throw new Error("Module name cannot be empty");
+    if (args.order < 0) throw new Error("Order must be >= 0");
     return await ctx.db.insert("modules", args);
   },
 });
@@ -101,6 +104,8 @@ export const createTopic = mutation({
     order: v.number(),
   },
   handler: async (ctx, args) => {
+    if (!args.name.trim()) throw new Error("Topic name cannot be empty");
+    if (args.order < 0) throw new Error("Order must be >= 0");
     return await ctx.db.insert("topics", args);
   },
 });

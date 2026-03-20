@@ -142,7 +142,7 @@
       : 0,
   });
 
-  const gradeDistribution = $derived(() => {
+  const gradeDistribution = $derived.by(() => {
     const groups = { 'A+': 0, A: 0, 'B+': 0, B: 0, C: 0, D: 0, F: 0 };
     for (const r of sortedResults) {
       groups[r.grade as keyof typeof groups]++;
@@ -503,7 +503,9 @@
       <Card>
         <CardHeader><CardTitle class="text-base">{t('reports.gradeDistribution')}</CardTitle></CardHeader>
         <CardContent class="flex flex-col gap-3 pb-5">
-          {#each gradeDistribution() as [grade, count]}
+          {#each gradeDistribution as entry}
+            {@const grade = entry[0]}
+            {@const count = entry[1]}
             <div class="flex items-center gap-3">
               <span class="w-6 text-center text-xs font-bold">{grade}</span>
               <div class="flex-1 overflow-hidden rounded-full bg-muted h-5">

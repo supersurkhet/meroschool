@@ -3,7 +3,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
-  import { Download, Printer, QrCode, GridIcon, ChevronLeft } from 'lucide-svelte';
+  import { Download, Printer, QrCode, ChevronLeft } from 'lucide-svelte';
   import QRCodeLib from 'qrcode';
 
   interface Section {

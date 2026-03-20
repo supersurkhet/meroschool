@@ -132,7 +132,7 @@ export const getSchoolHierarchy = query({
           })
         );
 
-        return { ...cls, sections: sectionsWithSections };
+        return { ...cls, sections: sectionsWithStudents };
       })
     );
 

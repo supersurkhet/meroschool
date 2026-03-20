@@ -1,5 +1,5 @@
 <script lang="ts">
-	import "$lib/../app.css";
+	import "../app.css";
 	import Navbar from "$lib/components/navbar.svelte";
 	import Footer from "$lib/components/footer.svelte";
 	import { theme, applyTheme } from "$lib/theme.js";

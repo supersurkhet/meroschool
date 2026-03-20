@@ -1,10 +1,11 @@
 import { WorkOS } from '@workos-inc/node'
+import { env } from '$env/dynamic/private'
 
 let _workos: WorkOS | null = null
 
 export function getWorkOS(): WorkOS {
 	if (!_workos) {
-		const apiKey = process.env.WORKOS_API_KEY ?? ''
+		const apiKey = env.WORKOS_API_KEY ?? ''
 		if (!apiKey) {
 			throw new Error('WORKOS_API_KEY environment variable is required')
 		}
@@ -20,8 +21,5 @@ export const workos = {
 }
 
 export function getClientId(): string {
-	return process.env.WORKOS_CLIENT_ID ?? ''
+	return env.WORKOS_CLIENT_ID ?? ''
 }
-
-/** @deprecated Use getClientId() instead */
-export const clientId = ''

@@ -68,7 +68,7 @@
     return currentPath.startsWith(href);
   }
 
-  let pageTitle = $derived(() => {
+  let pageTitle = $derived.by(() => {
     for (const item of navItems) {
       if (isActive(item.href)) return t(item.labelKey);
     }
@@ -232,7 +232,7 @@
       <div class="flex items-center gap-2 text-[13px]">
         <span class="font-medium text-muted-foreground/40">MeroSchool</span>
         <span class="text-muted-foreground/20">/</span>
-        <span class="font-semibold">{pageTitle()}</span>
+        <span class="font-semibold">{pageTitle}</span>
       </div>
     </header>
 

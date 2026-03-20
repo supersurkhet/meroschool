@@ -31,7 +31,7 @@
   const schoolName = $derived(school?.name ?? 'MeroSchool');
 
   const now = new Date();
-  const greeting = $derived(() => {
+  const greeting = $derived.by(() => {
     const h = now.getHours();
     if (h < 12) return t('dashboard.goodMorning');
     if (h < 17) return t('dashboard.goodAfternoon');
@@ -98,7 +98,7 @@
     <div>
       <p class="text-[11px] font-bold uppercase tracking-[0.3em] text-muted-foreground/50">{dateStr}</p>
       <h1 class="mt-1 text-2xl font-bold tracking-tight">
-        {greeting()}, <span class="text-primary">{adminName}</span>
+        {greeting}, <span class="text-primary">{adminName}</span>
       </h1>
       <p class="mt-0.5 text-sm text-muted-foreground">Here's what's happening at {schoolName} today</p>
     </div>

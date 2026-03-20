@@ -69,7 +69,7 @@
     filterClassId ? SECTIONS.filter(s => s.classId === filterClassId) : []
   );
 
-  const filteredStudents = $derived(() => {
+  const filteredStudents = $derived.by(() => {
     let result = students;
 
     if (searchQuery.trim()) {
@@ -680,7 +680,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
           </tr>
         </thead>
         <tbody class="divide-y divide-border">
-          {#each filteredStudents() as student, i}
+          {#each filteredStudents as student, i}
             <tr class="group hover:bg-muted/30 transition-colors">
               <!-- Roll No -->
               <td class="px-4 py-3">
@@ -774,9 +774,9 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
     </div>
 
     <!-- Table footer -->
-    {#if filteredStudents().length > 0}
+    {#if filteredStudents.length > 0}
       <div class="px-4 py-3 border-t border-border bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
-        <span>Showing {filteredStudents().length} of {students.length} students</span>
+        <span>Showing {filteredStudents.length} of {students.length} students</span>
         <span>Sorted by {sortColumn === 'rollNumber' ? 'Roll No' : sortColumn === 'name' ? 'Name' : 'Date of Birth'} ({sortAsc ? 'A→Z' : 'Z→A'})</span>
       </div>
     {/if}

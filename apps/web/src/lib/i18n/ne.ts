@@ -180,6 +180,7 @@ export default {
 	"dashboard.nav.tests": "परीक्षाहरू",
 	"dashboard.nav.materials": "सामग्रीहरू",
 	"dashboard.nav.assignments": "असाइनमेन्टहरू",
+	"dashboard.nav.progress": "विद्यार्थी प्रगति",
 	"dashboard.nav.logout": "साइन आउट",
 
 	// Teacher dashboard
