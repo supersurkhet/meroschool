@@ -36,11 +36,7 @@
   function validateStep1(): boolean {
     const errors: Record<string, string> = {};
     if (!schoolName.trim()) errors.schoolName = 'School name is required';
-    if (!schoolAddress.trim()) errors.schoolAddress = 'Address is required';
-    if (!schoolPhone.trim()) errors.schoolPhone = 'Phone number is required';
-    if (!schoolEmail.trim()) errors.schoolEmail = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(schoolEmail)) errors.schoolEmail = 'Invalid email address';
-    if (!establishedYear.trim()) errors.establishedYear = 'Established year is required';
+    if (schoolEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(schoolEmail)) errors.schoolEmail = 'Invalid email address';
     step1Errors = errors;
     return Object.keys(errors).length === 0;
   }
@@ -171,12 +167,16 @@
     expandedSubjectClasses = next;
   }
 
+  function autoGenerateCode(name: string): string {
+    return name.trim().slice(0, 3).toUpperCase();
+  }
+
   function addSubject(classId: string, name?: string, code?: string) {
     const subjectName = name ?? newSubjectNames[classId];
     const subjectCode = code ?? newSubjectCodes[classId];
     if (!subjectName?.trim()) return;
     const trimmedName = subjectName.trim();
-    const trimmedCode = (subjectCode ?? '').trim().toUpperCase();
+    const trimmedCode = (subjectCode ?? '').trim().toUpperCase() || autoGenerateCode(trimmedName);
     subjects = [
       ...subjects,
       { id: crypto.randomUUID(), classId, name: trimmedName, code: trimmedCode }
@@ -362,7 +362,7 @@
 
           <!-- Address -->
           <div class="space-y-2">
-            <Label for="school-address">{t('setup.schoolAddress')} <span class="text-destructive">*</span></Label>
+            <Label for="school-address">{t('setup.schoolAddress')} <span class="text-muted-foreground text-xs">(optional)</span></Label>
             <Input
               id="school-address"
               placeholder="e.g. Kathmandu, Bagmati Province, Nepal"
@@ -380,7 +380,7 @@
           <!-- Phone & Email -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-2">
-              <Label for="school-phone">{t('common.phone')} <span class="text-destructive">*</span></Label>
+              <Label for="school-phone">{t('common.phone')} <span class="text-muted-foreground text-xs">(optional)</span></Label>
               <Input
                 id="school-phone"
                 type="tel"
@@ -393,7 +393,7 @@
               {/if}
             </div>
             <div class="space-y-2">
-              <Label for="school-email">{t('common.email')} <span class="text-destructive">*</span></Label>
+              <Label for="school-email">{t('common.email')} <span class="text-muted-foreground text-xs">(optional)</span></Label>
               <Input
                 id="school-email"
                 type="email"
@@ -409,7 +409,7 @@
 
           <!-- Established Year -->
           <div class="space-y-2">
-            <Label for="est-year">Established Year <span class="text-destructive">*</span></Label>
+            <Label for="est-year">Established Year <span class="text-muted-foreground text-xs">(optional)</span></Label>
             <Input
               id="est-year"
               placeholder="e.g. 2045 BS or 1988 AD"
@@ -817,9 +817,9 @@
                           />
                         </div>
                         <div class="w-28 space-y-1.5">
-                          <Label class="text-xs">Code (optional)</Label>
+                          <Label class="text-xs">Code <span class="text-muted-foreground">(auto)</span></Label>
                           <Input
-                            placeholder="e.g. OPT"
+                            placeholder={newSubjectNames[cls.id] ? autoGenerateCode(newSubjectNames[cls.id]) : 'e.g. OPT'}
                             bind:value={newSubjectCodes[cls.id]}
                           />
                         </div>

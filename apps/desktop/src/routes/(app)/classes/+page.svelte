@@ -452,12 +452,11 @@
 									/>
 								</div>
 								<div class="w-28 space-y-1">
-									<Label class="text-xs font-medium">{t('setup.capacity')}</Label>
+									<Label class="text-xs font-medium">{t('setup.capacity')} <span class="text-muted-foreground text-xs">(opt)</span></Label>
 									<Input
 										type="number"
 										min="1"
 										bind:value={sectionCapacity}
-										required
 									/>
 								</div>
 								<div class="flex gap-2">

@@ -30,10 +30,7 @@ export default function TeacherTestsScreen() {
 
 	// Create form state
 	const [testTitle, setTestTitle] = useState("")
-	const [testClass, setTestClass] = useState("")
-	const [testQuestions, setTestQuestions] = useState("")
 	const [testDuration, setTestDuration] = useState("")
-	const [testDueDate, setTestDueDate] = useState("")
 	const [creating, setCreating] = useState(false)
 
 	// Add question form state
@@ -88,22 +85,17 @@ export default function TeacherTestsScreen() {
 				title: testTitle,
 				subjectId: selectedSubjectId as any,
 				teacherId: user?.teacherId as any,
-				totalQuestions: testQuestions ? parseInt(testQuestions, 10) : undefined,
 				durationMinutes: testDuration ? parseInt(testDuration, 10) : undefined,
-				dueDate: testDueDate || undefined,
 			} as any)
 			setShowCreate(false)
 			setTestTitle("")
-			setTestClass("")
-			setTestQuestions("")
 			setTestDuration("")
-			setTestDueDate("")
 		} catch (err: any) {
 			Alert.alert("Error", err?.message ?? "Failed to create test.")
 		} finally {
 			setCreating(false)
 		}
-	}, [testTitle, testClass, testQuestions, testDuration, testDueDate, selectedSubjectId, user?.teacherId, createTest])
+	}, [testTitle, testDuration, selectedSubjectId, user?.teacherId, createTest])
 
 	const handleAddQuestion = useCallback(async () => {
 		if (!questionText.trim()) {
@@ -211,16 +203,7 @@ export default function TeacherTestsScreen() {
 						<Text style={{ fontSize: 16, fontWeight: "700", color: colors.text, marginBottom: 14 }}>{t("teacher.createTest")}</Text>
 						<View style={{ gap: 10 }}>
 							<Input placeholder="Test title" value={testTitle} onChangeText={setTestTitle} />
-							<Input placeholder="Select class" value={testClass} onChangeText={setTestClass} />
-							<View style={{ flexDirection: "row", gap: 10 }}>
-								<View style={{ flex: 1 }}>
-									<Input placeholder="# Questions" keyboardType="numeric" value={testQuestions} onChangeText={setTestQuestions} />
-								</View>
-								<View style={{ flex: 1 }}>
-									<Input placeholder="Duration (min)" keyboardType="numeric" value={testDuration} onChangeText={setTestDuration} />
-								</View>
-							</View>
-							<Input placeholder="Due date" value={testDueDate} onChangeText={setTestDueDate} />
+							<Input placeholder="Duration (min)" keyboardType="numeric" value={testDuration} onChangeText={setTestDuration} />
 							<Button
 								title={creating ? "Creating…" : "Generate from Question Bank"}
 								onPress={handleCreateTest}

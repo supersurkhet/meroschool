@@ -130,8 +130,18 @@
     editingId = null;
   }
 
+  function generateEmployeeId(): string {
+    const maxNum = teachers.reduce((max, t) => {
+      const match = t.employeeId.match(/EMP-(\d+)/);
+      return match ? Math.max(max, parseInt(match[1])) : max;
+    }, 0);
+    return `EMP-${String(maxNum + 1).padStart(3, '0')}`;
+  }
+
   function openAddForm() {
     resetForm();
+    formEmployeeId = generateEmployeeId();
+    formJoinDate = new Date().toISOString().slice(0, 10);
     showAddForm = true;
   }
 
@@ -158,7 +168,8 @@
   }
 
   async function saveTeacher() {
-    if (!formName.trim() || !formEmail.trim() || !formEmployeeId.trim()) return;
+    if (!formName.trim() || !formEmail.trim()) return;
+    if (!formEmployeeId.trim()) formEmployeeId = generateEmployeeId();
 
     if (editingId !== null) {
       // Edit: update local state only (no general update API)
@@ -322,7 +333,7 @@
               <Input id="f-phone" placeholder="98XX-XXXXXX" bind:value={formPhone} />
             </div>
             <div class="space-y-1.5">
-              <Label for="f-empid">{t('teachers.employeeId')} <span class="text-destructive">*</span></Label>
+              <Label for="f-empid">{t('teachers.employeeId')} <span class="text-muted-foreground text-xs">(auto-generated)</span></Label>
               <Input id="f-empid" placeholder="EMP-001" bind:value={formEmployeeId} />
             </div>
           </div>
@@ -343,7 +354,7 @@
               </select>
             </div>
             <div class="space-y-1.5">
-              <Label for="f-joindate">{t('teachers.joinDate')}</Label>
+              <Label for="f-joindate">{t('teachers.joinDate')} <span class="text-muted-foreground text-xs">(defaults to today)</span></Label>
               <Input id="f-joindate" type="date" bind:value={formJoinDate} />
             </div>
           </div>
@@ -396,7 +407,7 @@
           <Button variant="outline" onclick={cancelForm}>{t('common.cancel')}</Button>
           <Button
             onclick={saveTeacher}
-            disabled={!formName.trim() || !formEmail.trim() || !formEmployeeId.trim()}
+            disabled={!formName.trim() || !formEmail.trim()}
           >
             {editingId !== null ? t('teachers.updateTeacher') : t('common.save')}
           </Button>

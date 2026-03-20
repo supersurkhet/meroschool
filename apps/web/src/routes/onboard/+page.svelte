@@ -167,9 +167,11 @@
 				</div>
 				<h3 class="text-lg font-semibold mb-2">{$t("onboard.signInFirst")}</h3>
 				<p class="text-sm text-muted-foreground mb-5">{$t("onboard.signInDesc")}</p>
-				<a href="/auth/login?return_to=/onboard">
-					<Button size="lg">{$t("onboard.signInCta")}</Button>
-				</a>
+				<a
+					href="/auth/login?return_to=/onboard"
+					data-sveltekit-reload
+					class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 h-11 px-8 text-base"
+				>{$t("onboard.signInCta")}</a>
 				<p class="mt-3 text-xs text-muted-foreground">{$t("onboard.signInNote")}</p>
 			</Card>
 		{/if}
@@ -228,7 +230,7 @@
 							<Input id="schoolName" type="text" placeholder="Sunrise Academy" bind:value={schoolName} />
 						</div>
 						<div>
-							<label for="schoolAddress" class="block text-sm font-medium mb-1.5">{$t("onboard.schoolAddress")}</label>
+							<label for="schoolAddress" class="block text-sm font-medium mb-1.5">{$t("onboard.schoolAddress")} <span class="text-muted-foreground font-normal">({$t("onboard.optional")})</span></label>
 							<Input id="schoolAddress" type="text" placeholder="Putalisadak, Kathmandu" bind:value={address} />
 						</div>
 						<div class="grid grid-cols-2 gap-4">
@@ -251,7 +253,7 @@
 								</Select>
 							</div>
 							<div>
-								<label for="province" class="block text-sm font-medium mb-1.5">{$t("onboard.province")}</label>
+								<label for="province" class="block text-sm font-medium mb-1.5">{$t("onboard.province")} <span class="text-muted-foreground font-normal">({$t("onboard.optional")})</span></label>
 								<Select id="province" bind:value={province}>
 									{#each provinces as p}
 										<option value={p}>{p}</option>
@@ -260,7 +262,7 @@
 							</div>
 						</div>
 						<div>
-							<label for="district" class="block text-sm font-medium mb-1.5">{$t("onboard.district")}</label>
+							<label for="district" class="block text-sm font-medium mb-1.5">{$t("onboard.district")} <span class="text-muted-foreground font-normal">({$t("onboard.optional")})</span></label>
 							<Input id="district" type="text" placeholder="Kathmandu" bind:value={district} />
 						</div>
 					</div>

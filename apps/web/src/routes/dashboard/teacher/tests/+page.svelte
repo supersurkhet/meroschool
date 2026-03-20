@@ -31,7 +31,6 @@
 	let testTitle = $state('')
 	let testSubject = $state('Mathematics')
 	let testDuration = $state(60)
-	let testTotalMarks = $state(100)
 
 	// Question builder state
 	let questionText = $state('')
@@ -40,6 +39,9 @@
 	let questionMarks = $state(5)
 	let questions: Question[] = $state([])
 	let nextId = $state(1)
+
+	// Auto-compute total marks from individual question marks
+	let testTotalMarks = $derived(questions.reduce((sum, q) => sum + q.marks, 0))
 	let editingId: number | null = $state(null)
 
 	const subjects = ['Mathematics', 'Science', 'English', 'Nepali', 'Social Studies', 'Computer']
@@ -116,7 +118,6 @@
 		]
 		testTitle = ''
 		testDuration = 60
-		testTotalMarks = 100
 		questions = []
 	}
 </script>
@@ -131,7 +132,7 @@
 	<!-- Create Test Form -->
 	<Card class="p-6">
 		<h2 class="text-lg font-semibold text-foreground mb-4">{$t('tests.createTest')}</h2>
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
 			<div>
 				<label class="text-sm font-medium text-foreground mb-1.5 block">{$t('tests.testTitle')}</label>
 				<Input bind:value={testTitle} placeholder={$t('tests.testTitlePlaceholder')} />
@@ -148,11 +149,10 @@
 				<label class="text-sm font-medium text-foreground mb-1.5 block">{$t('tests.duration')}</label>
 				<Input type="number" bind:value={testDuration} min="5" max="180" />
 			</div>
-			<div>
-				<label class="text-sm font-medium text-foreground mb-1.5 block">{$t('tests.totalMarks')}</label>
-				<Input type="number" bind:value={testTotalMarks} min="1" />
-			</div>
 		</div>
+		{#if questions.length > 0}
+			<p class="text-sm text-muted-foreground mb-6">{$t('tests.totalMarks')}: <span class="font-semibold text-foreground">{testTotalMarks}</span></p>
+		{/if}
 
 		<!-- Question Builder -->
 		<div class="border-t pt-6">

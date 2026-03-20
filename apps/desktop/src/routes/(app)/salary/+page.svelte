@@ -17,6 +17,44 @@
     X,
   } from 'lucide-svelte';
   import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
+  import { getSchool } from '$lib/stores/school.svelte';
+  import { onMount } from 'svelte';
+
+  // ── Teacher list for dropdown ──────────────────────────────────────────────
+  type TeacherOption = { id: string; name: string; department: string; employeeId: string };
+  let teacherOptions = $state<TeacherOption[]>([]);
+
+  onMount(async () => {
+    if (!isConvexConfigured()) return;
+    const schoolId = getSchool()?.id;
+    if (!schoolId) return;
+    try {
+      const teachers = await convexQuery(api.people.listTeachersBySchool, { schoolId }, [] as any[]);
+      if (Array.isArray(teachers)) {
+        teacherOptions = teachers.map((t: any) => ({
+          id: t._id ?? t.id,
+          name: t.user?.name ?? '',
+          department: t.department ?? '',
+          employeeId: t.employeeId ?? '',
+        }));
+      }
+    } catch { /* ignore */ }
+  });
+
+  let formSelectedTeacherId = $state('');
+
+  function onTeacherSelected() {
+    const teacher = teacherOptions.find(t => t.id === formSelectedTeacherId);
+    if (teacher) {
+      formName = teacher.name;
+      formEmployeeId = teacher.employeeId;
+      formDepartment = teacher.department;
+    }
+  }
+
+  let formNetSalary = $derived(
+    (Number(formBaseSalary) || 0) - (Number(formDeductions) || 0) + (Number(formBonuses) || 0)
+  );
 
   type SalaryStatus = 'paid' | 'pending' | 'cancelled';
 
@@ -112,6 +150,7 @@
     formDeductions = String(record.deductions);
     formBonuses = String(record.bonuses);
     formNotes = record.notes;
+    formSelectedTeacherId = record.employeeId;
     showForm = true;
   }
 
@@ -317,18 +356,34 @@
       </CardHeader>
       <CardContent>
         <div class="grid grid-cols-3 gap-4">
-          <div class="flex flex-col gap-1.5">
-            <Label for="f-emp-id">{t('teachers.employeeId')}</Label>
-            <Input id="f-emp-id" bind:value={formEmployeeId} placeholder="EMP001" />
+          <div class="col-span-3 flex flex-col gap-1.5">
+            <Label for="f-teacher">Select Teacher</Label>
+            <select
+              id="f-teacher"
+              bind:value={formSelectedTeacherId}
+              onchange={onTeacherSelected}
+              class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Choose a teacher...</option>
+              {#each teacherOptions as teacher}
+                <option value={teacher.id}>{teacher.name} ({teacher.employeeId || 'No ID'})</option>
+              {/each}
+            </select>
           </div>
-          <div class="flex flex-col gap-1.5">
-            <Label for="f-name">{t('common.name')}</Label>
-            <Input id="f-name" bind:value={formName} placeholder="Full name" />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <Label for="f-dept">{t('teachers.department')}</Label>
-            <Input id="f-dept" bind:value={formDepartment} placeholder="Department" />
-          </div>
+          {#if formName}
+            <div class="flex flex-col gap-1.5">
+              <Label class="text-muted-foreground text-xs">{t('common.name')}</Label>
+              <p class="text-sm font-medium px-3 py-2 bg-muted/40 rounded-md">{formName}</p>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <Label class="text-muted-foreground text-xs">{t('teachers.employeeId')}</Label>
+              <p class="text-sm font-medium px-3 py-2 bg-muted/40 rounded-md font-mono">{formEmployeeId || '—'}</p>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <Label class="text-muted-foreground text-xs">{t('teachers.department')}</Label>
+              <p class="text-sm font-medium px-3 py-2 bg-muted/40 rounded-md">{formDepartment || '—'}</p>
+            </div>
+          {/if}
           <div class="flex flex-col gap-1.5">
             <Label for="f-base">{t('salary.baseSalary')}</Label>
             <Input id="f-base" type="number" bind:value={formBaseSalary} placeholder="35000" />
@@ -340,6 +395,11 @@
           <div class="flex flex-col gap-1.5">
             <Label for="f-bon">{t('salary.bonuses')}</Label>
             <Input id="f-bon" type="number" bind:value={formBonuses} placeholder="0" />
+          </div>
+          <div class="col-span-3 flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-border">
+            <span class="text-sm text-muted-foreground">{t('salary.netSalary')}:</span>
+            <span class="text-lg font-bold">{formatNPR(formNetSalary)}</span>
+            <span class="text-xs text-muted-foreground ml-2">(base - deductions + bonuses)</span>
           </div>
           <div class="col-span-3 flex flex-col gap-1.5">
             <Label for="f-notes">{t('common.notes')}</Label>

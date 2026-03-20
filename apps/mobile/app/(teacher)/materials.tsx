@@ -24,7 +24,6 @@ export default function TeacherMaterialsScreen() {
 	const [uploadType, setUploadType] = useState<UploadType>("pdf")
 	const [refreshing, setRefreshing] = useState(false)
 	const [uploadTitle, setUploadTitle] = useState("")
-	const [uploadClass, setUploadClass] = useState("")
 	const [uploadUrl, setUploadUrl] = useState("")
 	const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null)
 	const [uploading, setUploading] = useState(false)
@@ -68,7 +67,6 @@ export default function TeacherMaterialsScreen() {
 			} as any)
 			setShowUpload(false)
 			setUploadTitle("")
-			setUploadClass("")
 			setUploadUrl("")
 		} catch (err: any) {
 			Alert.alert("Upload Failed", err?.message ?? "Could not upload material.")
@@ -135,11 +133,6 @@ export default function TeacherMaterialsScreen() {
 								placeholder="Title"
 								value={uploadTitle}
 								onChangeText={setUploadTitle}
-							/>
-							<Input
-								placeholder="Class"
-								value={uploadClass}
-								onChangeText={setUploadClass}
 							/>
 							{/* Subject picker — shows loaded subjects */}
 							{subjects === undefined ? (

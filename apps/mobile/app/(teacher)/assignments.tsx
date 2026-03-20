@@ -26,7 +26,6 @@ export default function TeacherAssignmentsScreen() {
 	// Create form state
 	const [assignTitle, setAssignTitle] = useState("")
 	const [assignDescription, setAssignDescription] = useState("")
-	const [assignClass, setAssignClass] = useState("")
 	const [assignDueDate, setAssignDueDate] = useState("")
 	const [creating, setCreating] = useState(false)
 
@@ -69,7 +68,6 @@ export default function TeacherAssignmentsScreen() {
 			setShowCreate(false)
 			setAssignTitle("")
 			setAssignDescription("")
-			setAssignClass("")
 			setAssignDueDate("")
 		} catch (err: any) {
 			Alert.alert("Error", err?.message ?? "Failed to create assignment.")
@@ -195,11 +193,6 @@ export default function TeacherAssignmentsScreen() {
 								style={{ height: 80, textAlignVertical: "top" }}
 								value={assignDescription}
 								onChangeText={setAssignDescription}
-							/>
-							<Input
-								placeholder="Select class"
-								value={assignClass}
-								onChangeText={setAssignClass}
 							/>
 							<Input
 								placeholder="Due date"

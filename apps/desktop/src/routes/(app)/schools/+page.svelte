@@ -225,11 +225,10 @@
 						/>
 					</div>
 					<div class="space-y-1.5">
-						<Label class="text-xs font-medium">{t('common.address')}</Label>
+						<Label class="text-xs font-medium">{t('common.address')} <span class="text-xs text-muted-foreground">(optional)</span></Label>
 						<Input
 							placeholder="Address"
 							bind:value={formAddress}
-							required
 						/>
 					</div>
 					<div class="space-y-1.5">

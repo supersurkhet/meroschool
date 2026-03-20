@@ -162,6 +162,17 @@
     formClassId ? SECTIONS.filter(s => s.classId === formClassId) : []
   );
 
+  function generateRollNumber(sectionId?: string): string {
+    const sectionStudents = sectionId
+      ? students.filter(s => s.sectionId === sectionId)
+      : students;
+    const maxRoll = sectionStudents.reduce((max, s) => {
+      const num = parseInt(s.rollNumber);
+      return isNaN(num) ? max : Math.max(max, num);
+    }, 0);
+    return String(maxRoll + 1).padStart(3, '0');
+  }
+
   function openAddForm() {
     editingStudent = null;
     formName = '';
@@ -193,9 +204,9 @@
     if (!formName.trim()) errors.name = 'Name is required';
     if (!formEmail.trim()) errors.email = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formEmail)) errors.email = 'Invalid email';
-    if (!formRollNumber.trim()) errors.rollNumber = 'Roll number is required';
+    if (!formRollNumber.trim()) formRollNumber = generateRollNumber(formSectionId || undefined);
     if (!formDob) errors.dob = 'Date of birth is required';
-    if (!formAdmissionDate) errors.admissionDate = 'Admission date is required';
+    if (!formAdmissionDate) formAdmissionDate = new Date().toISOString().slice(0, 10);
     if (!formClassId) errors.classId = 'Please select a class';
     if (!formSectionId) errors.sectionId = 'Please select a section';
     formErrors = errors;
@@ -444,8 +455,8 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
         <!-- Row 2: Roll Number, DOB, Admission Date -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="space-y-1.5">
-            <Label for="f-roll">{t('students.rollNumber')} <span class="text-destructive">*</span></Label>
-            <Input id="f-roll" placeholder="e.g. 001" bind:value={formRollNumber} class={formErrors.rollNumber ? 'border-destructive' : ''} />
+            <Label for="f-roll">{t('students.rollNumber')} <span class="text-muted-foreground text-xs">(auto-generated)</span></Label>
+            <Input id="f-roll" placeholder={formSectionId ? generateRollNumber(formSectionId) : 'Auto-assigned'} bind:value={formRollNumber} class={formErrors.rollNumber ? 'border-destructive' : ''} />
             {#if formErrors.rollNumber}<p class="text-xs text-destructive">{formErrors.rollNumber}</p>{/if}
           </div>
           <div class="space-y-1.5">
@@ -454,7 +465,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
             {#if formErrors.dob}<p class="text-xs text-destructive">{formErrors.dob}</p>{/if}
           </div>
           <div class="space-y-1.5">
-            <Label for="f-admission">{t('students.admissionDate')} <span class="text-destructive">*</span></Label>
+            <Label for="f-admission">{t('students.admissionDate')} <span class="text-muted-foreground text-xs">(defaults to today)</span></Label>
             <Input id="f-admission" type="date" bind:value={formAdmissionDate} class={formErrors.admissionDate ? 'border-destructive' : ''} />
             {#if formErrors.admissionDate}<p class="text-xs text-destructive">{formErrors.admissionDate}</p>{/if}
           </div>

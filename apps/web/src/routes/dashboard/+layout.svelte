@@ -108,7 +108,7 @@
 			{/each}
 		</nav>
 		<div class="border-t p-4">
-			<a href="/auth/logout" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+			<a href="/auth/logout" data-sveltekit-reload class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
 				{$t('dashboard.nav.logout')}
 			</a>
 		</div>
@@ -135,7 +135,7 @@
 					{/each}
 				</nav>
 				<div class="border-t p-4">
-					<a href="/auth/logout" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+					<a href="/auth/logout" data-sveltekit-reload class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
 						{$t('dashboard.nav.logout')}
 					</a>
 				</div>
