@@ -1,17 +1,38 @@
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 
-// Seed function to populate demo data for meroschool.
-// Run once via Convex dashboard or `npx convex run seed:seed`
-export const seed = mutation({
+// Nepali first/last name pools for realistic demo data
+const firstNames = [
+  "Aarav", "Anish", "Bikash", "Deepak", "Gaurav",
+  "Hari", "Ishwor", "Kiran", "Manish", "Nabin",
+  "Priya", "Ranjana", "Sita", "Sunita", "Uma",
+  "Anjali", "Binita", "Durga", "Gita", "Kabita",
+  "Laxmi", "Mina", "Nirmala", "Parbati", "Rashmi",
+  "Sarita", "Tara", "Urmila", "Yamuna", "Bimala",
+];
+const lastNames = [
+  "Thapa", "Sharma", "Adhikari", "Poudel", "KC",
+  "Budha", "Bhandari", "Oli", "Gurung", "Shrestha",
+];
+
+function pickName(index: number): { first: string; last: string } {
+  return {
+    first: firstNames[index % firstNames.length],
+    last: lastNames[index % lastNames.length],
+  };
+}
+
+// Seed function: creates demo school with full data.
+// Run via: npx convex run seed:seed
+export const seed = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Check if already seeded
-    const existingSchools = await ctx.db.query("schools").first();
-    if (existingSchools) {
-      throw new Error("Database already seeded. Clear data first.");
+    // ── Guard: don't double-seed ──
+    const existing = await ctx.db.query("schools").first();
+    if (existing) {
+      throw new Error("Database already seeded. Clear all tables first.");
     }
 
-    // ─── School ───────────────────────────────────────────────────
+    // ─── 1. School ────────────────────────────────────────────────
     const schoolId = await ctx.db.insert("schools", {
       name: "Surkhet Valley Academy",
       address: "Birendranagar-4, Surkhet, Nepal",
@@ -20,7 +41,7 @@ export const seed = mutation({
       establishedYear: 2015,
     });
 
-    // ─── Admin User ───────────────────────────────────────────────
+    // ─── 2. Admin ─────────────────────────────────────────────────
     const adminUserId = await ctx.db.insert("users", {
       workosUserId: "demo_admin_001",
       name: "Ram Bahadur Shrestha",
@@ -30,17 +51,16 @@ export const seed = mutation({
       schoolId,
     });
 
-    // ─── Teachers ─────────────────────────────────────────────────
-    const teacherData = [
+    // ─── 3. Teachers (3) ──────────────────────────────────────────
+    const teacherDefs = [
       { name: "Sita Sharma", email: "sita@surkhetvalley.edu.np", dept: "Mathematics", empId: "T-001" },
       { name: "Krishna Adhikari", email: "krishna@surkhetvalley.edu.np", dept: "Science", empId: "T-002" },
       { name: "Gita Poudel", email: "gita@surkhetvalley.edu.np", dept: "English", empId: "T-003" },
-      { name: "Hari Prasad Oli", email: "hari@surkhetvalley.edu.np", dept: "Nepali", empId: "T-004" },
     ];
 
-    const teacherIds = [];
-    const teacherUserIds = [];
-    for (const t of teacherData) {
+    const teacherUserIds: any[] = [];
+    const teacherIds: any[] = [];
+    for (const t of teacherDefs) {
       const userId = await ctx.db.insert("users", {
         workosUserId: `demo_teacher_${t.empId}`,
         name: t.name,
@@ -60,151 +80,154 @@ export const seed = mutation({
       teacherIds.push(teacherId);
     }
 
-    // ─── Classes & Sections ───────────────────────────────────────
-    const classConfigs = [
-      { name: "Class 8", grade: 8, sections: ["A", "B"] },
-      { name: "Class 9", grade: 9, sections: ["A", "B"] },
-      { name: "Class 10", grade: 10, sections: ["A"] },
-    ];
+    // ─── 4. Classes (6, 7, 8) with 2 sections each ───────────────
+    const grades = [6, 7, 8];
+    const sectionNames = ["A", "B"];
 
-    const sectionMap: Record<string, any> = {};
-    const classIds = [];
+    const classIds: any[] = [];
+    const sectionIds: any[] = []; // flat list of all 6 sections
+    const sectionMeta: Array<{ classId: any; sectionId: any; grade: number; sec: string }> = [];
 
-    for (const cc of classConfigs) {
+    for (const grade of grades) {
       const classId = await ctx.db.insert("classes", {
         schoolId,
-        name: cc.name,
-        grade: cc.grade,
+        name: `Class ${grade}`,
+        grade,
       });
       classIds.push(classId);
 
-      for (const secName of cc.sections) {
+      for (const sec of sectionNames) {
         const sectionId = await ctx.db.insert("sections", {
           classId,
-          name: secName,
+          name: sec,
         });
-        sectionMap[`${cc.grade}-${secName}`] = { classId, sectionId };
+        sectionIds.push(sectionId);
+        sectionMeta.push({ classId, sectionId, grade, sec });
       }
     }
 
-    // ─── Parents ──────────────────────────────────────────────────
-    const parentData = [
-      { name: "Bishnu Thapa", email: "bishnu.parent@gmail.com", occupation: "Farmer" },
-      { name: "Laxmi Bhandari", email: "laxmi.parent@gmail.com", occupation: "Teacher" },
-      { name: "Mohan KC", email: "mohan.parent@gmail.com", occupation: "Business" },
-      { name: "Durga Budha", email: "durga.parent@gmail.com", occupation: "Government" },
-    ];
-
-    const parentIds = [];
-    for (let i = 0; i < parentData.length; i++) {
-      const p = parentData[i];
+    // ─── 5. Parents (10 — roughly 1 per 3 students, shared) ──────
+    const parentIds: any[] = [];
+    for (let i = 0; i < 10; i++) {
+      const { first, last } = pickName(20 + i); // offset into names
       const userId = await ctx.db.insert("users", {
         workosUserId: `demo_parent_${i + 1}`,
-        name: p.name,
-        email: p.email,
+        name: `${first} ${last}`,
+        email: `${first.toLowerCase()}.parent${i + 1}@gmail.com`,
         role: "parent",
         isActive: true,
       });
       const parentId = await ctx.db.insert("parents", {
         userId,
-        occupation: p.occupation,
+        occupation: ["Farmer", "Teacher", "Business", "Government", "Doctor"][i % 5],
         address: "Birendranagar, Surkhet",
       });
       parentIds.push(parentId);
     }
 
-    // ─── Students ─────────────────────────────────────────────────
-    const studentData = [
-      { name: "Anish Thapa", email: "anish@student.edu.np", section: "10-A", roll: "1001", dob: "2010-03-15", parentIdx: 0 },
-      { name: "Priya Bhandari", email: "priya@student.edu.np", section: "10-A", roll: "1002", dob: "2010-07-22", parentIdx: 1 },
-      { name: "Rajan KC", email: "rajan@student.edu.np", section: "10-A", roll: "1003", dob: "2010-01-08", parentIdx: 2 },
-      { name: "Sunita Budha", email: "sunita@student.edu.np", section: "9-A", roll: "0901", dob: "2011-05-12", parentIdx: 3 },
-      { name: "Bikash Thapa", email: "bikash@student.edu.np", section: "9-A", roll: "0902", dob: "2011-09-03", parentIdx: 0 },
-      { name: "Manisha Bhandari", email: "manisha@student.edu.np", section: "9-B", roll: "0911", dob: "2011-11-20", parentIdx: 1 },
-      { name: "Dipak KC", email: "dipak@student.edu.np", section: "8-A", roll: "0801", dob: "2012-02-14", parentIdx: 2 },
-      { name: "Sarita Budha", email: "sarita@student.edu.np", section: "8-B", roll: "0812", dob: "2012-06-30", parentIdx: 3 },
-    ];
+    // ─── 6. Students (5 per section = 30 total) ──────────────────
+    let studentCounter = 0;
+    const allStudentIds: any[] = [];
+    const studentsBySectionIdx: any[][] = []; // parallel to sectionMeta
 
-    const studentIds = [];
-    for (const s of studentData) {
-      const sec = sectionMap[s.section];
-      const userId = await ctx.db.insert("users", {
-        workosUserId: `demo_student_${s.roll}`,
-        name: s.name,
-        email: s.email,
-        role: "student",
-        isActive: true,
-        schoolId,
-      });
-      const studentId = await ctx.db.insert("students", {
-        userId,
-        sectionId: sec.sectionId,
-        rollNumber: s.roll,
-        dateOfBirth: s.dob,
-        admissionDate: "2024-04-15",
-        parentIds: [parentIds[s.parentIdx]],
-      });
-      studentIds.push(studentId);
+    for (let si = 0; si < sectionMeta.length; si++) {
+      const sec = sectionMeta[si];
+      const sectionStudentIds: any[] = [];
+
+      for (let j = 0; j < 5; j++) {
+        const idx = studentCounter++;
+        const { first, last } = pickName(idx);
+        const rollNumber = `${sec.grade}${sec.sec}${String(j + 1).padStart(2, "0")}`;
+        const dobYear = 2014 - sec.grade; // age-appropriate
+        const dob = `${dobYear}-${String((idx % 12) + 1).padStart(2, "0")}-${String((idx % 28) + 1).padStart(2, "0")}`;
+
+        const userId = await ctx.db.insert("users", {
+          workosUserId: `demo_student_${rollNumber}`,
+          name: `${first} ${last}`,
+          email: `${first.toLowerCase()}.${last.toLowerCase()}${idx}@student.edu.np`,
+          role: "student",
+          isActive: true,
+          schoolId,
+        });
+
+        const studentId = await ctx.db.insert("students", {
+          userId,
+          sectionId: sec.sectionId,
+          rollNumber,
+          dateOfBirth: dob,
+          admissionDate: "2025-04-15",
+          parentIds: [parentIds[idx % parentIds.length]],
+        });
+
+        sectionStudentIds.push(studentId);
+        allStudentIds.push(studentId);
+      }
+
+      studentsBySectionIdx.push(sectionStudentIds);
     }
 
-    // ─── Subjects (Class 10) ──────────────────────────────────────
-    const class10Id = classIds[2];
-    const subjectConfigs = [
-      { name: "Mathematics", code: "MATH-10", teacherIdx: 0 },
-      { name: "Science", code: "SCI-10", teacherIdx: 1 },
-      { name: "English", code: "ENG-10", teacherIdx: 2 },
-      { name: "Nepali", code: "NEP-10", teacherIdx: 3 },
+    // ─── 7. Subjects (5, spread across classes) ──────────────────
+    const subjectDefs = [
+      { name: "Mathematics", code: "MATH", teacherIdx: 0 },
+      { name: "Science", code: "SCI", teacherIdx: 1 },
+      { name: "English", code: "ENG", teacherIdx: 2 },
+      { name: "Nepali", code: "NEP", teacherIdx: 0 },
+      { name: "Social Studies", code: "SOC", teacherIdx: 1 },
     ];
 
-    const subjectIds = [];
-    for (const sub of subjectConfigs) {
-      const subjectId = await ctx.db.insert("subjects", {
-        classId: class10Id,
-        name: sub.name,
-        code: sub.code,
-        teacherId: teacherIds[sub.teacherIdx],
-      });
-      subjectIds.push(subjectId);
+    const subjectIdsByClass: any[][] = [];
+    for (let ci = 0; ci < classIds.length; ci++) {
+      const classSubjectIds: any[] = [];
+      for (const sub of subjectDefs) {
+        const subjectId = await ctx.db.insert("subjects", {
+          classId: classIds[ci],
+          name: sub.name,
+          code: `${sub.code}-${grades[ci]}`,
+          teacherId: teacherIds[sub.teacherIdx],
+        });
+        classSubjectIds.push(subjectId);
+      }
+      subjectIdsByClass.push(classSubjectIds);
     }
 
-    // ─── Modules & Topics (Mathematics) ───────────────────────────
-    const mathSubjectId = subjectIds[0];
+    // ─── 8. Modules & Topics (for Math Class 8) ──────────────────
+    const mathClass8 = subjectIdsByClass[2][0]; // Class 8 Mathematics
 
-    const mod1Id = await ctx.db.insert("modules", {
-      subjectId: mathSubjectId,
+    const mod1 = await ctx.db.insert("modules", {
+      subjectId: mathClass8,
       name: "Algebra",
       description: "Linear equations, polynomials, and factoring",
       order: 1,
     });
-    const mod2Id = await ctx.db.insert("modules", {
-      subjectId: mathSubjectId,
+    const mod2 = await ctx.db.insert("modules", {
+      subjectId: mathClass8,
       name: "Geometry",
       description: "Triangles, circles, and coordinate geometry",
       order: 2,
     });
 
-    const topic1Id = await ctx.db.insert("topics", {
-      moduleId: mod1Id,
+    const topic1 = await ctx.db.insert("topics", {
+      moduleId: mod1,
       name: "Linear Equations",
       description: "Solving one and two variable linear equations",
       order: 1,
     });
     await ctx.db.insert("topics", {
-      moduleId: mod1Id,
+      moduleId: mod1,
       name: "Polynomials",
       description: "Operations on polynomials and factoring",
       order: 2,
     });
     await ctx.db.insert("topics", {
-      moduleId: mod2Id,
+      moduleId: mod2,
       name: "Triangle Properties",
       description: "Congruence, similarity, and Pythagoras theorem",
       order: 1,
     });
 
-    // ─── Materials ────────────────────────────────────────────────
+    // ─── 9. Materials ─────────────────────────────────────────────
     await ctx.db.insert("materials", {
-      topicId: topic1Id,
+      topicId: topic1,
       title: "Linear Equations - Video Lecture",
       type: "link",
       url: "https://www.youtube.com/watch?v=example",
@@ -212,24 +235,15 @@ export const seed = mutation({
       uploadedBy: teacherUserIds[0],
       order: 1,
     });
-    await ctx.db.insert("materials", {
-      topicId: topic1Id,
-      title: "Linear Equations Practice Problems",
-      type: "link",
-      url: "https://example.com/practice-linear-equations.pdf",
-      description: "20 practice problems with solutions",
-      uploadedBy: teacherUserIds[0],
-      order: 2,
-    });
 
-    // ─── Test with MCQ Questions ──────────────────────────────────
+    // ─── 10. Test with 5 MCQ Questions (Class 8 Math) ─────────────
     const testId = await ctx.db.insert("tests", {
-      subjectId: mathSubjectId,
-      moduleId: mod1Id,
+      subjectId: mathClass8,
+      moduleId: mod1,
       title: "Algebra Unit Test 1",
       description: "Test covering linear equations and polynomials",
-      durationMinutes: 45,
-      totalMarks: 20,
+      durationMinutes: 30,
+      totalMarks: 10,
       isPublished: true,
       createdBy: teacherUserIds[0],
     });
@@ -265,36 +279,6 @@ export const seed = mutation({
         correctOptionIndex: 1,
         marks: 2,
       },
-      {
-        question: "What is the degree of 4x³ + 2x - 1?",
-        options: ["1", "2", "3", "4"],
-        correctOptionIndex: 2,
-        marks: 2,
-      },
-      {
-        question: "If y = 2x + 1, what is y when x = 3?",
-        options: ["5", "6", "7", "8"],
-        correctOptionIndex: 2,
-        marks: 2,
-      },
-      {
-        question: "Simplify: (x + 2)(x - 2)",
-        options: ["x² - 4", "x² + 4", "x² - 2", "2x"],
-        correctOptionIndex: 0,
-        marks: 2,
-      },
-      {
-        question: "Which equation has no solution?",
-        options: ["x + 1 = 2", "0x = 5", "2x = 4", "x - x = 0"],
-        correctOptionIndex: 1,
-        marks: 2,
-      },
-      {
-        question: "What is the sum of roots of x² - 5x + 6 = 0?",
-        options: ["5", "6", "-5", "-6"],
-        correctOptionIndex: 0,
-        marks: 2,
-      },
     ];
 
     for (let i = 0; i < questions.length; i++) {
@@ -305,11 +289,41 @@ export const seed = mutation({
       });
     }
 
-    // ─── Assignment ───────────────────────────────────────────────
-    const sec10A = sectionMap["10-A"];
+    // ─── 11. Attendance (last 5 school days, all sections) ────────
+    const attendanceDates = [
+      "2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19",
+    ];
+    const statusPool: Array<"present" | "absent" | "late" | "excused"> = [
+      "present", "present", "present", "present", "present",
+      "present", "present", "present", "absent", "late",
+    ];
+
+    for (let si = 0; si < sectionMeta.length; si++) {
+      const sec = sectionMeta[si];
+      const students = studentsBySectionIdx[si];
+      const teacherUserId = teacherUserIds[si % teacherUserIds.length];
+
+      for (const date of attendanceDates) {
+        for (let j = 0; j < students.length; j++) {
+          // Deterministic but varied: mostly present, ~10% absent, ~10% late
+          const hash = si * 1000 + j * 100 + parseInt(date.slice(-2));
+          const status = statusPool[hash % statusPool.length];
+
+          await ctx.db.insert("attendance", {
+            studentId: students[j],
+            sectionId: sec.sectionId,
+            date,
+            status,
+            markedBy: teacherUserId,
+          });
+        }
+      }
+    }
+
+    // ─── 12. Assignment ───────────────────────────────────────────
     await ctx.db.insert("assignments", {
-      subjectId: mathSubjectId,
-      sectionId: sec10A.sectionId,
+      subjectId: mathClass8,
+      sectionId: sectionMeta[4].sectionId, // Class 8-A
       title: "Algebra Homework - Linear Equations",
       description: "Solve problems 1-15 from Chapter 3",
       dueDate: "2026-04-01",
@@ -317,57 +331,39 @@ export const seed = mutation({
       createdBy: teacherUserIds[0],
     });
 
-    // ─── Attendance (last 5 days for Class 10-A) ──────────────────
-    const statuses: Array<"present" | "absent" | "late"> = ["present", "absent", "late"];
-    const class10Students = studentIds.slice(0, 3); // first 3 are Class 10-A
-    const dates = ["2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19"];
-
-    for (const date of dates) {
-      for (let i = 0; i < class10Students.length; i++) {
-        // Mostly present, occasional absent/late
-        const status = i === 1 && date === "2026-03-17" ? "absent" : (i === 2 && date === "2026-03-18" ? "late" : "present");
-        await ctx.db.insert("attendance", {
-          studentId: class10Students[i],
-          sectionId: sec10A.sectionId,
-          date,
-          status,
-          markedBy: teacherUserIds[0],
-        });
-      }
-    }
-
-    // ─── Salary Records ───────────────────────────────────────────
+    // ─── 13. Salary Records ───────────────────────────────────────
     for (let i = 0; i < teacherIds.length; i++) {
       await ctx.db.insert("salaryRecords", {
         teacherId: teacherIds[i],
         month: "2026-03",
         baseSalary: 35000,
         deductions: 2000,
-        bonuses: i === 0 ? 3000 : 0, // bonus for math teacher
+        bonuses: i === 0 ? 3000 : 0,
         netSalary: 35000 - 2000 + (i === 0 ? 3000 : 0),
         status: i < 2 ? "paid" : "pending",
         paidAt: i < 2 ? Date.now() : undefined,
       });
     }
 
-    // ─── Welcome Notification ─────────────────────────────────────
+    // ─── 14. Welcome Notification ─────────────────────────────────
     await ctx.db.insert("notifications", {
       userId: adminUserId,
       type: "general",
       title: "Welcome to MeroSchool",
-      message: "Your school management system is ready. Start by reviewing the demo data.",
+      message: "Your school management system is ready with demo data.",
       isRead: false,
     });
 
     return {
-      schoolId,
-      totalUsers: 1 + teacherData.length + parentData.length + studentData.length,
-      totalClasses: classConfigs.length,
-      totalStudents: studentData.length,
-      totalTeachers: teacherData.length,
-      totalParents: parentData.length,
-      totalSubjects: subjectConfigs.length,
-      totalQuestions: questions.length,
+      school: "Surkhet Valley Academy",
+      classes: grades.length,
+      sections: sectionMeta.length,
+      students: allStudentIds.length,
+      teachers: teacherDefs.length,
+      parents: parentIds.length,
+      subjects: subjectDefs.length * grades.length,
+      questions: questions.length,
+      attendanceRecords: sectionMeta.length * attendanceDates.length * 5,
     };
   },
 });
