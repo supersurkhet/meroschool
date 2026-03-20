@@ -27,6 +27,8 @@ const ne: Translations = {
   },
   nav: {
     dashboard: 'ड्यासबोर्ड',
+    schools: 'विद्यालयहरू',
+    classesSections: 'कक्षा र सेक्सनहरू',
     setup: 'सेटअप',
     students: 'विद्यार्थीहरू',
     teachers: 'शिक्षकहरू',

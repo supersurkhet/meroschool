@@ -187,3 +187,24 @@
 - [ ] Recent activity feed shows attendance, test, assignment, and absence events
 - [ ] Bottom tabs: Home, Attendance, Results, Notifications all navigate correctly
 - [ ] Dark mode renders correctly on parent dashboard
+
+## Auth + Admin Guard — Desktop (Phase 1.4)
+- [ ] AuthUser type supports admin, teacher, student, parent roles
+- [ ] isAdmin() returns true only for role === 'admin'
+- [ ] Non-admin authenticated users see "Access Denied" screen with sign-out button
+- [ ] Unauthenticated users redirect to /auth login page
+
+## Admin Dashboard + School Management — Desktop (Phase 2.1)
+- [ ] Sidebar shows Schools and Classes & Sections nav items with correct icons
+- [ ] Schools page lists sample schools in a table with name, address, phone, email
+- [ ] Add School form opens inline with name, address, phone, email fields
+- [ ] Edit school populates form with existing values and saves changes
+- [ ] Delete school removes it from the list
+- [ ] School search filters by name and address
+- [ ] Classes page lists classes with expand/collapse for sections
+- [ ] Add Class form creates new class with name and school
+- [ ] Add Section form (inline) creates section with name and capacity
+- [ ] Section cards show student count / capacity with fill bar
+- [ ] Delete class and delete section work correctly
+- [ ] i18n keys for Schools and Classes & Sections exist in English and Nepali
+- [ ] Dark mode renders correctly on schools and classes pages

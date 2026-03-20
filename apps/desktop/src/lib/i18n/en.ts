@@ -25,6 +25,8 @@ const en = {
   },
   nav: {
     dashboard: 'Dashboard',
+    schools: 'Schools',
+    classesSections: 'Classes & Sections',
     setup: 'Setup',
     students: 'Students',
     teachers: 'Teachers',
@@ -132,7 +134,11 @@ const en = {
     classQr: 'Class QR Code',
     scanToJoin: 'Scan to Join',
   },
-} as const;
+};
 
-export type Translations = typeof en;
+type DeepStringRecord<T> = {
+  [K in keyof T]: T[K] extends string ? string : DeepStringRecord<T[K]>;
+};
+
+export type Translations = DeepStringRecord<typeof en>;
 export default en;
