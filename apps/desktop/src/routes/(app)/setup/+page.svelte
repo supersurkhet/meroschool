@@ -318,7 +318,7 @@
               type="button"
               class="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer w-full {isDraggingLogo ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}"
               ondrop={handleLogoDrop}
-              ondragover={(e) => { e.preventDefault(); isDraggingLogo = true; }}
+              ondragover={(e: DragEvent) => { e.preventDefault(); isDraggingLogo = true; }}
               ondragleave={() => { isDraggingLogo = false; }}
               onclick={() => document.getElementById('logo-input')?.click()}
               aria-label="Upload school logo"

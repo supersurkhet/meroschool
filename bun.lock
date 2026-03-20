@@ -118,6 +118,11 @@
     },
     "packages/ui": {
       "name": "@meroschool/ui",
+      "devDependencies": {
+        "svelte": "^5.54.0",
+        "svelte-check": "^4.4.5",
+        "typescript": "^5.9.3",
+      },
     },
     "packages/utils": {
       "name": "@meroschool/utils",

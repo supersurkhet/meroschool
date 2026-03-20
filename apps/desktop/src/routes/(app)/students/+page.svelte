@@ -566,7 +566,7 @@ Sita Devi,sita@student.edu.np,002,2009-01-15`;
           type="button"
           class="border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all duration-200 cursor-pointer w-full {isDraggingCsv ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}"
           ondrop={handleCsvDrop}
-          ondragover={(e) => { e.preventDefault(); isDraggingCsv = true; }}
+          ondragover={(e: DragEvent) => { e.preventDefault(); isDraggingCsv = true; }}
           ondragleave={() => { isDraggingCsv = false; }}
           onclick={() => document.getElementById('csv-input')?.click()}
           aria-label="Upload CSV file"

@@ -24,7 +24,7 @@
 
   function handleLogin() {
     if (!oauthReady) {
-      errorMessage = 'WorkOS is not configured. Set VITE_WORKOS_CLIENT_ID and VITE_WORKOS_API_KEY in .env.local';
+      errorMessage = 'Authentication is not configured. Set VITE_WORKOS_CLIENT_ID and VITE_WORKOS_API_KEY in .env.local';
       return;
     }
     isLoading = true;
@@ -152,7 +152,6 @@
           </p>
         </div>
 
-        <!-- WorkOS OAuth button -->
         <div class="space-y-4">
           <Button
             onclick={handleLogin}
@@ -161,13 +160,12 @@
           >
             {#if isLoading}
               <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-              <span class="ml-2">Redirecting to WorkOS...</span>
+              <span class="ml-2">{t('auth.redirecting')}</span>
             {:else}
-              <!-- WorkOS logo mark -->
               <svg class="mr-2.5 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
               </svg>
-              Sign in with WorkOS
+              {t('auth.signInButton')}
               <ExternalLink class="ml-2 h-3.5 w-3.5 opacity-50 transition-opacity group-hover:opacity-100" />
             {/if}
           </Button>
@@ -176,7 +174,7 @@
             <div class="flex items-start gap-2.5 rounded-lg border border-warning/30 bg-warning/5 px-3.5 py-3 text-xs text-warning">
               <AlertCircle class="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <div>
-                <p class="font-semibold">WorkOS not configured</p>
+                <p class="font-semibold">{t('auth.notConfigured')}</p>
                 <p class="mt-0.5 text-warning/70">
                   Set <code class="rounded bg-warning/10 px-1 font-mono text-[10px]">VITE_WORKOS_CLIENT_ID</code> and
                   <code class="rounded bg-warning/10 px-1 font-mono text-[10px]">VITE_WORKOS_API_KEY</code> in
@@ -198,7 +196,7 @@
         <div class="mt-8 rounded-lg border border-border/50 bg-muted/20 p-4">
           <p class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">Secure Authentication</p>
           <p class="mt-1.5 text-xs leading-relaxed text-muted-foreground/70">
-            Authentication is handled by WorkOS AuthKit. Your credentials are never stored locally — only a session token is kept after successful sign-in.
+            {t('auth.securityNote')}
           </p>
         </div>
 

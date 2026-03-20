@@ -53,10 +53,6 @@
     }
   }
 
-  let formNetSalary = $derived(
-    (Number(formBaseSalary) || 0) - (Number(formDeductions) || 0) + (Number(formBonuses) || 0)
-  );
-
   type SalaryStatus = 'paid' | 'pending' | 'cancelled';
 
   interface SalaryRecord {
@@ -129,6 +125,9 @@
   let formDeductions = $state('');
   let formBonuses = $state('');
   let formNotes = $state('');
+  let formNetSalary = $derived(
+    (Number(formBaseSalary) || 0) - (Number(formDeductions) || 0) + (Number(formBonuses) || 0)
+  );
 
   function openAddForm() {
     editingId = null;

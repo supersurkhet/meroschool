@@ -64,6 +64,10 @@ const ne: Translations = {
 		accessDenied: 'पहुँच अस्वीकृत',
 		noAdminPrivileges: 'यो प्यानल पहुँच गर्न तपाईंसँग प्रशासन अधिकार छैन।',
 		password: 'पासवर्ड',
+		signInButton: 'साइन इन गर्नुहोस्',
+		redirecting: 'साइन इन हुँदैछ...',
+		notConfigured: 'प्रमाणीकरण कन्फिगर गरिएको छैन',
+		securityNote: 'तपाईंको प्रमाणपत्र स्थानीय रूपमा कहिल्यै भण्डारण गरिँदैन — सफल साइन-इन पछि सत्र टोकन मात्र राखिन्छ।',
 	},
 	setup: {
 		schoolSetup: 'विद्यालय सेटअप',

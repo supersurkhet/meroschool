@@ -62,6 +62,10 @@ const en = {
 		accessDenied: 'Access Denied',
 		noAdminPrivileges: 'You do not have admin privileges to access this panel.',
 		password: 'Password',
+		signInButton: 'Sign In',
+		redirecting: 'Signing in...',
+		notConfigured: 'Authentication not configured',
+		securityNote: 'Your credentials are never stored locally — only a session token is kept after successful sign-in.',
 	},
 	setup: {
 		schoolSetup: 'School Setup',

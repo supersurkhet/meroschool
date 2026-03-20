@@ -41,7 +41,7 @@
 
 	let notifications = $state<any[]>([])
 
-	onMount(async () => {
+	onMount(() => {
 		applyTheme($theme)
 		const unsub = theme.subscribe((t) => applyTheme(t))
 
@@ -53,18 +53,21 @@
 			setConvexAuth(data.sessionToken)
 		}
 
-		try {
-			const client = getConvexClient()
-			if (client) {
-				const result = await client.query('notifications:listUnread' as any, { userId: 'current' })
-				if (Array.isArray(result)) {
-					notifications = result
-					unreadCount = result.length
+		async function loadNotifications() {
+			try {
+				const client = getConvexClient()
+				if (client) {
+					const result = await client.query('notifications:listUnread' as any, { userId: 'current' })
+					if (Array.isArray(result)) {
+						notifications = result
+						unreadCount = result.length
+					}
 				}
+			} catch {
+				// Convex not available
 			}
-		} catch {
-			// Convex not available
 		}
+		loadNotifications()
 
 		return unsub
 	})
@@ -117,7 +120,7 @@
 	<!-- Mobile sidebar overlay -->
 	{#if sidebarOpen}
 		<div class="fixed inset-0 z-40 lg:hidden">
-			<Button variant="ghost" class="absolute inset-0 bg-black/50 rounded-none h-auto w-auto" onclick={() => sidebarOpen = false} aria-label="Close sidebar"></Button>
+			<button type="button" class="absolute inset-0 bg-black/50" onclick={() => sidebarOpen = false} aria-label="Close sidebar"></button>
 			<aside class="relative w-64 h-full flex flex-col bg-card border-r">
 				<div class="flex h-16 items-center gap-2 border-b px-6">
 					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">M</div>
