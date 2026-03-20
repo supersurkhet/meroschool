@@ -372,3 +372,109 @@
 - [ ] `bulkCreateTeachers` creates user + teacher records for each entry
 - [ ] `exportStudents` returns all students for a school with class name, section name, email
 - [ ] `exportAttendance` returns attendance records for a section and date range with student names
+
+## Phase 2 — Mobile Screens (Expo)
+
+### Teacher Attendance (Mobile)
+- [ ] Section selector shows all assigned sections as horizontal chips
+- [ ] Date navigator shows today's date with < > arrows
+- [ ] Tapping "Today" label resets to current date
+- [ ] Student list renders with roll number, name, and P/A/L toggle buttons
+- [ ] Present button highlights green when selected
+- [ ] Absent button highlights red when selected
+- [ ] Late button highlights yellow when selected
+- [ ] Tapping same status again deselects it (toggles to null)
+- [ ] "Mark All" button sets all students to present
+- [ ] Summary bar shows present/total count and absent/late counts
+- [ ] Submit button is disabled when no students are marked
+- [ ] Submit shows confirmation Alert with attendance summary
+- [ ] Submit shows success Alert after confirmation
+- [ ] FlatList renders 20 students with smooth scrolling
+
+### QR Scanner (Mobile)
+- [ ] Camera permission request screen renders when permission not granted
+- [ ] Camera view opens with QR scanning overlay and corner accents
+- [ ] Valid QR code triggers success screen with green checkmark animation
+- [ ] Success screen shows "Attendance Marked!" with section and time
+- [ ] Expired QR shows "QR Expired" error with retry button
+- [ ] Wrong section QR shows "Wrong Section" error with section mismatch info
+- [ ] Invalid QR format shows "Invalid QR" error
+- [ ] "Try Again" resets scanner to scanning state
+- [ ] "Go Back" navigates back to previous screen
+- [ ] Back arrow in camera overlay navigates back
+
+### Student Materials (Mobile)
+- [ ] Subject grid renders 6 subjects in 2-column layout with icons
+- [ ] Tapping subject navigates to modules list
+- [ ] Modules list shows topic count and total materials count
+- [ ] Tapping module navigates to topics list
+- [ ] Topics list shows material type emojis preview
+- [ ] Tapping topic navigates to materials list
+- [ ] Material cards show type icon, title, detail, and type badge
+- [ ] Tapping material opens URL via Linking.openURL
+- [ ] Back button in header navigates up one level
+- [ ] Breadcrumb subtitle updates at each level
+
+### Student Test Taking (Mobile)
+- [ ] "Available Tests" tab lists tests with subject, title, duration, marks
+- [ ] "Past Results" tab lists completed tests with color-coded percentage
+- [ ] Tapping available test shows test info screen with details
+- [ ] Test info shows duration, question count, total marks
+- [ ] "Start Test" begins test with countdown timer
+- [ ] Timer shows mm:ss format and counts down every second
+- [ ] Timer turns red when under 60 seconds remaining
+- [ ] Options A/B/C/D rendered with radio-style selection
+- [ ] Selected option highlighted with primary color
+- [ ] Question navigation dots at bottom: green=answered, gray=unanswered, blue=current
+- [ ] Previous/Next buttons navigate between questions
+- [ ] Submit button shows answered/total count
+- [ ] Submit confirmation Alert warns about unanswered questions
+- [ ] Results screen shows score circle with color coding
+- [ ] Per-question review shows correct/incorrect with explanations
+- [ ] Tapping past result shows detail view with question review
+- [ ] Percentage color: green >= 70%, yellow 40-70%, red < 40%
+
+### Student Assignments (Mobile)
+- [ ] "Pending" tab shows assignment cards with subject badge and due status
+- [ ] Due status color: green (> 3 days), yellow (1-3 days), red (overdue/today)
+- [ ] Tapping assignment opens detail view with description
+- [ ] Detail view has text input area for submission
+- [ ] "Attach File" button shows placeholder alert
+- [ ] Submit validates non-empty text input
+- [ ] Submit confirmation shows success alert
+- [ ] "Completed" tab shows graded assignments with grade badge and feedback
+- [ ] Empty states render when no items in either tab
+
+### Parent Attendance Calendar (Mobile)
+- [ ] Month header shows "March 2026" with < > navigation arrows
+- [ ] Calendar grid renders 7-column layout with weekday headers
+- [ ] Present days are green, absent days are red, late days are yellow
+- [ ] Weekend days are gray/muted
+- [ ] Legend row explains color meanings
+- [ ] Monthly summary card shows present, absent, late counts
+- [ ] Attendance percentage calculated correctly
+- [ ] Progress bar shows proportional present/late/absent segments
+- [ ] Navigating months updates calendar and summary data
+
+### Parent Results (Mobile)
+- [ ] Summary cards show average score and total tests taken
+- [ ] Best subject card identifies highest-average subject
+- [ ] Test results list shows color-coded percentage circles
+- [ ] Green >= 70%, yellow 40-70%, red < 40% percentage coloring
+- [ ] Tapping result opens detail view with per-question review
+- [ ] Detail view shows correct (checkmark) and incorrect (X) indicators
+- [ ] Incorrect answers show both user answer and correct answer
+
+### Parent Notifications (Mobile)
+- [ ] FlatList renders notification items with type-specific icons and colors
+- [ ] attendance_alert type shows red alert icon
+- [ ] test_result type shows blue document icon
+- [ ] assignment_graded type shows green checkmark icon
+- [ ] general type shows gray info icon
+- [ ] Unread notifications have bold title and colored left border
+- [ ] Unread dot indicator shows on unread items
+- [ ] Tapping notification marks it as read
+- [ ] "Mark as Read" button in header marks all as read
+- [ ] Unread count updates in subtitle after marking read
+- [ ] Pull to refresh triggers RefreshControl
+- [ ] Empty state shows "No Notifications" when list is empty
