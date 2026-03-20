@@ -42,6 +42,11 @@ export const markSingle = mutation({
     markedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateFormat.test(args.date)) {
+      throw new Error("Invalid date format. Expected YYYY-MM-DD");
+    }
+
     // Check if already marked for that date
     const existing = await ctx.db
       .query("attendance")
@@ -97,6 +102,11 @@ export const markBulk = mutation({
     markedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateFormat.test(args.date)) {
+      throw new Error("Invalid date format. Expected YYYY-MM-DD");
+    }
+
     const ids = [];
     for (const record of args.records) {
       // Check for existing record and update if found
@@ -167,6 +177,11 @@ export const getStudentAttendance = query({
     endDate: v.string(),
   },
   handler: async (ctx, args) => {
+    const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateFormat.test(args.startDate) || !dateFormat.test(args.endDate)) {
+      throw new Error("Invalid date format. Expected YYYY-MM-DD");
+    }
+
     const records = await ctx.db
       .query("attendance")
       .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
@@ -176,7 +191,7 @@ export const getStudentAttendance = query({
           q.lte(q.field("date"), args.endDate)
         )
       )
-      .collect();
+      .take(100);
 
     return records;
   },

@@ -478,3 +478,95 @@
 - [ ] Unread count updates in subtitle after marking read
 - [ ] Pull to refresh triggers RefreshControl
 - [ ] Empty state shows "No Notifications" when list is empty
+
+## Phase 3 — Mobile Wiring (Convex, i18n, Error Boundaries, Loading, Dark Mode)
+
+### Convex Integration (Mobile)
+- [ ] ConvexReactClient uses EXPO_PUBLIC_CONVEX_URL env var
+- [ ] ConvexProviderWrapper wraps app in root _layout.tsx
+- [ ] lib/convex/hooks.ts re-exports useQuery and useMutation from convex/react
+- [ ] Student dashboard has commented Convex query patterns for attendance, tests, assignments
+- [ ] Convex queries can be uncommented and work when backend is running
+
+### i18n System (Mobile)
+- [ ] lib/i18n/en.ts has comprehensive English strings for all roles (common, auth, student, teacher, parent, qr)
+- [ ] lib/i18n/ne.ts has matching Nepali translations for all keys
+- [ ] lib/i18n/translations/en.ts and ne.ts mirror root translations with additional keys
+- [ ] lib/i18n/context.tsx provides I18nProvider with useI18n hook
+- [ ] Language switcher component toggles between "EN | ने"
+- [ ] Language preference persists in AsyncStorage across app restarts
+- [ ] All screens use useTranslation() for label text
+- [ ] Switching language updates all visible labels immediately
+
+### Error Boundaries (Mobile)
+- [ ] ErrorBoundary class component catches render errors in subtree
+- [ ] ErrorScreen shows warning icon, error message, and retry button
+- [ ] Student tab group _layout.tsx wrapped with ErrorBoundary
+- [ ] Teacher tab group _layout.tsx wrapped with ErrorBoundary
+- [ ] Parent tab group _layout.tsx wrapped with ErrorBoundary
+- [ ] Retry button in ErrorScreen resets error state and re-renders children
+- [ ] Error info logged to console for debugging
+
+### Loading States (Mobile)
+- [ ] Skeleton component renders animated shimmer placeholder with configurable dimensions
+- [ ] Skeleton animation pulses opacity using React Native Animated API
+- [ ] SkeletonCard provides pre-composed card skeleton layout
+- [ ] SkeletonList renders multiple SkeletonCard items
+- [ ] LoadingScreen shows centered ActivityIndicator with loading text
+- [ ] LoadingScreen uses theme colors for dark mode compatibility
+
+### Dark Mode (Mobile)
+- [ ] ThemeContext provides isDark, toggle, and colors values
+- [ ] Theme toggle in profile screen switches between light and dark
+- [ ] Theme preference persists in AsyncStorage with @meroschool/theme key
+- [ ] All screens use useTheme() colors, no hardcoded color values
+- [ ] Tab bar background and border colors update in dark mode
+- [ ] Card, Badge, Button components use theme colors
+- [ ] StatusBar style switches between light and dark based on theme
+- [ ] System color scheme is used as initial default
+
+## Phase 3 — Convex Backend: Notifications, Query Optimization, Validation, Cron Jobs
+
+### Notification System
+- [ ] `subscribeUnread` query returns up to 20 unread notifications sorted desc for a userId
+- [ ] `sendAttendanceAlert` internal mutation looks up student name, finds parents, inserts attendance_alert notification for each parent
+- [ ] `sendTestResultNotification` internal mutation looks up student name and test title, sends test_result notification to parents
+- [ ] `sendAssignmentDueReminder` internal mutation finds assignments due tomorrow, sends assignment_due notification to students who haven't submitted
+- [ ] `sendAssignmentGradedNotification` internal mutation looks up submission/assignment/student and sends assignment_graded notification to student
+- [ ] `deleteOldNotifications` internal mutation deletes read notifications older than 30 days
+
+### Cron Jobs
+- [ ] `crons.ts` registers daily "send-assignment-reminders" cron at 00:15 UTC calling `sendAssignmentDueReminder`
+- [ ] `crons.ts` registers weekly "cleanup-old-notifications" cron on Sunday at 02:00 UTC calling `deleteOldNotifications`
+
+### Query Optimization
+- [ ] `listUnread` notifications query uses `.take(50)` instead of `.collect()`
+- [ ] `listTestsBySubject` uses `.take(100)` instead of `.collect()`
+- [ ] `getStudentTestHistory` uses `.take(100)` instead of `.collect()`
+- [ ] `getParentChildren` uses `.take(500)` instead of unbounded `.collect()`
+- [ ] `schools.list` uses `.take(50)` instead of `.collect()`
+- [ ] `getUsersByRole` uses `.take(100)` instead of `.collect()`
+- [ ] `listByTeacher` (salary) uses `.take(50)` instead of `.collect()`
+- [ ] `listBySection` (assignments) uses `.take(100)` instead of `.collect()`
+- [ ] `listBySubject` (assignments) uses `.take(100)` instead of `.collect()`
+- [ ] `listSubmissions` uses `.take(100)` instead of `.collect()`
+- [ ] `listStudentSubmissions` uses `.take(100)` instead of `.collect()`
+- [ ] `getStudentAttendance` uses `.take(100)` instead of `.collect()`
+- [ ] `exportAttendance` uses `.take(1000)` instead of `.collect()`
+
+### Data Validation
+- [ ] `upsertUser` validates email format with `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
+- [ ] `schools.create` validates email format and phone format `/^(98|97)\d{8}$/`
+- [ ] `createStudent` validates dateOfBirth and admissionDate format (YYYY-MM-DD)
+- [ ] `markSingle` validates date format (YYYY-MM-DD)
+- [ ] `markBulk` validates date format (YYYY-MM-DD)
+- [ ] `getStudentAttendance` validates startDate and endDate format (YYYY-MM-DD)
+- [ ] `assignments.create` validates dueDate format (YYYY-MM-DD)
+- [ ] `createTest` validates durationMinutes > 0 and <= 180
+- [ ] `addQuestion` validates exactly 4 options and correctOptionIndex 0-3
+- [ ] `addQuestionsBulk` validates options count and correctOptionIndex for each question
+- [ ] `salary.create` validates baseSalary >= 0
+- [ ] `bulkCreateSalary` validates baseSalary >= 0
+- [ ] `bulkEnrollStudents` validates email format, dateOfBirth, and admissionDate format
+- [ ] `bulkCreateTeachers` validates email format
+- [ ] `exportAttendance` validates startDate and endDate format (YYYY-MM-DD)

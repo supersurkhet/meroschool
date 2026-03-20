@@ -32,6 +32,11 @@ export const upsertUser = mutation({
     avatarUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailFormat.test(args.email)) {
+      throw new Error("Invalid email format");
+    }
+
     const existing = await ctx.db
       .query("users")
       .withIndex("by_workos_id", (q) => q.eq("workosUserId", args.workosUserId))
@@ -67,7 +72,7 @@ export const getUsersByRole = query({
     return await ctx.db
       .query("users")
       .withIndex("by_role", (q) => q.eq("role", args.role))
-      .collect();
+      .take(100);
   },
 });
 

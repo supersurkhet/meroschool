@@ -13,13 +13,21 @@ export const create = mutation({
     establishedYear: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneFormat = /^(98|97)\d{8}$/;
+    if (args.email && !emailFormat.test(args.email)) {
+      throw new Error("Invalid email format");
+    }
+    if (args.phone && !phoneFormat.test(args.phone)) {
+      throw new Error("Invalid phone format. Expected Nepal mobile format (98|97)XXXXXXXX");
+    }
     return await ctx.db.insert("schools", args);
   },
 });
 
 export const list = query({
   handler: async (ctx) => {
-    return await ctx.db.query("schools").collect();
+    return await ctx.db.query("schools").take(50);
   },
 });
 

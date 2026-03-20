@@ -17,6 +17,19 @@ export const bulkEnrollStudents = mutation({
 		schoolId: v.id("schools"),
 	},
 	handler: async (ctx, args) => {
+		const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
+		for (const s of args.students) {
+			if (!emailFormat.test(s.email)) {
+				throw new Error(`Invalid email format: ${s.email}`);
+			}
+			if (s.dateOfBirth && !dateFormat.test(s.dateOfBirth)) {
+				throw new Error(`Invalid date format for dateOfBirth: ${s.dateOfBirth}. Expected YYYY-MM-DD`);
+			}
+			if (s.admissionDate && !dateFormat.test(s.admissionDate)) {
+				throw new Error(`Invalid date format for admissionDate: ${s.admissionDate}. Expected YYYY-MM-DD`);
+			}
+		}
 		const ids = [];
 		for (const s of args.students) {
 			// Create user record
@@ -58,6 +71,12 @@ export const bulkCreateTeachers = mutation({
 		schoolId: v.id("schools"),
 	},
 	handler: async (ctx, args) => {
+		const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		for (const t of args.teachers) {
+			if (!emailFormat.test(t.email)) {
+				throw new Error(`Invalid email format: ${t.email}`);
+			}
+		}
 		const ids = [];
 		for (const t of args.teachers) {
 			// Create user record
@@ -135,6 +154,11 @@ export const exportAttendance = query({
 		endDate: v.string(),
 	},
 	handler: async (ctx, args) => {
+		const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
+		if (!dateFormat.test(args.startDate) || !dateFormat.test(args.endDate)) {
+			throw new Error("Invalid date format. Expected YYYY-MM-DD");
+		}
+
 		const records = await ctx.db
 			.query("attendance")
 			.withIndex("by_section", (q) => q.eq("sectionId", args.sectionId))
@@ -144,7 +168,7 @@ export const exportAttendance = query({
 					q.lte(q.field("date"), args.endDate)
 				)
 			)
-			.collect();
+			.take(1000);
 
 		return Promise.all(
 			records.map(async (r) => {

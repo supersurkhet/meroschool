@@ -13,6 +13,13 @@ export const createStudent = mutation({
     parentIds: v.array(v.id("parents")),
   },
   handler: async (ctx, args) => {
+    const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
+    if (args.dateOfBirth && !dateFormat.test(args.dateOfBirth)) {
+      throw new Error("Invalid date format for dateOfBirth. Expected YYYY-MM-DD");
+    }
+    if (args.admissionDate && !dateFormat.test(args.admissionDate)) {
+      throw new Error("Invalid date format for admissionDate. Expected YYYY-MM-DD");
+    }
     return await ctx.db.insert("students", args);
   },
 });
@@ -130,7 +137,7 @@ export const getParentChildren = query({
   args: { parentId: v.id("parents") },
   handler: async (ctx, args) => {
     // Find all students who have this parent in their parentIds
-    const allStudents = await ctx.db.query("students").collect();
+    const allStudents = await ctx.db.query("students").take(500);
     const children = allStudents.filter((s) =>
       s.parentIds?.includes(args.parentId)
     );

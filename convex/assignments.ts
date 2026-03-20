@@ -15,6 +15,10 @@ export const create = mutation({
     fileId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
+    const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateFormat.test(args.dueDate)) {
+      throw new Error("Invalid date format for dueDate. Expected YYYY-MM-DD");
+    }
     return await ctx.db.insert("assignments", args);
   },
 });
@@ -25,7 +29,7 @@ export const listBySection = query({
     return await ctx.db
       .query("assignments")
       .withIndex("by_section", (q) => q.eq("sectionId", args.sectionId))
-      .collect();
+      .take(100);
   },
 });
 
@@ -35,7 +39,7 @@ export const listBySubject = query({
     return await ctx.db
       .query("assignments")
       .withIndex("by_subject", (q) => q.eq("subjectId", args.subjectId))
-      .collect();
+      .take(100);
   },
 });
 
@@ -168,7 +172,7 @@ export const listSubmissions = query({
       .withIndex("by_assignment", (q) =>
         q.eq("assignmentId", args.assignmentId)
       )
-      .collect();
+      .take(100);
 
     return Promise.all(
       submissions.map(async (s) => {
@@ -205,7 +209,7 @@ export const listStudentSubmissions = query({
     const submissions = await ctx.db
       .query("submissions")
       .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
-      .collect();
+      .take(100);
 
     return Promise.all(
       submissions.map(async (s) => {

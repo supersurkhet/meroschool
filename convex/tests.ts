@@ -14,6 +14,9 @@ export const createTest = mutation({
     moduleId: v.optional(v.id("modules")),
   },
   handler: async (ctx, args) => {
+    if (args.durationMinutes <= 0 || args.durationMinutes > 180) {
+      throw new Error("Test duration must be greater than 0 and at most 180 minutes");
+    }
     return await ctx.db.insert("tests", { ...args, isPublished: false });
   },
 });
@@ -31,7 +34,7 @@ export const listTestsBySubject = query({
     return await ctx.db
       .query("tests")
       .withIndex("by_subject", (q) => q.eq("subjectId", args.subjectId))
-      .collect();
+      .take(100);
   },
 });
 
@@ -99,7 +102,7 @@ export const getStudentTestHistory = query({
     const attempts = await ctx.db
       .query("testAttempts")
       .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
-      .collect();
+      .take(100);
 
     return Promise.all(
       attempts.map(async (a) => {
@@ -131,6 +134,12 @@ export const addQuestion = mutation({
     order: v.number(),
   },
   handler: async (ctx, args) => {
+    if (args.options.length !== 4) {
+      throw new Error("Question must have exactly 4 options");
+    }
+    if (args.correctOptionIndex < 0 || args.correctOptionIndex > 3) {
+      throw new Error("correctOptionIndex must be between 0 and 3");
+    }
     return await ctx.db.insert("testQuestions", args);
   },
 });
@@ -148,6 +157,14 @@ export const addQuestionsBulk = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    for (const q of args.questions) {
+      if (q.options.length !== 4) {
+        throw new Error("Each question must have exactly 4 options");
+      }
+      if (q.correctOptionIndex < 0 || q.correctOptionIndex > 3) {
+        throw new Error("correctOptionIndex must be between 0 and 3");
+      }
+    }
     const ids = [];
     for (let i = 0; i < args.questions.length; i++) {
       const id = await ctx.db.insert("testQuestions", {

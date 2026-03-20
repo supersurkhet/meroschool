@@ -11,6 +11,10 @@ export const create = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (args.baseSalary < 0) {
+      throw new Error("baseSalary must be >= 0");
+    }
+
     const netSalary = args.baseSalary - args.deductions + args.bonuses;
 
     // Check for existing record this month
@@ -97,7 +101,7 @@ export const listByTeacher = query({
     return await ctx.db
       .query("salaryRecords")
       .withIndex("by_teacher", (q) => q.eq("teacherId", args.teacherId))
-      .collect();
+      .take(50);
   },
 });
 
@@ -182,6 +186,10 @@ export const bulkCreateSalary = mutation({
     schoolId: v.id("schools"),
   },
   handler: async (ctx, args) => {
+    if (args.baseSalary < 0) {
+      throw new Error("baseSalary must be >= 0");
+    }
+
     const teachers = await ctx.db
       .query("teachers")
       .withIndex("by_school", (q) => q.eq("schoolId", args.schoolId))

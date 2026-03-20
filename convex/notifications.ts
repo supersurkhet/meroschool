@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 
 export const send = mutation({
   args: {
@@ -64,7 +65,7 @@ export const listUnread = query({
       .withIndex("by_user_unread", (q) =>
         q.eq("userId", args.userId).eq("isRead", false)
       )
-      .collect();
+      .take(50);
   },
 });
 
@@ -119,5 +120,174 @@ export const unreadCount = query({
       )
       .collect();
     return unread.length;
+  },
+});
+
+// Real-time subscription returning unread notifications, sorted by sentAt desc, limit 20
+export const subscribeUnread = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("notifications")
+      .withIndex("by_user_unread", (q) =>
+        q.eq("userId", args.userId).eq("isRead", false)
+      )
+      .order("desc")
+      .take(20);
+  },
+});
+
+// Internal mutation: send attendance alert to student's parents
+export const sendAttendanceAlert = internalMutation({
+  args: {
+    studentId: v.id("students"),
+    date: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student) return;
+    const user = await ctx.db.get(student.userId);
+    const studentName = user?.name ?? "Your child";
+
+    const parentIds = student.parentIds ?? [];
+    for (const parentId of parentIds) {
+      const parent = await ctx.db.get(parentId);
+      if (parent) {
+        await ctx.db.insert("notifications", {
+          userId: parent.userId,
+          type: "attendance_alert",
+          title: "Attendance Alert",
+          message: `Your child ${studentName} was marked absent on ${args.date}`,
+          isRead: false,
+        });
+      }
+    }
+  },
+});
+
+// Internal mutation: send test result notification to student's parents
+export const sendTestResultNotification = internalMutation({
+  args: {
+    studentId: v.id("students"),
+    testId: v.id("tests"),
+    score: v.number(),
+    totalMarks: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student) return;
+    const user = await ctx.db.get(student.userId);
+    const studentName = user?.name ?? "Your child";
+
+    const test = await ctx.db.get(args.testId);
+    const testTitle = test?.title ?? "Unknown Test";
+
+    const parentIds = student.parentIds ?? [];
+    for (const parentId of parentIds) {
+      const parent = await ctx.db.get(parentId);
+      if (parent) {
+        await ctx.db.insert("notifications", {
+          userId: parent.userId,
+          type: "test_result",
+          title: "Test Result",
+          message: `${studentName} scored ${args.score}/${args.totalMarks} on ${testTitle}`,
+          isRead: false,
+        });
+      }
+    }
+  },
+});
+
+// Internal mutation: send assignment due reminders for assignments due tomorrow
+export const sendAssignmentDueReminder = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Calculate tomorrow's date in YYYY-MM-DD format
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+    // Find all assignments due tomorrow
+    const allAssignments = await ctx.db.query("assignments").collect();
+    const dueAssignments = allAssignments.filter(
+      (a) => a.dueDate === tomorrowStr
+    );
+
+    for (const assignment of dueAssignments) {
+      // Get all students in the assignment's section
+      const students = await ctx.db
+        .query("students")
+        .withIndex("by_section", (q) => q.eq("sectionId", assignment.sectionId))
+        .collect();
+
+      for (const student of students) {
+        // Check if already submitted
+        const submission = await ctx.db
+          .query("submissions")
+          .withIndex("by_assignment_student", (q) =>
+            q
+              .eq("assignmentId", assignment._id)
+              .eq("studentId", student._id)
+          )
+          .first();
+
+        if (!submission) {
+          await ctx.db.insert("notifications", {
+            userId: student.userId,
+            type: "assignment_due",
+            title: "Assignment Due Tomorrow",
+            message: `"${assignment.title}" is due tomorrow (${tomorrowStr})`,
+            isRead: false,
+            relatedId: assignment._id as string,
+          });
+        }
+      }
+    }
+  },
+});
+
+// Internal mutation: send notification when assignment is graded
+export const sendAssignmentGradedNotification = internalMutation({
+  args: {
+    submissionId: v.id("submissions"),
+  },
+  handler: async (ctx, args) => {
+    const submission = await ctx.db.get(args.submissionId);
+    if (!submission) return;
+
+    const student = await ctx.db.get(submission.studentId);
+    if (!student) return;
+
+    const assignment = await ctx.db.get(submission.assignmentId);
+    if (!assignment) return;
+
+    await ctx.db.insert("notifications", {
+      userId: student.userId,
+      type: "assignment_graded",
+      title: "Assignment Graded",
+      message: `Your assignment '${assignment.title}' has been graded: ${submission.grade}/${assignment.totalMarks}`,
+      isRead: false,
+      relatedId: args.submissionId as string,
+    });
+  },
+});
+
+// Internal mutation: delete read notifications older than 30 days
+export const deleteOldNotifications = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+    const allNotifications = await ctx.db.query("notifications").collect();
+    let deletedCount = 0;
+
+    for (const n of allNotifications) {
+      if (n.isRead && n._creationTime < thirtyDaysAgo) {
+        await ctx.db.delete(n._id);
+        deletedCount++;
+      }
+    }
+
+    return deletedCount;
   },
 });
