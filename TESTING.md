@@ -159,6 +159,77 @@
 - [ ] All components render correctly in dark mode
 - [ ] Theme preference persists across sessions
 
+## Teacher Attendance Page (Web)
+- [ ] Section dropdown shows available sections
+- [ ] Date picker defaults to today's date
+- [ ] Student list table renders with Roll#, Name, Status columns
+- [ ] Present button turns green when selected
+- [ ] Absent button turns red when selected
+- [ ] Late button turns yellow when selected
+- [ ] "Mark All Present" sets all students to present
+- [ ] Summary bar shows correct present/absent/late counts
+- [ ] Submit button shows loading state and success badge
+- [ ] Dark mode renders correctly on attendance page
+
+## Teacher Test Management (Web)
+- [ ] Create test form has title, subject, duration, total marks fields
+- [ ] Question builder shows text area and 4 option inputs with radio buttons
+- [ ] Add Question appends to questions list below
+- [ ] Edit button populates question form with existing data
+- [ ] Remove button deletes question from list
+- [ ] Correct answer highlighted in green in questions list
+- [ ] Create & Publish adds test to existing tests table
+- [ ] Existing tests table shows title, questions count, status badge, date
+- [ ] View Results link navigates to test results page
+- [ ] Dark mode renders correctly on tests page
+
+## Teacher Test Results (Web)
+- [ ] Stats cards show average, highest, lowest, pass rate
+- [ ] Results table shows student name, score, percentage, time taken
+- [ ] Percentage color-coded: green >= 80%, yellow >= 60%, red < 60%
+- [ ] Pass/Fail badge shows correctly
+- [ ] Export CSV downloads a valid CSV file
+- [ ] Back to Tests link navigates correctly
+- [ ] Dark mode renders correctly on results page
+
+## Teacher Materials Page (Web)
+- [ ] Subject/module/topic selectors filter content correctly
+- [ ] Breadcrumb shows current subject > module > topic
+- [ ] Materials list shows title, type badge, description, URL
+- [ ] Type badges are color-coded (video=blue, pdf=red, link=green, document=purple)
+- [ ] Add Material form creates new material under selected topic
+- [ ] Delete button removes material from list
+- [ ] Upload area placeholder is styled and visible
+- [ ] Dark mode renders correctly on materials page
+
+## Teacher Assignments Page (Web)
+- [ ] Create assignment form has title, description, subject, section, due date, total marks
+- [ ] Create Assignment button adds to assignments list
+- [ ] Assignments list shows title, subject, section, due date, submissions count
+- [ ] Click to expand shows submissions table
+- [ ] Grade input accepts numeric value
+- [ ] Feedback input accepts text
+- [ ] Save button updates grade and feedback
+- [ ] Active/Closed badge shows correctly
+- [ ] Dark mode renders correctly on assignments page
+
+## Landing Page Polish (Web)
+- [ ] Hero heading shows "Digital School Management" with gradient text
+- [ ] Dashboard mockup has improved chart and activity feed sections
+- [ ] "Built for Nepal" section shows flag, 3 feature items
+- [ ] Nepali language support item renders
+- [ ] Surkhet mention renders
+- [ ] Offline mobile mention renders
+- [ ] All existing sections (features, CTA, trusted by) still render
+
+## Notification Bell (Web)
+- [ ] Bell icon visible in dashboard top bar
+- [ ] Red badge shows unread count (3)
+- [ ] Click bell opens dropdown with notification list
+- [ ] Notifications show text and time
+- [ ] "Mark all as read" clears unread count and closes dropdown
+- [ ] Bell not visible on non-dashboard pages
+
 ## Schema & Auth Alignment (Phase 1.1 + 1.5)
 - [ ] `users` table exists with workosUserId, name, email, role, avatarUrl, isActive, schoolId fields
 - [ ] `users` table has `by_workos_id` and `by_role` indexes

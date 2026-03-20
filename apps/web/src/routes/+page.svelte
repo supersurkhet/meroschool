@@ -50,8 +50,9 @@
 			<Badge variant="accent" class="mb-6">{$t("hero.badge")}</Badge>
 
 			<h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-				{$t("hero.title")}
-				<span class="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"> {$t("hero.titleHighlight")}</span>
+				<span class="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">{$t("hero.digitalSchool")}</span>
+				<br />
+				<span>{$t("hero.forNepal")}</span>
 			</h1>
 
 			<p class="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -89,28 +90,54 @@
 				</div>
 				<div class="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
 					<div class="rounded-xl bg-primary/10 p-4 text-center">
-						<div class="text-2xl font-bold text-primary">1,247</div>
-						<div class="text-xs text-muted-foreground mt-1">Students</div>
+						<div class="text-3xl font-bold text-primary">1,247</div>
+						<div class="text-xs text-muted-foreground mt-1 font-medium">Students</div>
 					</div>
 					<div class="rounded-xl bg-accent/10 p-4 text-center">
-						<div class="text-2xl font-bold text-accent">86</div>
-						<div class="text-xs text-muted-foreground mt-1">Teachers</div>
+						<div class="text-3xl font-bold text-accent">86</div>
+						<div class="text-xs text-muted-foreground mt-1 font-medium">Teachers</div>
 					</div>
 					<div class="rounded-xl bg-chart-4/10 p-4 text-center">
-						<div class="text-2xl font-bold text-chart-4">94.2%</div>
-						<div class="text-xs text-muted-foreground mt-1">Attendance</div>
+						<div class="text-3xl font-bold text-chart-4">94.2%</div>
+						<div class="text-xs text-muted-foreground mt-1 font-medium">Attendance</div>
 					</div>
 					<div class="rounded-xl bg-chart-1/10 p-4 text-center">
-						<div class="text-2xl font-bold text-chart-1">Rs.12L</div>
-						<div class="text-xs text-muted-foreground mt-1">Fees Collected</div>
+						<div class="text-3xl font-bold text-chart-1">Rs.12L</div>
+						<div class="text-xs text-muted-foreground mt-1 font-medium">Fees Collected</div>
 					</div>
 				</div>
-				<div class="px-6 pb-6">
-					<div class="h-32 rounded-lg bg-gradient-to-r from-primary/5 via-accent/5 to-chart-4/5 flex items-center justify-center">
+				<div class="px-6 pb-6 grid grid-cols-2 gap-4">
+					<div class="rounded-lg bg-muted/50 p-4">
+						<div class="text-xs font-medium text-muted-foreground mb-3">Monthly Attendance</div>
 						<div class="flex gap-1 items-end h-20">
 							{#each [40, 65, 55, 80, 70, 90, 75, 85, 60, 95, 80, 88] as h}
-								<div class="w-4 sm:w-6 rounded-t bg-primary/60 transition-all" style="height: {h}%"></div>
+								<div class="flex-1 rounded-t bg-gradient-to-t from-primary/80 to-primary/40 transition-all" style="height: {h}%"></div>
 							{/each}
+						</div>
+						<div class="flex justify-between mt-1">
+							<span class="text-[9px] text-muted-foreground">Jan</span>
+							<span class="text-[9px] text-muted-foreground">Dec</span>
+						</div>
+					</div>
+					<div class="rounded-lg bg-muted/50 p-4">
+						<div class="text-xs font-medium text-muted-foreground mb-3">Recent Activity</div>
+						<div class="space-y-2">
+							<div class="flex items-center gap-2">
+								<div class="h-2 w-2 rounded-full bg-green-500"></div>
+								<span class="text-[11px] text-foreground">Attendance marked - 10A</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<div class="h-2 w-2 rounded-full bg-blue-500"></div>
+								<span class="text-[11px] text-foreground">Test published - Science</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<div class="h-2 w-2 rounded-full bg-purple-500"></div>
+								<span class="text-[11px] text-foreground">Fee collected - Rs.5,000</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<div class="h-2 w-2 rounded-full bg-orange-500"></div>
+								<span class="text-[11px] text-foreground">Assignment graded - Math</span>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -135,6 +162,40 @@
 					<p class="text-sm text-muted-foreground leading-relaxed">{$t(`features.${feature.descKey}`)}</p>
 				</Card>
 			{/each}
+		</div>
+	</div>
+</section>
+
+<!-- Built for Nepal -->
+<section class="py-16 sm:py-20">
+	<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+		<div class="rounded-2xl border bg-card p-8 sm:p-12">
+			<div class="flex flex-col sm:flex-row items-center gap-8">
+				<div class="text-6xl shrink-0">&#127475;&#127477;</div>
+				<div>
+					<h2 class="text-2xl font-bold text-foreground sm:text-3xl">{$t("nepal.title")}</h2>
+					<div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+						<div class="flex items-center gap-3">
+							<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+								<svg class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+							</div>
+							<span class="text-sm text-foreground">{$t("nepal.nepaliSupport")}</span>
+						</div>
+						<div class="flex items-center gap-3">
+							<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+								<svg class="h-5 w-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+							</div>
+							<span class="text-sm text-foreground">{$t("nepal.surkhet")}</span>
+						</div>
+						<div class="flex items-center gap-3">
+							<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-4/10">
+								<svg class="h-5 w-5 text-chart-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+							</div>
+							<span class="text-sm text-foreground">{$t("nepal.offline")}</span>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>
