@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { t } from '$lib/i18n/index.svelte'
+	import { onMount } from 'svelte'
+	import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex'
+	import { getSchool } from '$lib/stores/school.svelte'
 	import { Button } from '$lib/components/ui/button'
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
 	import { Input } from '$lib/components/ui/input'
@@ -14,6 +17,7 @@
 		ChevronDown,
 		ChevronRight,
 		Users,
+		Loader2,
 	} from 'lucide-svelte'
 
 	// ── Types ──────────────────────────────────────────────────────────
@@ -28,6 +32,7 @@
 		id: string
 		name: string
 		school: string
+		grade: number
 		sections: Section[]
 	}
 
@@ -37,6 +42,7 @@
 			id: '1',
 			name: 'Grade 1',
 			school: 'Surkhet Valley Secondary School',
+			grade: 1,
 			sections: [
 				{ id: '1a', name: 'Section A', capacity: 40, studentCount: 35 },
 				{ id: '1b', name: 'Section B', capacity: 40, studentCount: 38 },
@@ -46,6 +52,7 @@
 			id: '2',
 			name: 'Grade 2',
 			school: 'Surkhet Valley Secondary School',
+			grade: 2,
 			sections: [
 				{ id: '2a', name: 'Section A', capacity: 40, studentCount: 32 },
 			],
@@ -54,6 +61,7 @@
 			id: '3',
 			name: 'Grade 3',
 			school: 'Surkhet Valley Secondary School',
+			grade: 3,
 			sections: [
 				{ id: '3a', name: 'Section A', capacity: 45, studentCount: 40 },
 				{ id: '3b', name: 'Section B', capacity: 45, studentCount: 42 },
@@ -64,6 +72,7 @@
 			id: '4',
 			name: 'Grade 4',
 			school: 'Karnali Academy',
+			grade: 4,
 			sections: [
 				{ id: '4a', name: 'Section A', capacity: 35, studentCount: 30 },
 			],
@@ -72,10 +81,12 @@
 			id: '5',
 			name: 'Grade 5',
 			school: 'Karnali Academy',
+			grade: 5,
 			sections: [],
 		},
 	])
 
+	let loading = $state(true)
 	let expandedIds = $state<Set<string>>(new Set(['1', '3']))
 	let showClassForm = $state(false)
 	let addingSectionForClassId = $state<string | null>(null)
@@ -88,6 +99,50 @@
 	// Section form fields
 	let sectionName = $state('')
 	let sectionCapacity = $state(40)
+
+	// ── Convex loading ────────────────────────────────────────────────
+	onMount(async () => {
+		if (!isConvexConfigured()) { loading = false; return }
+		const schoolId = getSchool()?.id
+		if (!schoolId) { loading = false; return }
+
+		try {
+			const hierarchy = await convexQuery(
+				api.schools.getSchoolHierarchy,
+				{ schoolId },
+				null,
+			)
+			if (!hierarchy) { loading = false; return }
+
+			const school = await convexQuery(api.schools.get, { id: schoolId }, null)
+			const schoolName = school?.name ?? 'School'
+
+			const loadedClasses: ClassRecord[] = []
+			for (const cls of hierarchy.classes ?? []) {
+				const sections: Section[] = (cls.sections ?? []).map((sec: any) => ({
+					id: sec._id ?? sec.id,
+					name: sec.name,
+					capacity: 40,
+					studentCount: sec.students?.length ?? 0,
+				}))
+				loadedClasses.push({
+					id: cls._id ?? cls.id,
+					name: cls.name,
+					school: schoolName,
+					grade: cls.grade ?? 0,
+					sections,
+				})
+			}
+
+			if (loadedClasses.length > 0) {
+				classes = loadedClasses
+				expandedIds = new Set(loadedClasses.slice(0, 2).map(c => c.id))
+			}
+		} catch (err) {
+			console.warn('[classes] Convex load failed, using mock data:', err)
+		}
+		loading = false
+	})
 
 	// ── Computed ───────────────────────────────────────────────────────
 	let totalStudents = $derived(
@@ -131,7 +186,7 @@
 		showClassForm = true
 	}
 
-	function handleClassSubmit(e: SubmitEvent) {
+	async function handleClassSubmit(e: SubmitEvent) {
 		e.preventDefault()
 		if (editingClassId) {
 			classes = classes.map((c) =>
@@ -140,15 +195,33 @@
 					: c,
 			)
 		} else {
+			const optimisticId = crypto.randomUUID()
+			const gradeMatch = className.match(/\d+/)
+			const grade = gradeMatch ? Number(gradeMatch[0]) : 0
 			classes = [
 				...classes,
 				{
-					id: crypto.randomUUID(),
+					id: optimisticId,
 					name: className,
 					school: classSchool,
+					grade,
 					sections: [],
 				},
 			]
+			// Convex: persist class creation
+			const schoolId = getSchool()?.id
+			if (isConvexConfigured() && schoolId) {
+				try {
+					const realId = await convexMutation(api.schools.createClass, {
+						schoolId,
+						name: className,
+						grade,
+					})
+					classes = classes.map((c) => c.id === optimisticId ? { ...c, id: realId } : c)
+				} catch (err) {
+					console.warn('[classes] Convex createClass failed, keeping local entry:', err)
+				}
+			}
 		}
 		resetClassForm()
 	}
@@ -174,8 +247,9 @@
 		sectionCapacity = 40
 	}
 
-	function handleSectionSubmit(e: SubmitEvent, classId: string) {
+	async function handleSectionSubmit(e: SubmitEvent, classId: string) {
 		e.preventDefault()
+		const optimisticId = crypto.randomUUID()
 		classes = classes.map((c) => {
 			if (c.id !== classId) return c
 			return {
@@ -183,7 +257,7 @@
 				sections: [
 					...c.sections,
 					{
-						id: crypto.randomUUID(),
+						id: optimisticId,
 						name: sectionName,
 						capacity: sectionCapacity,
 						studentCount: 0,
@@ -191,6 +265,25 @@
 				],
 			}
 		})
+
+		// Convex: persist section creation
+		if (isConvexConfigured()) {
+			try {
+				const realId = await convexMutation(api.schools.createSection, {
+					classId,
+					name: sectionName,
+				})
+				classes = classes.map((c) => ({
+					...c,
+					sections: c.sections.map((s) =>
+						s.id === optimisticId ? { ...s, id: realId } : s
+					),
+				}))
+			} catch (err) {
+				console.warn('[classes] Convex createSection failed, keeping local entry:', err)
+			}
+		}
+
 		cancelAddSection()
 	}
 
@@ -276,6 +369,16 @@
 						</Button>
 					</div>
 				</form>
+			</CardContent>
+		</Card>
+	{/if}
+
+	<!-- Loading state -->
+	{#if loading}
+		<Card>
+			<CardContent class="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+				<Loader2 class="h-5 w-5 animate-spin" />
+				<span class="text-sm">Loading classes...</span>
 			</CardContent>
 		</Card>
 	{/if}

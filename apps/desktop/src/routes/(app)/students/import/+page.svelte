@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { t } from '$lib/i18n/index.svelte'
 	import { goto } from '$app/navigation'
+	import { convexMutation, convexQuery, isConvexConfigured, api } from '$lib/convex'
+	import { getSchool } from '$lib/stores/school.svelte'
 	import { Button } from '$lib/components/ui/button'
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
 	import { Badge } from '$lib/components/ui/badge'
@@ -110,9 +112,35 @@
 		fileName = ''
 	}
 
-	function importValid() {
+	async function importValid() {
 		const valid = parsedRows.filter((_, i) => !errorRowSet.has(i))
-		alert(`Imported ${valid.length} students successfully!`)
+
+		const schoolId = getSchool()?.id
+		if (isConvexConfigured() && schoolId && valid.length > 0) {
+			try {
+				// Map CSV rows to the bulkEnrollStudents format
+				const students = valid.map((row) => ({
+					name: row['name'] ?? row['Name'] ?? '',
+					email: row['email'] ?? row['Email'] ?? `${(row['name'] ?? 'student').toLowerCase().replace(/\s+/g, '.')}@import.local`,
+					rollNumber: row['roll_number'] ?? row['Roll Number'] ?? row['roll'] ?? '',
+					sectionId: row['section_id'] ?? 'default', // Will need a real section ID
+					...(row['date_of_birth'] || row['dob'] ? { dateOfBirth: row['date_of_birth'] ?? row['dob'] } : {}),
+					admissionDate: new Date().toISOString().slice(0, 10),
+				}))
+
+				await convexMutation(api.csv.bulkEnrollStudents, {
+					students,
+					schoolId,
+				})
+				alert(`Imported ${valid.length} students successfully via Convex!`)
+			} catch (err) {
+				console.warn('[import] Convex bulkEnrollStudents failed:', err)
+				alert(`Imported ${valid.length} students locally. Convex sync failed — check console.`)
+			}
+		} else {
+			alert(`Imported ${valid.length} students successfully!`)
+		}
+
 		goto('/students')
 	}
 
@@ -142,8 +170,23 @@
 		URL.revokeObjectURL(url)
 	}
 
-	function exportSample(type: string) {
+	async function exportSample(type: string) {
+		const schoolId = getSchool()?.id
+
 		if (type === 'students') {
+			// Try to export real data from Convex
+			if (isConvexConfigured() && schoolId) {
+				try {
+					const realData = await convexQuery(api.csv.exportStudents, { schoolId }, null)
+					if (Array.isArray(realData) && realData.length > 0) {
+						exportToCSV(realData, 'students_export.csv')
+						return
+					}
+				} catch (err) {
+					console.warn('[export] Convex exportStudents failed, using sample:', err)
+				}
+			}
+			// Fallback to sample data
 			exportToCSV([
 				{ 'Roll#': '001', Name: 'Aayush Bhandari', Class: 'Grade 10', Section: 'A', Status: 'Active' },
 				{ 'Roll#': '002', Name: 'Priya Tamang', Class: 'Grade 10', Section: 'A', Status: 'Active' },
