@@ -5,26 +5,10 @@
 	import { applyTheme } from '$lib/theme.js'
 	import { onMount } from 'svelte'
 	import { user as userStore } from '$lib/stores/auth.svelte.js'
-	import { setConvexAuth } from '$lib/convex-client.js'
+	import { setConvexAuth, getConvexClient } from '$lib/convex-client.js'
 	import Button from '$lib/components/ui/button.svelte'
 
 	let { data, children } = $props()
-
-	onMount(() => {
-		applyTheme($theme)
-		const unsub = theme.subscribe((t) => applyTheme(t))
-
-		if (data.user) {
-			userStore.set(data.user)
-		}
-
-		// Set up Convex auth with the JWT from the server
-		if (data.sessionToken) {
-			setConvexAuth(data.sessionToken)
-		}
-
-		return unsub
-	})
 
 	function toggleLocale() {
 		setLocale($locale === 'en' ? 'ne' : 'en')
@@ -53,19 +37,50 @@
 
 	let sidebarOpen = $state(false)
 	let bellOpen = $state(false)
-	let unreadCount = $state(3)
+	let unreadCount = $state(0)
 
-	const sampleNotifications = $state([
-		{ id: 1, text: 'New assignment submitted by Aarav Sharma', time: '5 min ago', read: false },
-		{ id: 2, text: 'Test results published for Class 10-A', time: '1 hour ago', read: false },
-		{ id: 3, text: 'Attendance reminder for today', time: '3 hours ago', read: false },
-		{ id: 4, text: 'Parent meeting scheduled for Friday', time: '1 day ago', read: true },
-	])
+	let notifications = $state<any[]>([])
 
-	function markAllRead() {
-		for (const n of sampleNotifications) n.read = true
+	onMount(async () => {
+		applyTheme($theme)
+		const unsub = theme.subscribe((t) => applyTheme(t))
+
+		if (data.user) {
+			userStore.set(data.user)
+		}
+
+		if (data.sessionToken) {
+			setConvexAuth(data.sessionToken)
+		}
+
+		try {
+			const client = getConvexClient()
+			if (client) {
+				const result = await client.query('notifications:listUnread' as any, { userId: 'current' })
+				if (Array.isArray(result)) {
+					notifications = result
+					unreadCount = result.length
+				}
+			}
+		} catch {
+			// Convex not available
+		}
+
+		return unsub
+	})
+
+	async function markAllRead() {
+		for (const n of notifications) n.read = true
 		unreadCount = 0
 		bellOpen = false
+		try {
+			const client = getConvexClient()
+			if (client) {
+				await client.mutation('notifications:markAllRead' as any, { userId: 'current' })
+			}
+		} catch {
+			// Convex not available
+		}
 	}
 </script>
 
@@ -162,7 +177,7 @@
 								<button onclick={markAllRead} class="text-xs text-primary hover:underline cursor-pointer">{$t('notifications.markAllRead')}</button>
 							</div>
 							<div class="max-h-64 overflow-y-auto">
-								{#each sampleNotifications as notif}
+								{#each notifications as notif}
 									<div class="px-4 py-3 hover:bg-muted/50 transition-colors border-b last:border-b-0 {notif.read ? 'opacity-60' : ''}">
 										<p class="text-sm text-foreground">{notif.text}</p>
 										<span class="text-xs text-muted-foreground">{notif.time}</span>

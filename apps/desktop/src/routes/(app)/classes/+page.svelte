@@ -37,57 +37,10 @@
 	}
 
 	// ── State ──────────────────────────────────────────────────────────
-	let classes = $state<ClassRecord[]>([
-		{
-			id: '1',
-			name: 'Grade 1',
-			school: 'Surkhet Valley Secondary School',
-			grade: 1,
-			sections: [
-				{ id: '1a', name: 'Section A', capacity: 40, studentCount: 35 },
-				{ id: '1b', name: 'Section B', capacity: 40, studentCount: 38 },
-			],
-		},
-		{
-			id: '2',
-			name: 'Grade 2',
-			school: 'Surkhet Valley Secondary School',
-			grade: 2,
-			sections: [
-				{ id: '2a', name: 'Section A', capacity: 40, studentCount: 32 },
-			],
-		},
-		{
-			id: '3',
-			name: 'Grade 3',
-			school: 'Surkhet Valley Secondary School',
-			grade: 3,
-			sections: [
-				{ id: '3a', name: 'Section A', capacity: 45, studentCount: 40 },
-				{ id: '3b', name: 'Section B', capacity: 45, studentCount: 42 },
-				{ id: '3c', name: 'Section C', capacity: 45, studentCount: 38 },
-			],
-		},
-		{
-			id: '4',
-			name: 'Grade 4',
-			school: 'Karnali Academy',
-			grade: 4,
-			sections: [
-				{ id: '4a', name: 'Section A', capacity: 35, studentCount: 30 },
-			],
-		},
-		{
-			id: '5',
-			name: 'Grade 5',
-			school: 'Karnali Academy',
-			grade: 5,
-			sections: [],
-		},
-	])
+	let classes = $state<ClassRecord[]>([])
 
 	let loading = $state(true)
-	let expandedIds = $state<Set<string>>(new Set(['1', '3']))
+	let expandedIds = $state<Set<string>>(new Set())
 	let showClassForm = $state(false)
 	let addingSectionForClassId = $state<string | null>(null)
 	let editingClassId = $state<string | null>(null)
@@ -139,7 +92,8 @@
 				expandedIds = new Set(loadedClasses.slice(0, 2).map(c => c.id))
 			}
 		} catch (err) {
-			console.warn('[classes] Convex load failed, using mock data:', err)
+			console.warn('[classes] Convex load failed:', err)
+		classes = []
 		}
 		loading = false
 	})

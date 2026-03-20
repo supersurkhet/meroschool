@@ -30,29 +30,7 @@
 	}
 
 	// ── State ──────────────────────────────────────────────────────────
-	let schools = $state<SchoolRecord[]>([
-		{
-			id: '1',
-			name: 'Surkhet Valley Secondary School',
-			address: 'Birendranagar-10, Surkhet',
-			phone: '+977-083-520123',
-			email: 'info@surkhetvalley.edu.np',
-		},
-		{
-			id: '2',
-			name: 'Karnali Academy',
-			address: 'Birendranagar-6, Surkhet',
-			phone: '+977-083-521456',
-			email: 'admin@karnaliacademy.edu.np',
-		},
-		{
-			id: '3',
-			name: 'Bright Future English School',
-			address: 'Lekbeshi-3, Surkhet',
-			phone: '+977-083-540789',
-			email: 'contact@brightfuture.edu.np',
-		},
-	])
+	let schools = $state<SchoolRecord[]>([])
 
 	let loading = $state(true)
 	let showForm = $state(false)
@@ -81,7 +59,8 @@
 				}))
 			}
 		} catch (err) {
-			console.warn('[schools] Convex load failed, using mock data:', err)
+			console.warn('[schools] Convex load failed:', err)
+		schools = []
 		}
 		loading = false
 	})

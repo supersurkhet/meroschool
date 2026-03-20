@@ -60,109 +60,12 @@
           }));
         }
       } catch {
-        // Keep mock data as fallback
+        salaryRecords = [];
       }
     })();
   });
 
-  let salaryRecords = $state<SalaryRecord[]>([
-    {
-      id: '1',
-      employeeId: 'EMP001',
-      name: 'Ramesh Prasad Sharma',
-      department: 'Mathematics',
-      baseSalary: 45000,
-      deductions: 3500,
-      bonuses: 2000,
-      status: 'paid',
-      notes: 'Performance bonus included for excellent results.',
-      expanded: false,
-    },
-    {
-      id: '2',
-      employeeId: 'EMP002',
-      name: 'Sunita Devi Thapa',
-      department: 'Science',
-      baseSalary: 42000,
-      deductions: 3200,
-      bonuses: 0,
-      status: 'paid',
-      notes: '',
-      expanded: false,
-    },
-    {
-      id: '3',
-      employeeId: 'EMP003',
-      name: 'Bikash Kumar Rai',
-      department: 'English',
-      baseSalary: 38000,
-      deductions: 2800,
-      bonuses: 1500,
-      status: 'pending',
-      notes: 'Awaiting bank account verification.',
-      expanded: false,
-    },
-    {
-      id: '4',
-      employeeId: 'EMP004',
-      name: 'Kamala Adhikari',
-      department: 'Nepali',
-      baseSalary: 35000,
-      deductions: 2500,
-      bonuses: 0,
-      status: 'pending',
-      notes: '',
-      expanded: false,
-    },
-    {
-      id: '5',
-      employeeId: 'EMP005',
-      name: 'Dipak Bahadur Gurung',
-      department: 'Social Studies',
-      baseSalary: 36000,
-      deductions: 2700,
-      bonuses: 1000,
-      status: 'pending',
-      notes: 'Overtime for extra classes in March.',
-      expanded: false,
-    },
-    {
-      id: '6',
-      employeeId: 'EMP006',
-      name: 'Anita Kumari Joshi',
-      department: 'Administration',
-      baseSalary: 28000,
-      deductions: 2000,
-      bonuses: 500,
-      status: 'paid',
-      notes: '',
-      expanded: false,
-    },
-    {
-      id: '7',
-      employeeId: 'EMP007',
-      name: 'Sanjay Baral',
-      department: 'Computer Science',
-      baseSalary: 48000,
-      deductions: 3800,
-      bonuses: 3000,
-      status: 'cancelled',
-      notes: 'Employee on unpaid leave this month.',
-      expanded: false,
-    },
-    {
-      id: '8',
-      employeeId: 'EMP008',
-      name: 'Puja Shrestha',
-      department: 'Administration',
-      baseSalary: 26000,
-      deductions: 1800,
-      bonuses: 0,
-      status: 'pending',
-      notes: '',
-      expanded: false,
-    },
-  ]);
+  let salaryRecords = $state<SalaryRecord[]>([]);
 
   const netSalary = (r: SalaryRecord) => r.baseSalary - r.deductions + r.bonuses;
 

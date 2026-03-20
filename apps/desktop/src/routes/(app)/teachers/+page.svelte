@@ -31,7 +31,7 @@
     avatarColor: string;
   };
 
-  // ── Sample data ──────────────────────────────────────────────────────────────
+  // ── Constants ──────────────────────────────────────────────────────────────
   const ALL_SUBJECTS = [
     'Mathematics', 'Science', 'English', 'Nepali',
     'Social Studies', 'Computer Science', 'Physical Education',
@@ -56,73 +56,7 @@
     return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
   }
 
-  let teachers = $state<Teacher[]>([
-    {
-      id: 1,
-      name: 'Ram Prasad Sharma',
-      email: 'ram.sharma@meroschoool.edu.np',
-      phone: '9841-123456',
-      employeeId: 'EMP-001',
-      department: 'Science & Math',
-      joinDate: '2019-04-15',
-      subjects: ['Mathematics', 'Science'],
-      classes: ['Class 9', 'Class 10'],
-      initials: 'RS',
-      avatarColor: 'bg-violet-500',
-    },
-    {
-      id: 2,
-      name: 'Sita Devi Thapa',
-      email: 'sita.thapa@meroschool.edu.np',
-      phone: '9851-234567',
-      employeeId: 'EMP-002',
-      department: 'Languages',
-      joinDate: '2020-07-01',
-      subjects: ['English', 'Nepali'],
-      classes: ['Class 7', 'Class 8'],
-      initials: 'ST',
-      avatarColor: 'bg-blue-500',
-    },
-    {
-      id: 3,
-      name: 'Bikash Kumar Rai',
-      email: 'bikash.rai@meroschool.edu.np',
-      phone: '9861-345678',
-      employeeId: 'EMP-003',
-      department: 'Technology',
-      joinDate: '2021-01-10',
-      subjects: ['Computer Science', 'Mathematics'],
-      classes: ['Class 9', 'Class 10'],
-      initials: 'BR',
-      avatarColor: 'bg-emerald-500',
-    },
-    {
-      id: 4,
-      name: 'Kamala Gurung',
-      email: 'kamala.gurung@meroschool.edu.np',
-      phone: '9801-456789',
-      employeeId: 'EMP-004',
-      department: 'Humanities',
-      joinDate: '2018-06-20',
-      subjects: ['Social Studies', 'Nepali'],
-      classes: ['Class 5', 'Class 6'],
-      initials: 'KG',
-      avatarColor: 'bg-rose-500',
-    },
-    {
-      id: 5,
-      name: 'Dipesh Maharjan',
-      email: 'dipesh.maharjan@meroschool.edu.np',
-      phone: '9811-567890',
-      employeeId: 'EMP-005',
-      department: 'Arts & PE',
-      joinDate: '2022-03-05',
-      subjects: ['Physical Education', 'Arts', 'Music'],
-      classes: ['Class 1', 'Class 2', 'Class 3'],
-      initials: 'DM',
-      avatarColor: 'bg-amber-500',
-    },
-  ]);
+  let teachers = $state<Teacher[]>([]);
 
   // ── Convex loading ────────────────────────────────────────────────────────────
   onMount(async () => {
@@ -153,7 +87,8 @@
         avatarColor: colorIdx(i),
       }));
     } catch (err) {
-      console.warn('[teachers] Convex load failed, using mock data:', err);
+      console.warn('[teachers] Convex load failed:', err);
+      teachers = [];
     }
   });
 

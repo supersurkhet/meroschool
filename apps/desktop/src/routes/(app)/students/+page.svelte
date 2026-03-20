@@ -28,38 +28,9 @@
   type ClassEntry = { id: string; name: string; grade: number };
   type SectionEntry = { id: string; classId: string; name: string };
 
-  // ─── Sample class/section data (fallback) ────────────────────────────────
-  let CLASSES = $state<ClassEntry[]>([
-    { id: 'cls1', name: 'Class 1', grade: 1 },
-    { id: 'cls5', name: 'Class 5', grade: 5 },
-    { id: 'cls8', name: 'Class 8', grade: 8 },
-    { id: 'cls10', name: 'Class 10', grade: 10 },
-  ]);
-
-  let SECTIONS = $state<SectionEntry[]>([
-    { id: 'sec1a', classId: 'cls1', name: 'A' },
-    { id: 'sec1b', classId: 'cls1', name: 'B' },
-    { id: 'sec5a', classId: 'cls5', name: 'A' },
-    { id: 'sec5b', classId: 'cls5', name: 'B' },
-    { id: 'sec8a', classId: 'cls8', name: 'A' },
-    { id: 'sec10a', classId: 'cls10', name: 'A' },
-    { id: 'sec10b', classId: 'cls10', name: 'B' },
-    { id: 'sec10c', classId: 'cls10', name: 'C' },
-  ]);
-
-  // ─── Sample student data (fallback) ──────────────────────────────────────
-  let students = $state<Student[]>([
-    { id: 's1', rollNumber: '001', name: 'Aarav Sharma', email: 'aarav.sharma@student.edu.np', classId: 'cls10', sectionId: 'sec10a', dateOfBirth: '2008-03-15', admissionDate: '2023-04-01' },
-    { id: 's2', rollNumber: '002', name: 'Priya Thapa', email: 'priya.thapa@student.edu.np', classId: 'cls10', sectionId: 'sec10a', dateOfBirth: '2008-07-22', admissionDate: '2023-04-01' },
-    { id: 's3', rollNumber: '003', name: 'Rohan Karki', email: 'rohan.karki@student.edu.np', classId: 'cls10', sectionId: 'sec10b', dateOfBirth: '2008-01-10', admissionDate: '2023-04-01' },
-    { id: 's4', rollNumber: '101', name: 'Sita Rai', email: 'sita.rai@student.edu.np', classId: 'cls8', sectionId: 'sec8a', dateOfBirth: '2010-05-18', admissionDate: '2022-04-05' },
-    { id: 's5', rollNumber: '102', name: 'Bikram Gurung', email: 'bikram.gurung@student.edu.np', classId: 'cls8', sectionId: 'sec8a', dateOfBirth: '2010-11-02', admissionDate: '2022-04-05' },
-    { id: 's6', rollNumber: '201', name: 'Anisha Magar', email: 'anisha.magar@student.edu.np', classId: 'cls5', sectionId: 'sec5a', dateOfBirth: '2013-08-30', admissionDate: '2021-04-10' },
-    { id: 's7', rollNumber: '202', name: 'Dipesh Bhandari', email: 'dipesh.bhandari@student.edu.np', classId: 'cls5', sectionId: 'sec5b', dateOfBirth: '2013-02-14', admissionDate: '2021-04-10' },
-    { id: 's8', rollNumber: '301', name: 'Nisha Tamang', email: 'nisha.tamang@student.edu.np', classId: 'cls1', sectionId: 'sec1a', dateOfBirth: '2017-06-25', admissionDate: '2024-04-02' },
-    { id: 's9', rollNumber: '302', name: 'Saroj Shrestha', email: 'saroj.shrestha@student.edu.np', classId: 'cls1', sectionId: 'sec1b', dateOfBirth: '2017-09-12', admissionDate: '2024-04-02' },
-    { id: 's10', rollNumber: '004', name: 'Kabita Adhikari', email: 'kabita.adhikari@student.edu.np', classId: 'cls10', sectionId: 'sec10c', dateOfBirth: '2008-12-05', admissionDate: '2023-04-01' },
-  ]);
+  let CLASSES = $state<ClassEntry[]>([]);
+  let SECTIONS = $state<SectionEntry[]>([]);
+  let students = $state<Student[]>([]);
 
   // ─── Convex loading ───────────────────────────────────────────────────────
   onMount(async () => {
@@ -110,7 +81,10 @@
       if (loadedSections.length > 0) SECTIONS = loadedSections;
       if (loadedStudents.length > 0) students = loadedStudents;
     } catch (err) {
-      console.warn('[students] Convex load failed, using mock data:', err);
+      console.warn('[students] Convex load failed:', err);
+      CLASSES = [];
+      SECTIONS = [];
+      students = [];
     }
   });
 

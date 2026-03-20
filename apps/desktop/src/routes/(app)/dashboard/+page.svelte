@@ -78,15 +78,8 @@
     { labelKey: 'dashboard.salaryPending', value: liveSalaryPending, change: 'NPR 1.65L', icon: DollarSign, accent: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
   ]);
 
-  // Activity feed (mock — no activity log API yet)
-  const activities = [
-    { icon: UserPlus, msg: 'Priya Tamang enrolled — Grade 8-A', time: '10m ago', dot: 'bg-emerald-500' },
-    { icon: BookOpen, msg: 'Midterm results uploaded — Grade 10', time: '1h ago', dot: 'bg-indigo-500' },
-    { icon: DollarSign, msg: 'Salary paid — Ramesh Prasad Sharma', time: '2h ago', dot: 'bg-amber-500' },
-    { icon: CheckCircle, msg: 'Attendance marked — 91% present', time: '8:30 AM', dot: 'bg-teal-500' },
-    { icon: QrCode, msg: 'QR codes regenerated — Grade 6', time: 'Yesterday', dot: 'bg-violet-500' },
-    { icon: GraduationCap, msg: 'Profile updated — Sunita Devi Thapa', time: 'Yesterday', dot: 'bg-orange-500' },
-  ];
+  // Loaded from Convex when available
+  const activities: { icon: typeof UserPlus; msg: string; time: string; dot: string }[] = [];
 
   // Quick actions — labels use i18n keys
   const actions = $derived([
@@ -98,13 +91,8 @@
     { label: t('dashboard.addTeacher'), desc: t('dashboard.newHire'), icon: GraduationCap, href: '/teachers', color: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400' },
   ]);
 
-  // Schedule (mock — no schedule API yet)
-  const schedule = [
-    { title: 'Mathematics Midterm', time: '09:00 – 11:00', who: 'Grade 10', type: 'exam' as const },
-    { title: 'Science Lab Practical', time: '11:30 – 13:00', who: 'Grade 9-B', type: 'exam' as const },
-    { title: 'Staff Meeting', time: '14:00 – 15:00', who: 'All Staff', type: 'meeting' as const },
-    { title: 'Sports Day Planning', time: '15:30 – 16:30', who: 'Admin + PE', type: 'event' as const },
-  ];
+  // Loaded from Convex when available
+  const schedule: { title: string; time: string; who: string; type: 'exam' | 'meeting' | 'event' }[] = [];
 
   const typeColors = {
     exam: 'bg-rose-500',

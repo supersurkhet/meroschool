@@ -13,7 +13,7 @@
 		{ key: "admin" as const, icon: "🏫", labelKey: "demo.admin" },
 	];
 
-	// Sample data for demos
+	// Demo preview data (intentional for demo page)
 	const studentSchedule = [
 		{ time: "10:00", subject: "Mathematics", teacher: "R. Sharma", room: "201" },
 		{ time: "10:45", subject: "Science", teacher: "S. Thapa", room: "Lab 1" },

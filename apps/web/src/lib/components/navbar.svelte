@@ -9,14 +9,9 @@
 
 	let mobileOpen = $state(false);
 	let bellOpen = $state(false);
-	let unreadCount = $state(3);
+	let unreadCount = $state(0);
 
-	const sampleNotifications = $state([
-		{ id: 1, text: 'New assignment submitted by Aarav Sharma', time: '5 min ago', read: false },
-		{ id: 2, text: 'Test results published for Class 10-A', time: '1 hour ago', read: false },
-		{ id: 3, text: 'Attendance reminder for today', time: '3 hours ago', read: false },
-		{ id: 4, text: 'Parent meeting scheduled for Friday', time: '1 day ago', read: true },
-	]);
+	let notifications = $state<any[]>([]);
 
 	let isDashboard = $derived($page.url.pathname.startsWith('/dashboard'));
 
@@ -24,19 +19,30 @@
 		if (!isDashboard) return;
 		try {
 			const client = getConvexClient();
-			if (!client) return;
-			// Optionally fetch real notification count when Convex is configured
-			// const count = await client.query('notifications:unreadCount' as any, { userId });
-			// if (typeof count === 'number') unreadCount = count;
+			if (client) {
+				const result = await client.query('notifications:listUnread' as any, { userId: 'current' });
+				if (Array.isArray(result)) {
+					notifications = result;
+					unreadCount = result.length;
+				}
+			}
 		} catch {
-			// Convex not available, keep fallback count
+			// Convex not available
 		}
 	});
 
-	function markAllRead() {
-		for (const n of sampleNotifications) n.read = true;
+	async function markAllRead() {
+		for (const n of notifications) n.read = true;
 		unreadCount = 0;
 		bellOpen = false;
+		try {
+			const client = getConvexClient();
+			if (client) {
+				await client.mutation('notifications:markAllRead' as any, { userId: 'current' });
+			}
+		} catch {
+			// Convex not available
+		}
 	}
 
 	const navLinks = [
@@ -107,7 +113,7 @@
 								<button onclick={markAllRead} class="text-xs text-primary hover:underline cursor-pointer">{$t("notifications.markAllRead")}</button>
 							</div>
 							<div class="max-h-64 overflow-y-auto">
-								{#each sampleNotifications as notif}
+								{#each notifications as notif}
 									<div class="px-4 py-3 hover:bg-muted/50 transition-colors border-b last:border-b-0 {notif.read ? 'opacity-60' : ''}">
 										<p class="text-sm text-foreground">{notif.text}</p>
 										<span class="text-xs text-muted-foreground">{notif.time}</span>

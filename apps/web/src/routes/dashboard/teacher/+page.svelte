@@ -40,11 +40,7 @@
 		},
 	]
 
-	const sampleClasses = data.classes ?? [
-		{ subject: 'Mathematics', section: 'Class 10-A', students: 42 },
-		{ subject: 'Science', section: 'Class 9-B', students: 38 },
-		{ subject: 'Mathematics', section: 'Class 8-A', students: 45 },
-	]
+	const classes = data.classes ?? []
 </script>
 
 <div class="space-y-8">
@@ -88,7 +84,7 @@
 	<div>
 		<h2 class="text-lg font-semibold text-foreground mb-4">{$t('teacher.myClasses')}</h2>
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-			{#each sampleClasses as cls}
+			{#each classes as cls}
 				<Card class="p-5">
 					<div class="flex items-start justify-between">
 						<div>

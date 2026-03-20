@@ -81,27 +81,7 @@
   let convexSubjectIds = $state<Record<string, string>>({}); // subject name → convex id
   let convexSchoolId = $state<string | null>(null);
 
-  // ── Sample data ──────────────────────────────────────────────────────────────
-  let exams = $state<ExamEntry[]>([
-    // First Term – Class 10
-    { id: 1,  examType: 'First Term', className: 'Class 10', subject: 'English',              date: '2025-02-03', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'blue' },
-    { id: 2,  examType: 'First Term', className: 'Class 10', subject: 'Nepali',               date: '2025-02-05', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'emerald' },
-    { id: 3,  examType: 'First Term', className: 'Class 10', subject: 'Mathematics',          date: '2025-02-07', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'violet' },
-    { id: 4,  examType: 'First Term', className: 'Class 10', subject: 'Science',              date: '2025-02-10', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'cyan' },
-    { id: 5,  examType: 'First Term', className: 'Class 10', subject: 'Social Studies',       date: '2025-02-12', startTime: '10:00', endTime: '13:00', totalMarks: 75,  subjectColor: 'amber' },
-    { id: 6,  examType: 'First Term', className: 'Class 10', subject: 'Computer Science',     date: '2025-02-14', startTime: '10:00', endTime: '12:00', totalMarks: 75,  subjectColor: 'indigo' },
-    { id: 7,  examType: 'First Term', className: 'Class 10', subject: 'Optional Mathematics', date: '2025-02-17', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'rose' },
-    // Mid Term – Class 9
-    { id: 8,  examType: 'Mid Term', className: 'Class 9', subject: 'English',              date: '2025-04-07', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'blue' },
-    { id: 9,  examType: 'Mid Term', className: 'Class 9', subject: 'Nepali',               date: '2025-04-09', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'emerald' },
-    { id: 10, examType: 'Mid Term', className: 'Class 9', subject: 'Mathematics',          date: '2025-04-11', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'violet' },
-    { id: 11, examType: 'Mid Term', className: 'Class 9', subject: 'Science',              date: '2025-04-14', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'cyan' },
-    // Final – Class 8
-    { id: 12, examType: 'Final', className: 'Class 8', subject: 'English',         date: '2025-06-02', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'blue' },
-    { id: 13, examType: 'Final', className: 'Class 8', subject: 'Nepali',          date: '2025-06-04', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'emerald' },
-    { id: 14, examType: 'Final', className: 'Class 8', subject: 'Mathematics',     date: '2025-06-06', startTime: '10:00', endTime: '13:00', totalMarks: 100, subjectColor: 'violet' },
-    { id: 15, examType: 'Final', className: 'Class 8', subject: 'Computer Science', date: '2025-06-09', startTime: '10:00', endTime: '12:00', totalMarks: 75,  subjectColor: 'indigo' },
-  ]);
+  let exams = $state<ExamEntry[]>([]);
 
   // ── UI State ─────────────────────────────────────────────────────────────────
   let activeExamType = $state<string>('First Term');

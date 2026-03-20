@@ -38,18 +38,7 @@
     total: number;
   }
 
-  const attendanceData = $state<AttendanceRecord[]>([
-    { id: '1', name: 'Aarav Maharjan', rollNo: '01', class: 'Grade 8', present: 18, absent: 1, late: 1, total: 20 },
-    { id: '2', name: 'Bipasha Karki', rollNo: '02', class: 'Grade 8', present: 20, absent: 0, late: 0, total: 20 },
-    { id: '3', name: 'Chirag Tamang', rollNo: '03', class: 'Grade 8', present: 15, absent: 3, late: 2, total: 20 },
-    { id: '4', name: 'Divya Shrestha', rollNo: '04', class: 'Grade 9', present: 19, absent: 1, late: 0, total: 20 },
-    { id: '5', name: 'Esha Poudel', rollNo: '05', class: 'Grade 9', present: 17, absent: 2, late: 1, total: 20 },
-    { id: '6', name: 'Firoj Ansari', rollNo: '06', class: 'Grade 9', present: 14, absent: 4, late: 2, total: 20 },
-    { id: '7', name: 'Gita Rai', rollNo: '07', class: 'Grade 10', present: 20, absent: 0, late: 0, total: 20 },
-    { id: '8', name: 'Hari Bahadur Magar', rollNo: '08', class: 'Grade 10', present: 16, absent: 3, late: 1, total: 20 },
-    { id: '9', name: 'Isha Gurung', rollNo: '09', class: 'Grade 10', present: 18, absent: 1, late: 1, total: 20 },
-    { id: '10', name: 'Jeevan Lama', rollNo: '10', class: 'Grade 8', present: 13, absent: 5, late: 2, total: 20 },
-  ]);
+  const attendanceData = $state<AttendanceRecord[]>([]);
 
   const filteredAttendance = $derived(
     attendanceClass === 'all'
@@ -89,18 +78,7 @@
     totalMarks: number;
   }
 
-  const examResults = $state<ExamResult[]>([
-    { id: '1', name: 'Aarav Maharjan', rollNo: '01', class: 'Grade 8', marks: 87, totalMarks: 100 },
-    { id: '2', name: 'Bipasha Karki', rollNo: '02', class: 'Grade 8', marks: 94, totalMarks: 100 },
-    { id: '3', name: 'Chirag Tamang', rollNo: '03', class: 'Grade 8', marks: 62, totalMarks: 100 },
-    { id: '4', name: 'Divya Shrestha', rollNo: '04', class: 'Grade 9', marks: 78, totalMarks: 100 },
-    { id: '5', name: 'Esha Poudel', rollNo: '05', class: 'Grade 9', marks: 91, totalMarks: 100 },
-    { id: '6', name: 'Firoj Ansari', rollNo: '06', class: 'Grade 9', marks: 55, totalMarks: 100 },
-    { id: '7', name: 'Gita Rai', rollNo: '07', class: 'Grade 10', marks: 98, totalMarks: 100 },
-    { id: '8', name: 'Hari Bahadur Magar', rollNo: '08', class: 'Grade 10', marks: 71, totalMarks: 100 },
-    { id: '9', name: 'Isha Gurung', rollNo: '09', class: 'Grade 10', marks: 83, totalMarks: 100 },
-    { id: '10', name: 'Jeevan Lama', rollNo: '10', class: 'Grade 8', marks: 47, totalMarks: 100 },
-  ]);
+  const examResults = $state<ExamResult[]>([]);
 
   const filteredResults = $derived(
     resultsClass === 'all'
@@ -169,68 +147,7 @@
     subjects: { name: string; avg: number }[];
   }
 
-  const classPerformance = $state<ClassPerf[]>([
-    {
-      class: 'Grade 8',
-      avgScore: 72,
-      students: 35,
-      subjects: [
-        { name: 'Mathematics', avg: 68 },
-        { name: 'Science', avg: 74 },
-        { name: 'English', avg: 76 },
-        { name: 'Nepali', avg: 80 },
-        { name: 'Social Studies', avg: 71 },
-      ],
-    },
-    {
-      class: 'Grade 9',
-      avgScore: 75,
-      students: 40,
-      subjects: [
-        { name: 'Mathematics', avg: 70 },
-        { name: 'Science', avg: 78 },
-        { name: 'English', avg: 73 },
-        { name: 'Nepali', avg: 82 },
-        { name: 'Social Studies', avg: 74 },
-      ],
-    },
-    {
-      class: 'Grade 10',
-      avgScore: 80,
-      students: 38,
-      subjects: [
-        { name: 'Mathematics', avg: 77 },
-        { name: 'Science', avg: 83 },
-        { name: 'English', avg: 79 },
-        { name: 'Nepali', avg: 85 },
-        { name: 'Social Studies', avg: 78 },
-      ],
-    },
-    {
-      class: 'Grade 6',
-      avgScore: 69,
-      students: 32,
-      subjects: [
-        { name: 'Mathematics', avg: 64 },
-        { name: 'Science', avg: 70 },
-        { name: 'English', avg: 72 },
-        { name: 'Nepali', avg: 75 },
-        { name: 'Social Studies', avg: 68 },
-      ],
-    },
-    {
-      class: 'Grade 7',
-      avgScore: 71,
-      students: 36,
-      subjects: [
-        { name: 'Mathematics', avg: 66 },
-        { name: 'Science', avg: 72 },
-        { name: 'English', avg: 74 },
-        { name: 'Nepali', avg: 78 },
-        { name: 'Social Studies', avg: 69 },
-      ],
-    },
-  ]);
+  const classPerformance = $state<ClassPerf[]>([]);
 
   let selectedPerfClass = $state<string | null>(null);
   const perfDetail = $derived(
@@ -265,7 +182,7 @@
           }
         }
       } catch {
-        // Keep mock data as fallback
+        // Convex load failed; empty state shown
       }
     })();
   });
@@ -295,7 +212,7 @@
           }
         }
       } catch {
-        // Keep mock data as fallback
+        // Convex load failed; empty state shown
       }
     })();
   });
@@ -337,7 +254,7 @@
           }
         }
       } catch {
-        // Keep mock data as fallback
+        // Convex load failed; empty state shown
       }
     })();
   });

@@ -41,7 +41,7 @@
   // Convex: section ID for attendance export (first section of selected class)
   let convexSectionId = $state<string | null>(null);
 
-  let sampleResults = $state([
+  let results = $state([
     { roll: '001', name: 'Aarav Sharma', math: 85, science: 78, english: 92, nepali: 88, social: 75, total: 418, pct: 83.6, grade: 'A' },
     { roll: '002', name: 'Bipana Thapa', math: 92, science: 88, english: 85, nepali: 90, social: 82, total: 437, pct: 87.4, grade: 'A+' },
     { roll: '003', name: 'Chandan Rai', math: 70, science: 65, english: 72, nepali: 68, social: 60, total: 335, pct: 67.0, grade: 'B+' },
@@ -57,7 +57,7 @@
 
   function generateCSV(): string {
     const headers = ['Roll No', 'Student Name', 'Mathematics', 'Science', 'English', 'Nepali', 'Social Studies', 'Total', 'Percentage', 'Grade'];
-    const rows = sampleResults.map(r => [r.roll, r.name, r.math, r.science, r.english, r.nepali, r.social, r.total, r.pct, r.grade].join(','));
+    const rows = results.map(r => [r.roll, r.name, r.math, r.science, r.english, r.nepali, r.social, r.total, r.pct, r.grade].join(','));
     return [headers.join(','), ...rows].join('\n');
   }
 
@@ -103,7 +103,7 @@
             </tr>
           </thead>
           <tbody>
-            ${sampleResults.map(r => `
+            ${results.map(r => `
               <tr>
                 <td>${r.roll}</td><td>${r.name}</td><td>${r.math}</td><td>${r.science}</td><td>${r.english}</td><td>${r.nepali}</td><td>${r.social}</td><td>${r.total}</td><td>${r.pct}%</td>
                 <td class="${r.grade.startsWith('A') ? 'grade-a' : r.grade.startsWith('B') ? 'grade-b' : 'grade-c'}">${r.grade}</td>
@@ -181,7 +181,7 @@
       );
 
       if (attempts?.length) {
-        sampleResults = attempts.map((attempt: any, idx: number) => {
+        results = attempts.map((attempt: any, idx: number) => {
           const marks = attempt.marks ?? {};
           const subjects = Object.keys(marks);
           const total = subjects.reduce((s: number, k: string) => s + (marks[k] ?? 0), 0);
@@ -399,7 +399,7 @@
               <CardTitle>Preview</CardTitle>
               <CardDescription>{selectedClassName} — {selectedExamName}</CardDescription>
             </div>
-            <Badge variant="secondary">{sampleResults.length} students</Badge>
+            <Badge variant="secondary">{results.length} students</Badge>
           </div>
         </CardHeader>
         <CardContent>
@@ -420,7 +420,7 @@
                 </tr>
               </thead>
               <tbody>
-                {#each sampleResults as result}
+                {#each results as result}
                   <tr class="border-b border-border/50 hover:bg-muted/50 transition-colors">
                     <td class="py-2 px-2 font-mono text-xs">{result.roll}</td>
                     <td class="py-2 px-2 font-medium">{result.name}</td>

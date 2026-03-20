@@ -37,17 +37,7 @@
     avatarColor: string;
   };
 
-  // ── Sample students pool (for linking) ───────────────────────────────────────
-  let STUDENTS = $state<Student[]>([
-    { id: 101, name: 'Aarav Sharma', rollNumber: 'R001', class: 'Class 9', section: 'A' },
-    { id: 102, name: 'Priya Sharma', rollNumber: 'R002', class: 'Class 7', section: 'B' },
-    { id: 103, name: 'Arjun Thapa', rollNumber: 'R003', class: 'Class 10', section: 'A' },
-    { id: 104, name: 'Nisha Rai', rollNumber: 'R004', class: 'Class 8', section: 'A' },
-    { id: 105, name: 'Sajan Gurung', rollNumber: 'R005', class: 'Class 5', section: 'C' },
-    { id: 106, name: 'Anita Maharjan', rollNumber: 'R006', class: 'Class 6', section: 'B' },
-    { id: 107, name: 'Rohan Basnet', rollNumber: 'R007', class: 'Class 3', section: 'A' },
-    { id: 108, name: 'Kritika Shrestha', rollNumber: 'R008', class: 'Class 4', section: 'A' },
-  ]);
+  let STUDENTS = $state<Student[]>([]);
 
   // Load real students from Convex school hierarchy
   $effect(() => {
@@ -124,58 +114,13 @@
         }
         if (loaded.length > 0) parents = loaded;
       } catch {
-        // Keep mock data as fallback
+        parents = [];
       }
     })();
   });
 
   // ── State ────────────────────────────────────────────────────────────────────
-  let parents = $state<Parent[]>([
-    {
-      id: 1,
-      name: 'Raj Kumar Sharma',
-      email: 'raj.sharma@gmail.com',
-      phone: '9841-111222',
-      occupation: 'Engineer',
-      address: 'Kathmandu, Baneshwor',
-      childIds: [101, 102],
-      initials: 'RK',
-      avatarColor: 'bg-indigo-500',
-    },
-    {
-      id: 2,
-      name: 'Meena Thapa',
-      email: 'meena.thapa@yahoo.com',
-      phone: '9851-222333',
-      occupation: 'Teacher',
-      address: 'Lalitpur, Pulchowk',
-      childIds: [103],
-      initials: 'MT',
-      avatarColor: 'bg-teal-500',
-    },
-    {
-      id: 3,
-      name: 'Gyanendra Rai',
-      email: 'gyan.rai@gmail.com',
-      phone: '9861-333444',
-      occupation: 'Businessman',
-      address: 'Bhaktapur, Suryabinayak',
-      childIds: [104],
-      initials: 'GR',
-      avatarColor: 'bg-orange-500',
-    },
-    {
-      id: 4,
-      name: 'Sunita Gurung',
-      email: 'sunita.gurung@gmail.com',
-      phone: '9801-444555',
-      occupation: 'Doctor',
-      address: 'Kathmandu, Baluwatar',
-      childIds: [105, 106],
-      initials: 'SG',
-      avatarColor: 'bg-pink-500',
-    },
-  ]);
+  let parents = $state<Parent[]>([]);
 
   // UI state
   let searchQuery = $state('');
@@ -317,7 +262,7 @@
           });
         }
       } catch {
-        // Keep local mock entry as fallback
+        // Local state already updated; continue
       }
     }
 
