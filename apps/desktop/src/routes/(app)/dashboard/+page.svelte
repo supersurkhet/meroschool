@@ -47,10 +47,10 @@
   });
 
   // ─── Convex live stats ────────────────────────────────────────────────────
-  let liveStudents = $state('487');
-  let liveTeachers = $state('28');
-  let liveAttendance = $state('91%');
-  let liveSalaryPending = $state('5');
+  let liveStudents = $state('—');
+  let liveTeachers = $state('—');
+  let liveAttendance = $state('—');
+  let liveSalaryPending = $state('—');
 
   $effect(() => {
     const schoolId = getSchool()?.id;
@@ -100,18 +100,13 @@
     event: 'bg-indigo-500',
   };
 
-  // Attendance sparkline — seeded from live stats; loaded from Convex when available
-  let sparkline = $state([88, 92, 85, 91, 94, 89, 91]);
-  const sparkMax = $derived(Math.max(...sparkline));
+  // Attendance sparkline — loaded from Convex when available
+  let sparkline = $state<number[]>([]);
+  const sparkMax = $derived(sparkline.length > 0 ? Math.max(...sparkline) : 1);
 
   // Class distribution — loaded from school hierarchy
   type ClassDist = { name: string; pct: number };
-  let classDistribution = $state<ClassDist[]>([
-    { name: 'Grade 10', pct: 95 },
-    { name: 'Grade 9', pct: 88 },
-    { name: 'Grade 8', pct: 92 },
-    { name: 'Grade 7', pct: 85 },
-  ]);
+  let classDistribution = $state<ClassDist[]>([]);
 
   $effect(() => {
     const schoolId = getSchool()?.id;
@@ -241,16 +236,22 @@
           <h3 class="text-sm font-semibold">{t('dashboard.attendanceTrend')}</h3>
           <span class="text-[11px] font-medium text-muted-foreground">7 days</span>
         </div>
-        <div class="mt-4 flex items-end gap-1.5" style="height: 48px;">
-          {#each sparkline as val, i}
-            {@const height = (val / sparkMax) * 100}
-            <div
-              class="flex-1 rounded-sm transition-all hover:opacity-80 {i === sparkline.length - 1 ? 'bg-primary' : 'bg-primary/25'}"
-              style="height: {height}%;"
-              title="{val}%"
-            ></div>
-          {/each}
-        </div>
+        {#if sparkline.length > 0}
+          <div class="mt-4 flex items-end gap-1.5" style="height: 48px;">
+            {#each sparkline as val, i}
+              {@const height = (val / sparkMax) * 100}
+              <div
+                class="flex-1 rounded-sm transition-all hover:opacity-80 {i === sparkline.length - 1 ? 'bg-primary' : 'bg-primary/25'}"
+                style="height: {height}%;"
+                title="{val}%"
+              ></div>
+            {/each}
+          </div>
+        {:else}
+          <div class="mt-4 flex items-center justify-center" style="height: 48px;">
+            <p class="text-xs text-muted-foreground">No data yet</p>
+          </div>
+        {/if}
         <p class="mt-2 text-center text-lg font-bold text-primary">{liveAttendance}</p>
         <p class="text-center text-[11px] text-muted-foreground">{t('dashboard.todaysAttendance')}</p>
       </div>
@@ -258,17 +259,21 @@
       <!-- Class distribution -->
       <div class="rounded-xl border border-border bg-card p-5">
         <h3 class="text-sm font-semibold">{t('dashboard.classDistribution')}</h3>
-        <div class="mt-3 space-y-2">
-          {#each classDistribution as cls}
-            <div class="flex items-center gap-2">
-              <span class="w-16 text-[11px] text-muted-foreground">{cls.name}</span>
-              <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                <div class="h-full rounded-full bg-primary transition-all" style="width: {cls.pct}%;"></div>
+        {#if classDistribution.length > 0}
+          <div class="mt-3 space-y-2">
+            {#each classDistribution as cls}
+              <div class="flex items-center gap-2">
+                <span class="w-16 text-[11px] text-muted-foreground">{cls.name}</span>
+                <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div class="h-full rounded-full bg-primary transition-all" style="width: {cls.pct}%;"></div>
+                </div>
+                <span class="w-8 text-right text-[11px] font-semibold">{cls.pct}%</span>
               </div>
-              <span class="w-8 text-right text-[11px] font-semibold">{cls.pct}%</span>
-            </div>
-          {/each}
-        </div>
+            {/each}
+          </div>
+        {:else}
+          <p class="mt-3 text-xs text-muted-foreground">No data. Set up your school first.</p>
+        {/if}
       </div>
     </div>
   </div>

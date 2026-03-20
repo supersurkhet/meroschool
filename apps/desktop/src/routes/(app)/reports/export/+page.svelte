@@ -332,19 +332,27 @@
 
             <div>
               <Label>Class</Label>
-              <select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedClass}>
-                {#each classes as cls}
-                  <option value={cls.id}>{cls.name}</option>
-                {/each}
+              <select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedClass} disabled={classes.length === 0}>
+                {#if classes.length === 0}
+                  <option value="">No classes — set up school first</option>
+                {:else}
+                  {#each classes as cls}
+                    <option value={cls.id}>{cls.name}</option>
+                  {/each}
+                {/if}
               </select>
             </div>
 
             <div>
               <Label>Examination</Label>
-              <select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedExam}>
-                {#each exams as exam}
-                  <option value={exam.id}>{exam.name}</option>
-                {/each}
+              <select class="w-full mt-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={selectedExam} disabled={exams.length === 0}>
+                {#if exams.length === 0}
+                  <option value="">No exams found</option>
+                {:else}
+                  {#each exams as exam}
+                    <option value={exam.id}>{exam.name}</option>
+                  {/each}
+                {/if}
               </select>
             </div>
 
@@ -383,6 +391,12 @@
           </div>
         </CardHeader>
         <CardContent>
+          {#if results.length === 0}
+            <div class="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+              <p class="text-sm font-medium">No data yet.</p>
+              <p class="text-xs">Select a class and exam, or complete school setup first.</p>
+            </div>
+          {:else}
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
@@ -421,6 +435,7 @@
               </tbody>
             </table>
           </div>
+          {/if}
         </CardContent>
       </Card>
     </div>

@@ -20,16 +20,7 @@
     color: string;
   }
 
-  let classes = $state<SchoolClass[]>([
-    { id: 'cls-6', name: 'Grade 6', sections: [{ id: 'sec-6a', name: 'Section A' }, { id: 'sec-6b', name: 'Section B' }], color: 'bg-purple-500' },
-    { id: 'cls-7', name: 'Grade 7', sections: [{ id: 'sec-7a', name: 'Section A' }, { id: 'sec-7b', name: 'Section B' }], color: 'bg-blue-500' },
-    { id: 'cls-8', name: 'Grade 8', sections: [{ id: 'sec-8a', name: 'Section A' }, { id: 'sec-8b', name: 'Section B' }, { id: 'sec-8c', name: 'Section C' }], color: 'bg-cyan-500' },
-    { id: 'cls-9', name: 'Grade 9', sections: [{ id: 'sec-9a', name: 'Section A' }, { id: 'sec-9b', name: 'Section B' }], color: 'bg-teal-500' },
-    { id: 'cls-10', name: 'Grade 10', sections: [{ id: 'sec-10a', name: 'Section A' }, { id: 'sec-10b', name: 'Section B' }], color: 'bg-green-500' },
-    { id: 'cls-11', name: 'Grade 11', sections: [{ id: 'sec-11s', name: 'Science' }, { id: 'sec-11m', name: 'Management' }], color: 'bg-yellow-500' },
-    { id: 'cls-12', name: 'Grade 12', sections: [{ id: 'sec-12s', name: 'Science' }, { id: 'sec-12m', name: 'Management' }], color: 'bg-orange-500' },
-    { id: 'cls-pl', name: 'Playgroup', sections: [{ id: 'sec-pl', name: 'Main' }], color: 'bg-pink-500' },
-  ]);
+  let classes = $state<SchoolClass[]>([]);
 
   let selectedClass = $state<SchoolClass | null>(null);
   let selectedSection = $state<Section | null>(null);
@@ -381,6 +372,11 @@
           </CardContent>
         </Card>
       {/each}
+      {#if classes.length === 0}
+        <div class="col-span-full flex flex-col items-center gap-2 py-12 text-muted-foreground">
+          <p class="text-sm">No classes found. Complete school setup first.</p>
+        </div>
+      {/if}
     </div>
   {/if}
 </div>
