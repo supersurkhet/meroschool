@@ -7,6 +7,8 @@
 	import Select from '$lib/components/ui/select.svelte'
 	import Textarea from '$lib/components/ui/textarea.svelte'
 
+	let { data } = $props()
+
 	interface Submission {
 		studentName: string
 		submittedDate: string
@@ -36,7 +38,7 @@
 	const subjects = ['Mathematics', 'Science', 'English', 'Nepali', 'Social Studies', 'Computer']
 	const sections = ['10-A', '10-B', '9-A', '9-B', '8-A', '8-B']
 
-	let assignments: Assignment[] = $state([
+	let assignments: Assignment[] = $state(data.assignments ?? [
 		{
 			id: 'a1',
 			title: 'Algebra Homework Ch. 5',

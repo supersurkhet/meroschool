@@ -15,12 +15,14 @@
 		status: AttendanceStatus
 	}
 
+	let { data } = $props()
+
 	let selectedSection = $state('10-A')
 	let selectedDate = $state(new Date().toISOString().split('T')[0])
 
-	const sections = ['10-A', '10-B', '9-A', '9-B', '8-A', '8-B']
+	const sections = data.sections ?? ['10-A', '10-B', '9-A', '9-B', '8-A', '8-B']
 
-	let students: Student[] = $state([
+	let students: Student[] = $state(data.students ?? [
 		{ id: '1', roll: 1, name: 'Aarav Sharma', status: 'present' },
 		{ id: '2', roll: 2, name: 'Bipana Thapa', status: 'present' },
 		{ id: '3', roll: 3, name: 'Chandan Adhikari', status: 'present' },

@@ -7,6 +7,8 @@
 	import Select from '$lib/components/ui/select.svelte'
 	import Textarea from '$lib/components/ui/textarea.svelte'
 
+	let { data } = $props()
+
 	type MaterialType = 'video' | 'pdf' | 'link' | 'document'
 
 	interface Material {
@@ -32,7 +34,7 @@
 		modules: Module[]
 	}
 
-	const subjectsData: Subject[] = [
+	const subjectsData: Subject[] = data.subjectsData ?? [
 		{
 			name: 'Mathematics',
 			modules: [

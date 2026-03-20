@@ -5,6 +5,8 @@
 	import Select from "$lib/components/ui/select.svelte";
 	import Badge from "$lib/components/ui/badge.svelte";
 
+	let { data } = $props();
+
 	interface StudentProgress {
 		id: number;
 		name: string;
@@ -20,7 +22,7 @@
 	let selectedSection = $state(sections[0]);
 	let expandedId = $state<number | null>(null);
 
-	const sampleStudents: StudentProgress[] = [
+	const sampleStudents: StudentProgress[] = data.students ?? [
 		{ id: 1, name: "Aarav Sharma", attendance: 92, testAvg: 85, assignmentsDone: 18, assignmentsTotal: 20, testScores: [{ subject: "Math", score: 88 }, { subject: "Science", score: 82 }, { subject: "English", score: 85 }], attendanceHistory: [95, 90, 88, 93, 91, 92] },
 		{ id: 2, name: "Sita Adhikari", attendance: 88, testAvg: 91, assignmentsDone: 20, assignmentsTotal: 20, testScores: [{ subject: "Math", score: 95 }, { subject: "Science", score: 90 }, { subject: "English", score: 88 }], attendanceHistory: [85, 88, 90, 87, 89, 88] },
 		{ id: 3, name: "Bikash Thapa", attendance: 45, testAvg: 35, assignmentsDone: 8, assignmentsTotal: 20, testScores: [{ subject: "Math", score: 30 }, { subject: "Science", score: 38 }, { subject: "English", score: 37 }], attendanceHistory: [50, 48, 42, 45, 43, 45] },

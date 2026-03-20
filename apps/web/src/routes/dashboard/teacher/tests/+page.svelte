@@ -7,6 +7,8 @@
 	import Select from '$lib/components/ui/select.svelte'
 	import Textarea from '$lib/components/ui/textarea.svelte'
 
+	let { data } = $props()
+
 	interface Question {
 		id: number
 		text: string
@@ -91,8 +93,8 @@
 		questionMarks = 5
 	}
 
-	// Existing tests (sample)
-	let existingTests: Test[] = $state([
+	// Existing tests (from server, with fallback)
+	let existingTests: Test[] = $state(data.tests ?? [
 		{ id: 'test-1', title: 'Mid-term Mathematics', subject: 'Mathematics', questionsCount: 25, status: 'published', date: '2026-03-15', totalMarks: 100 },
 		{ id: 'test-2', title: 'Science Unit Test', subject: 'Science', questionsCount: 15, status: 'published', date: '2026-03-10', totalMarks: 50 },
 		{ id: 'test-3', title: 'English Grammar Quiz', subject: 'English', questionsCount: 10, status: 'draft', date: '2026-03-18', totalMarks: 30 },
