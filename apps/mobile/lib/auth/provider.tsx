@@ -45,6 +45,11 @@ async function resolveRoleIds(convexUserId: string, role: UserRole): Promise<Par
 			if (teacher) {
 				ids.teacherId = teacher._id as string
 				ids.schoolId = teacher.schoolId as string
+				// Resolve school name
+				try {
+					const school = await convex.query(api.schools.get, { id: teacher.schoolId as any })
+					if (school) ids.schoolName = school.name
+				} catch {}
 			}
 		} else if (role === "parent") {
 			const parent = await convex.query(api.people.getParentByUser, { userId: convexUserId as any })
@@ -215,7 +220,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 			name: [workosUser.firstName, workosUser.lastName].filter(Boolean).join(" ") || workosUser.email,
 			role,
 			avatarUrl: workosUser.profilePictureUrl ?? undefined,
-			schoolName: "MeroSchool",
+			schoolName: roleIds.schoolName,
 			...roleIds,
 		}
 

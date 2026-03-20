@@ -172,8 +172,8 @@
 	// ── Template download ─────────────────────────────────────────────
 	function downloadTemplate() {
 		const headers = ['name', 'email', 'roll_number', 'class', 'section', 'guardian_name', 'guardian_phone']
-		const sampleRow = ['Ram Prasad', 'ram@student.edu.np', '001', 'Grade 10', 'A', 'Sita Prasad', '9841000000']
-		const csv = Papa.unparse({ fields: headers, data: [sampleRow] })
+		const exampleRow = ['Ram Prasad', 'ram@student.edu.np', '001', 'Grade 10', 'A', 'Sita Prasad', '9841000000']
+		const csv = Papa.unparse({ fields: headers, data: [exampleRow] })
 		const blob = new Blob([csv], { type: 'text/csv' })
 		const url = URL.createObjectURL(blob)
 		const a = document.createElement('a')

@@ -127,25 +127,9 @@ export default function LoginScreen() {
 						icon={!loading ? <Ionicons name="shield-checkmark" size={18} color="#FFF" /> : undefined}
 					/>
 
-					{/* Secondary: email/password fallback */}
 					<Text style={{ fontSize: 12, color: colors.textMuted, textAlign: "center" }}>
-						Powered by WorkOS AuthKit with role-based access
+						Secure sign-in powered by WorkOS AuthKit
 					</Text>
-
-					{/* Dev hint */}
-					<View
-						style={{
-							backgroundColor: colors.surfaceAlt,
-							borderRadius: 12,
-							padding: 14,
-							marginTop: 4,
-						}}
-					>
-						<Text style={{ fontSize: 12, color: colors.textSecondary, textAlign: "center", lineHeight: 18 }}>
-							WorkOS will detect your role automatically.{"\n"}
-							Dev fallback: "teacher@", "parent@", or "admin@" in email.
-						</Text>
-					</View>
 				</View>
 
 				{/* Footer */}

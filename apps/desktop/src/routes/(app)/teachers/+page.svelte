@@ -202,7 +202,7 @@
           const userId = await convexMutation(api.auth.upsertUser, {
             name: formName,
             email: formEmail,
-            workosUserId: `local-${optimisticId}`,
+            workosUserId: `pending-${Date.now()}-${optimisticId}`,
             role: 'teacher',
           });
           const teacherId = await convexMutation(api.people.createTeacher, {

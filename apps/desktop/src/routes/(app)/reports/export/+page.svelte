@@ -14,25 +14,14 @@
 
   let selectedFormat = $state<ExportFormat>('csv');
   let selectedScope = $state<ExportScope>('class');
-  let selectedClass = $state('class-10');
-  let selectedExam = $state('first-term');
+  let selectedClass = $state('');
+  let selectedExam = $state('');
   let isExporting = $state(false);
   let exportSuccess = $state(false);
 
-  let classes = $state([
-    { id: 'class-10', name: 'Class 10', grade: 10 },
-    { id: 'class-9', name: 'Class 9', grade: 9 },
-    { id: 'class-8', name: 'Class 8', grade: 8 },
-    { id: 'class-7', name: 'Class 7', grade: 7 },
-    { id: 'class-5', name: 'Class 5', grade: 5 },
-    { id: 'class-1', name: 'Class 1', grade: 1 },
-  ]);
+  let classes = $state<{id: string; name: string; grade: number}[]>([]);
 
-  let exams = $state([
-    { id: 'first-term', name: 'First Term Examination' },
-    { id: 'mid-term', name: 'Mid Term Examination' },
-    { id: 'final', name: 'Final Examination' },
-  ]);
+  let exams = $state<{id: string; name: string}[]>([]);
 
   // Convex: real test ID for the selected exam (used to fetch attempts)
   let convexTestId = $state<string | null>(null);
@@ -41,16 +30,7 @@
   // Convex: section ID for attendance export (first section of selected class)
   let convexSectionId = $state<string | null>(null);
 
-  let results = $state([
-    { roll: '001', name: 'Aarav Sharma', math: 85, science: 78, english: 92, nepali: 88, social: 75, total: 418, pct: 83.6, grade: 'A' },
-    { roll: '002', name: 'Bipana Thapa', math: 92, science: 88, english: 85, nepali: 90, social: 82, total: 437, pct: 87.4, grade: 'A+' },
-    { roll: '003', name: 'Chandan Rai', math: 70, science: 65, english: 72, nepali: 68, social: 60, total: 335, pct: 67.0, grade: 'B+' },
-    { roll: '004', name: 'Deepa Gurung', math: 95, science: 92, english: 88, nepali: 94, social: 90, total: 459, pct: 91.8, grade: 'A+' },
-    { roll: '005', name: 'Eshan Maharjan', math: 60, science: 55, english: 65, nepali: 70, social: 58, total: 308, pct: 61.6, grade: 'B' },
-    { roll: '006', name: 'Fulmaya Tamang', math: 78, science: 82, english: 80, nepali: 85, social: 77, total: 402, pct: 80.4, grade: 'A' },
-    { roll: '007', name: 'Ganesh Adhikari', math: 88, science: 90, english: 76, nepali: 82, social: 85, total: 421, pct: 84.2, grade: 'A' },
-    { roll: '008', name: 'Hari KC', math: 45, science: 40, english: 50, nepali: 55, social: 42, total: 232, pct: 46.4, grade: 'C' },
-  ]);
+  let results = $state<any[]>([]);
 
   const selectedClassName = $derived(classes.find(c => c.id === selectedClass)?.name ?? '');
   const selectedExamName = $derived(exams.find(e => e.id === selectedExam)?.name ?? '');
