@@ -1,74 +1,73 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import { locale, setLocale, type Locale } from "$lib/i18n/index.js";
-	import { theme, setTheme, type Theme } from "$lib/theme.js";
-	import Button from "$lib/components/ui/button.svelte";
-	import { page } from "$app/stores";
-	import { onMount } from "svelte";
-	import { getConvexClient } from "$lib/convex-client.js";
+import { page } from '$app/stores'
+import Button from '$lib/components/ui/button.svelte'
+import { getConvexClient } from '$lib/convex-client.js'
+import { type Locale, locale, setLocale, t } from '$lib/i18n/index.js'
+import { setTheme, type Theme, theme } from '$lib/theme.js'
+import { onMount } from 'svelte'
 
-	let mobileOpen = $state(false);
-	let bellOpen = $state(false);
-	let unreadCount = $state(0);
+let mobileOpen = $state(false)
+let bellOpen = $state(false)
+let unreadCount = $state(0)
 
-	let notifications = $state<any[]>([]);
+let notifications = $state<any[]>([])
 
-	let isDashboard = $derived($page.url.pathname.startsWith('/dashboard'));
+const isDashboard = $derived($page.url.pathname.startsWith('/dashboard'))
 
-	onMount(async () => {
-		if (!isDashboard) return;
-		try {
-			const client = getConvexClient();
-			if (client) {
-				const result = await client.query('notifications:listUnread' as any, { userId: 'current' });
-				if (Array.isArray(result)) {
-					notifications = result;
-					unreadCount = result.length;
-				}
+onMount(async () => {
+	if (!isDashboard) return
+	try {
+		const client = getConvexClient()
+		if (client) {
+			const result = await client.query('notifications:listUnread' as any, { userId: 'current' })
+			if (Array.isArray(result)) {
+				notifications = result
+				unreadCount = result.length
 			}
-		} catch {
-			// Convex not available
 		}
-	});
+	} catch {
+		// Convex not available
+	}
+})
 
-	async function markAllRead() {
-		for (const n of notifications) n.read = true;
-		unreadCount = 0;
-		bellOpen = false;
-		try {
-			const client = getConvexClient();
-			if (client) {
-				await client.mutation('notifications:markAllRead' as any, { userId: 'current' });
-			}
-		} catch {
-			// Convex not available
+async function markAllRead() {
+	for (const n of notifications) n.read = true
+	unreadCount = 0
+	bellOpen = false
+	try {
+		const client = getConvexClient()
+		if (client) {
+			await client.mutation('notifications:markAllRead' as any, { userId: 'current' })
 		}
+	} catch {
+		// Convex not available
 	}
+}
 
-	const navLinks = [
-		{ key: "nav.features", href: "/features" },
-		{ key: "nav.pricing", href: "/pricing" },
-		{ key: "nav.demo", href: "/demo" },
-		{ key: "nav.download", href: "/download" },
-		{ key: "nav.about", href: "/about" },
-		{ key: "nav.contact", href: "/contact" },
-	];
+const navLinks = [
+	{ key: 'nav.features', href: '/features' },
+	{ key: 'nav.pricing', href: '/pricing' },
+	{ key: 'nav.demo', href: '/demo' },
+	{ key: 'nav.download', href: '/download' },
+	{ key: 'nav.about', href: '/about' },
+	{ key: 'nav.contact', href: '/contact' },
+]
 
-	function toggleLocale() {
-		setLocale($locale === "en" ? "ne" : "en");
-	}
+function toggleLocale() {
+	setLocale($locale === 'en' ? 'ne' : 'en')
+}
 
-	function cycleTheme() {
-		const themes: Theme[] = ["light", "dark", "system"];
-		const i = themes.indexOf($theme);
-		setTheme(themes[(i + 1) % themes.length]);
-	}
+function cycleTheme() {
+	const themes: Theme[] = ['light', 'dark', 'system']
+	const i = themes.indexOf($theme)
+	setTheme(themes[(i + 1) % themes.length])
+}
 
-	const themeIcon: Record<Theme, string> = {
-		light: "☀️",
-		dark: "🌙",
-		system: "💻",
-	};
+const themeIcon: Record<Theme, string> = {
+	light: '☀️',
+	dark: '🌙',
+	system: '💻',
+}
 </script>
 
 <nav class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg">

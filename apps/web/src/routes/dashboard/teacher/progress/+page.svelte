@@ -1,59 +1,62 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Button from "$lib/components/ui/button.svelte";
-	import Card from "$lib/components/ui/card.svelte";
-	import Select from "$lib/components/ui/select.svelte";
-	import Badge from "$lib/components/ui/badge.svelte";
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import Select from '$lib/components/ui/select.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	let { data } = $props();
+const { data } = $props()
 
-	interface StudentProgress {
-		id: number;
-		name: string;
-		attendance: number;
-		testAvg: number;
-		assignmentsDone: number;
-		assignmentsTotal: number;
-		testScores: { subject: string; score: number }[];
-		attendanceHistory: number[];
-	}
+interface StudentProgress {
+	id: number
+	name: string
+	attendance: number
+	testAvg: number
+	assignmentsDone: number
+	assignmentsTotal: number
+	testScores: { subject: string; score: number }[]
+	attendanceHistory: number[]
+}
 
-	const sections = ["Class 10 - A", "Class 10 - B", "Class 9 - A", "Class 9 - B"];
-	let selectedSection = $state(sections[0]);
-	let expandedId = $state<number | null>(null);
+const sections = ['Class 10 - A', 'Class 10 - B', 'Class 9 - A', 'Class 9 - B']
+let selectedSection = $state(sections[0])
+let expandedId = $state<number | null>(null)
 
-	const students: StudentProgress[] = data.students ?? [];
+const students: StudentProgress[] = data.students ?? []
 
-	const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 
-	function getColorClass(value: number): string {
-		if (value > 70) return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300";
-		if (value >= 40) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300";
-		return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300";
-	}
+function getColorClass(value: number): string {
+	if (value > 70) return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+	if (value >= 40) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'
+	return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+}
 
-	function overallRating(s: StudentProgress): number {
-		const assignmentPct = s.assignmentsTotal > 0 ? (s.assignmentsDone / s.assignmentsTotal) * 100 : 0;
-		return Math.round((s.attendance + s.testAvg + assignmentPct) / 3);
-	}
+function overallRating(s: StudentProgress): number {
+	const assignmentPct = s.assignmentsTotal > 0 ? (s.assignmentsDone / s.assignmentsTotal) * 100 : 0
+	return Math.round((s.attendance + s.testAvg + assignmentPct) / 3)
+}
 
-	function toggleExpand(id: number) {
-		expandedId = expandedId === id ? null : id;
-	}
+function toggleExpand(id: number) {
+	expandedId = expandedId === id ? null : id
+}
 
-	function exportCSV() {
-		const header = "Student Name,Attendance %,Test Avg %,Assignments Done,Overall %\n";
-		const rows = students
-			.map((s) => `${s.name},${s.attendance},${s.testAvg},${s.assignmentsDone}/${s.assignmentsTotal},${overallRating(s)}`)
-			.join("\n");
-		const blob = new Blob([header + rows], { type: "text/csv" });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = `progress-${selectedSection.replace(/\s+/g, "-")}.csv`;
-		a.click();
-		URL.revokeObjectURL(url);
-	}
+function exportCSV() {
+	const header = 'Student Name,Attendance %,Test Avg %,Assignments Done,Overall %\n'
+	const rows = students
+		.map(
+			(s) =>
+				`${s.name},${s.attendance},${s.testAvg},${s.assignmentsDone}/${s.assignmentsTotal},${overallRating(s)}`,
+		)
+		.join('\n')
+	const blob = new Blob([header + rows], { type: 'text/csv' })
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = `progress-${selectedSection.replace(/\s+/g, '-')}.csv`
+	a.click()
+	URL.revokeObjectURL(url)
+}
 </script>
 
 <svelte:head>

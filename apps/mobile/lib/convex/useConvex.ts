@@ -1,15 +1,11 @@
-import { useState, useEffect, useCallback } from "react"
-import { convexQuery, convexMutate } from "./client"
+import { useCallback, useEffect, useState } from 'react'
+import { convexMutate, convexQuery } from './client'
 
 /**
  * HTTP-based query hook for use outside ConvexProvider or when codegen is unavailable.
  * Prefer useQuery from convex/react when inside a ConvexProvider (real-time subscriptions).
  */
-export function useConvexQuery<T>(
-	fn: string,
-	args: Record<string, any> = {},
-	fallback: T,
-) {
+export function useConvexQuery<T>(fn: string, args: Record<string, any> = {}, fallback: T) {
 	const [data, setData] = useState<T>(fallback)
 	const [loading, setLoading] = useState(true)
 

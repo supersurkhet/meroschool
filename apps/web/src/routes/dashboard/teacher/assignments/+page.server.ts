@@ -1,6 +1,6 @@
-import type { PageServerLoad, Actions } from './$types'
-import { query, mutate } from '$lib/server/convex'
+import { mutate, query } from '$lib/server/convex'
 import { fail } from '@sveltejs/kit'
+import type { Actions, PageServerLoad } from './$types'
 
 const FALLBACK_ASSIGNMENTS = [
 	{
@@ -36,8 +36,7 @@ const FALLBACK_ASSIGNMENTS = [
 	{
 		id: 'a2',
 		title: 'Science Lab Report',
-		description:
-			'Write a detailed lab report on the photosynthesis experiment',
+		description: 'Write a detailed lab report on the photosynthesis experiment',
 		subject: 'Science',
 		section: '9-A',
 		dueDate: '2026-03-22',
@@ -91,10 +90,7 @@ export const actions: Actions = {
 			return { success: true }
 		} catch (e) {
 			return fail(500, {
-				error:
-					e instanceof Error
-						? e.message
-						: 'Failed to create assignment',
+				error: e instanceof Error ? e.message : 'Failed to create assignment',
 			})
 		}
 	},
@@ -114,10 +110,7 @@ export const actions: Actions = {
 			return { success: true }
 		} catch (e) {
 			return fail(500, {
-				error:
-					e instanceof Error
-						? e.message
-						: 'Failed to save grade',
+				error: e instanceof Error ? e.message : 'Failed to save grade',
 			})
 		}
 	},

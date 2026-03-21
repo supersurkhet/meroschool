@@ -1,151 +1,199 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/index.js'
-	import Card from '$lib/components/ui/card.svelte'
-	import Button from '$lib/components/ui/button.svelte'
-	import Badge from '$lib/components/ui/badge.svelte'
-	import Input from '$lib/components/ui/input.svelte'
-	import Select from '$lib/components/ui/select.svelte'
-	import Textarea from '$lib/components/ui/textarea.svelte'
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import Input from '$lib/components/ui/input.svelte'
+import Select from '$lib/components/ui/select.svelte'
+import Textarea from '$lib/components/ui/textarea.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	let { data } = $props()
+const { data } = $props()
 
-	type MaterialType = 'video' | 'pdf' | 'link' | 'document'
+type MaterialType = 'video' | 'pdf' | 'link' | 'document'
 
-	interface Material {
-		id: string
-		title: string
-		type: MaterialType
-		url: string
-		description: string
+interface Material {
+	id: string
+	title: string
+	type: MaterialType
+	url: string
+	description: string
+}
+
+interface Topic {
+	name: string
+	materials: Material[]
+}
+
+interface Module {
+	name: string
+	topics: Topic[]
+}
+
+interface Subject {
+	name: string
+	modules: Module[]
+}
+
+const subjectsData: Subject[] = data.subjectsData ?? [
+	{
+		name: 'Mathematics',
+		modules: [
+			{
+				name: 'Algebra',
+				topics: [
+					{
+						name: 'Linear Equations',
+						materials: [
+							{
+								id: 'm1',
+								title: 'Introduction to Linear Equations',
+								type: 'video',
+								url: 'https://example.com/video1',
+								description: 'Basics of linear equations in one variable',
+							},
+							{
+								id: 'm2',
+								title: 'Linear Equations Worksheet',
+								type: 'pdf',
+								url: 'https://example.com/pdf1',
+								description: 'Practice problems for linear equations',
+							},
+						],
+					},
+					{
+						name: 'Quadratic Equations',
+						materials: [
+							{
+								id: 'm3',
+								title: 'Quadratic Formula',
+								type: 'link',
+								url: 'https://example.com/quadratic',
+								description: 'Complete guide to the quadratic formula',
+							},
+						],
+					},
+				],
+			},
+			{
+				name: 'Geometry',
+				topics: [
+					{
+						name: 'Triangles',
+						materials: [
+							{
+								id: 'm4',
+								title: 'Types of Triangles',
+								type: 'document',
+								url: '',
+								description: 'Classification and properties of triangles',
+							},
+						],
+					},
+					{ name: 'Circles', materials: [] },
+				],
+			},
+		],
+	},
+	{
+		name: 'Science',
+		modules: [
+			{
+				name: 'Physics',
+				topics: [
+					{
+						name: 'Motion',
+						materials: [
+							{
+								id: 'm5',
+								title: 'Newton Laws of Motion',
+								type: 'video',
+								url: 'https://example.com/newton',
+								description: 'All three laws explained with examples',
+							},
+						],
+					},
+					{ name: 'Energy', materials: [] },
+				],
+			},
+		],
+	},
+]
+
+let selectedSubjectIdx = $state(0)
+let selectedModuleIdx = $state(0)
+let selectedTopicIdx = $state(0)
+
+const currentSubject = $derived(subjectsData[selectedSubjectIdx])
+const currentModule = $derived(currentSubject?.modules[selectedModuleIdx])
+const currentTopic = $derived(currentModule?.topics[selectedTopicIdx])
+
+// Deep copy materials for reactivity
+let topicMaterials: Map<string, Material[]> = $state(new Map())
+
+function getMaterialsKey(): string {
+	return `${selectedSubjectIdx}-${selectedModuleIdx}-${selectedTopicIdx}`
+}
+
+function getCurrentMaterials(): Material[] {
+	const key = getMaterialsKey()
+	if (topicMaterials.has(key)) return topicMaterials.get(key)!
+	return currentTopic?.materials ?? []
+}
+
+// Add material form
+let newTitle = $state('')
+let newType: MaterialType = $state('video')
+let newUrl = $state('')
+let newDescription = $state('')
+
+const materialTypes: MaterialType[] = ['video', 'pdf', 'link', 'document']
+
+const typeColors: Record<MaterialType, string> = {
+	video: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+	pdf: 'bg-red-500/10 text-red-600 dark:text-red-400',
+	link: 'bg-green-500/10 text-green-600 dark:text-green-400',
+	document: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+}
+
+function addMaterial() {
+	if (!newTitle.trim()) return
+	const key = getMaterialsKey()
+	const existing = getCurrentMaterials()
+	const material: Material = {
+		id: `m-${Date.now()}`,
+		title: newTitle,
+		type: newType,
+		url: newUrl,
+		description: newDescription,
 	}
+	topicMaterials.set(key, [...existing, material])
+	topicMaterials = new Map(topicMaterials)
+	newTitle = ''
+	newUrl = ''
+	newDescription = ''
+	newType = 'video'
+}
 
-	interface Topic {
-		name: string
-		materials: Material[]
-	}
+function deleteMaterial(id: string) {
+	const key = getMaterialsKey()
+	const existing = getCurrentMaterials()
+	topicMaterials.set(
+		key,
+		existing.filter((m) => m.id !== id),
+	)
+	topicMaterials = new Map(topicMaterials)
+}
 
-	interface Module {
-		name: string
-		topics: Topic[]
-	}
+function handleSubjectChange(e: Event) {
+	selectedSubjectIdx = Number((e.target as HTMLSelectElement).value)
+	selectedModuleIdx = 0
+	selectedTopicIdx = 0
+}
 
-	interface Subject {
-		name: string
-		modules: Module[]
-	}
-
-	const subjectsData: Subject[] = data.subjectsData ?? [
-		{
-			name: 'Mathematics',
-			modules: [
-				{
-					name: 'Algebra',
-					topics: [
-						{
-							name: 'Linear Equations',
-							materials: [
-								{ id: 'm1', title: 'Introduction to Linear Equations', type: 'video', url: 'https://example.com/video1', description: 'Basics of linear equations in one variable' },
-								{ id: 'm2', title: 'Linear Equations Worksheet', type: 'pdf', url: 'https://example.com/pdf1', description: 'Practice problems for linear equations' },
-							],
-						},
-						{ name: 'Quadratic Equations', materials: [{ id: 'm3', title: 'Quadratic Formula', type: 'link', url: 'https://example.com/quadratic', description: 'Complete guide to the quadratic formula' }] },
-					],
-				},
-				{
-					name: 'Geometry',
-					topics: [
-						{ name: 'Triangles', materials: [{ id: 'm4', title: 'Types of Triangles', type: 'document', url: '', description: 'Classification and properties of triangles' }] },
-						{ name: 'Circles', materials: [] },
-					],
-				},
-			],
-		},
-		{
-			name: 'Science',
-			modules: [
-				{
-					name: 'Physics',
-					topics: [
-						{ name: 'Motion', materials: [{ id: 'm5', title: 'Newton Laws of Motion', type: 'video', url: 'https://example.com/newton', description: 'All three laws explained with examples' }] },
-						{ name: 'Energy', materials: [] },
-					],
-				},
-			],
-		},
-	]
-
-	let selectedSubjectIdx = $state(0)
-	let selectedModuleIdx = $state(0)
-	let selectedTopicIdx = $state(0)
-
-	let currentSubject = $derived(subjectsData[selectedSubjectIdx])
-	let currentModule = $derived(currentSubject?.modules[selectedModuleIdx])
-	let currentTopic = $derived(currentModule?.topics[selectedTopicIdx])
-
-	// Deep copy materials for reactivity
-	let topicMaterials: Map<string, Material[]> = $state(new Map())
-
-	function getMaterialsKey(): string {
-		return `${selectedSubjectIdx}-${selectedModuleIdx}-${selectedTopicIdx}`
-	}
-
-	function getCurrentMaterials(): Material[] {
-		const key = getMaterialsKey()
-		if (topicMaterials.has(key)) return topicMaterials.get(key)!
-		return currentTopic?.materials ?? []
-	}
-
-	// Add material form
-	let newTitle = $state('')
-	let newType: MaterialType = $state('video')
-	let newUrl = $state('')
-	let newDescription = $state('')
-
-	const materialTypes: MaterialType[] = ['video', 'pdf', 'link', 'document']
-
-	const typeColors: Record<MaterialType, string> = {
-		video: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-		pdf: 'bg-red-500/10 text-red-600 dark:text-red-400',
-		link: 'bg-green-500/10 text-green-600 dark:text-green-400',
-		document: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-	}
-
-	function addMaterial() {
-		if (!newTitle.trim()) return
-		const key = getMaterialsKey()
-		const existing = getCurrentMaterials()
-		const material: Material = {
-			id: `m-${Date.now()}`,
-			title: newTitle,
-			type: newType,
-			url: newUrl,
-			description: newDescription,
-		}
-		topicMaterials.set(key, [...existing, material])
-		topicMaterials = new Map(topicMaterials)
-		newTitle = ''
-		newUrl = ''
-		newDescription = ''
-		newType = 'video'
-	}
-
-	function deleteMaterial(id: string) {
-		const key = getMaterialsKey()
-		const existing = getCurrentMaterials()
-		topicMaterials.set(key, existing.filter((m) => m.id !== id))
-		topicMaterials = new Map(topicMaterials)
-	}
-
-	function handleSubjectChange(e: Event) {
-		selectedSubjectIdx = Number((e.target as HTMLSelectElement).value)
-		selectedModuleIdx = 0
-		selectedTopicIdx = 0
-	}
-
-	function handleModuleChange(e: Event) {
-		selectedModuleIdx = Number((e.target as HTMLSelectElement).value)
-		selectedTopicIdx = 0
-	}
+function handleModuleChange(e: Event) {
+	selectedModuleIdx = Number((e.target as HTMLSelectElement).value)
+	selectedTopicIdx = 0
+}
 </script>
 
 <svelte:head>

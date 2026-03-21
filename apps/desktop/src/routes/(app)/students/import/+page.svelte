@@ -1,234 +1,274 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/index.svelte'
-	import { goto } from '$app/navigation'
-	import { convexMutation, convexQuery, isConvexConfigured, api } from '$lib/convex'
-	import { getSchool } from '$lib/stores/school.svelte'
-	import { Button } from '$lib/components/ui/button'
-	import { Select } from '$lib/components/ui/select'
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
-	import { Badge } from '$lib/components/ui/badge'
-	import Papa from 'papaparse'
-	import {
-		Upload,
-		Download,
-		FileText,
-		CheckCircle,
-		AlertCircle,
-		ArrowLeft,
-		X,
-	} from 'lucide-svelte'
+import { goto } from '$app/navigation'
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { Select } from '$lib/components/ui/select'
+import { api, convexMutation, convexQuery, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
+import { AlertCircle, ArrowLeft, CheckCircle, Download, FileText, Upload, X } from 'lucide-svelte'
+import Papa from 'papaparse'
 
-	// ── State ──────────────────────────────────────────────────────────
-	let parsedRows = $state<Record<string, string>[]>([])
-	let errors = $state<{ row: number; field: string; message: string }[]>([])
-	let fileName = $state('')
-	let isDragging = $state(false)
+// ── State ──────────────────────────────────────────────────────────
+let parsedRows = $state<Record<string, string>[]>([])
+let errors = $state<{ row: number; field: string; message: string }[]>([])
+let fileName = $state('')
+let isDragging = $state(false)
 
-	// ── Section picker state ────────────────────────────────────────────
-	type SectionOption = { id: string; label: string }
-	let sections = $state<SectionOption[]>([])
-	let selectedSectionId = $state<string>('')
+// ── Section picker state ────────────────────────────────────────────
+type SectionOption = { id: string; label: string }
+let sections = $state<SectionOption[]>([])
+let selectedSectionId = $state<string>('')
 
-	$effect(() => {
-		const schoolId = getSchool()?.id
-		if (!schoolId) return
-		;(async () => {
-			try {
-				const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId })
-				if (hierarchy?.classes) {
-					const opts: SectionOption[] = []
-					for (const cls of hierarchy.classes) {
-						for (const sec of cls.sections ?? []) {
-							opts.push({ id: sec._id, label: `${cls.name} — ${sec.name}` })
-						}
+$effect(() => {
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
+	;(async () => {
+		try {
+			const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId })
+			if (hierarchy?.classes) {
+				const opts: SectionOption[] = []
+				for (const cls of hierarchy.classes) {
+					for (const sec of cls.sections ?? []) {
+						opts.push({ id: sec._id, label: `${cls.name} — ${sec.name}` })
 					}
-					sections = opts
-					if (opts.length > 0 && !selectedSectionId) selectedSectionId = opts[0].id
 				}
-			} catch {}
-		})()
+				sections = opts
+				if (opts.length > 0 && !selectedSectionId) selectedSectionId = opts[0].id
+			}
+		} catch {}
+	})()
+})
+
+// ── Computed ───────────────────────────────────────────────────────
+const errorRowSet = $derived(new Set(errors.map((e) => e.row)))
+const validCount = $derived(parsedRows.length - errorRowSet.size)
+const errorCount = $derived(errorRowSet.size)
+const previewRows = $derived(parsedRows.slice(0, 10))
+const columns = $derived(parsedRows.length > 0 ? Object.keys(parsedRows[0]) : [])
+
+// ── Required columns ──────────────────────────────────────────────
+const requiredColumns = ['name', 'roll_number']
+
+// ── Validation helpers ────────────────────────────────────────────
+function isValidEmail(email: string): boolean {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function isValidPhone(phone: string): boolean {
+	// Accept various Nepal phone formats
+	return /^[\d+\-() ]{7,15}$/.test(phone)
+}
+
+// ── File handling ─────────────────────────────────────────────────
+function handleFile(file: File) {
+	if (!file.name.endsWith('.csv')) return
+	fileName = file.name
+	Papa.parse(file, {
+		header: true,
+		skipEmptyLines: true,
+		complete(results) {
+			parsedRows = results.data as Record<string, string>[]
+			validateRows()
+		},
 	})
+}
 
-	// ── Computed ───────────────────────────────────────────────────────
-	let errorRowSet = $derived(new Set(errors.map((e) => e.row)))
-	let validCount = $derived(parsedRows.length - errorRowSet.size)
-	let errorCount = $derived(errorRowSet.size)
-	let previewRows = $derived(parsedRows.slice(0, 10))
-	let columns = $derived(parsedRows.length > 0 ? Object.keys(parsedRows[0]) : [])
-
-	// ── Required columns ──────────────────────────────────────────────
-	const requiredColumns = ['name', 'roll_number']
-
-	// ── Validation helpers ────────────────────────────────────────────
-	function isValidEmail(email: string): boolean {
-		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-	}
-
-	function isValidPhone(phone: string): boolean {
-		// Accept various Nepal phone formats
-		return /^[\d+\-() ]{7,15}$/.test(phone)
-	}
-
-	// ── File handling ─────────────────────────────────────────────────
-	function handleFile(file: File) {
-		if (!file.name.endsWith('.csv')) return
-		fileName = file.name
-		Papa.parse(file, {
-			header: true,
-			skipEmptyLines: true,
-			complete(results) {
-				parsedRows = results.data as Record<string, string>[]
-				validateRows()
-			},
-		})
-	}
-
-	function validateRows() {
-		const errs: { row: number; field: string; message: string }[] = []
-		for (let i = 0; i < parsedRows.length; i++) {
-			const row = parsedRows[i]
-			// Check required fields
-			for (const col of requiredColumns) {
-				if (!row[col] || !row[col].trim()) {
-					errs.push({ row: i, field: col, message: `Row ${i + 1}: Missing required field "${col}"` })
-				}
-			}
-			// Validate email format if present
-			if (row['email'] && row['email'].trim() && !isValidEmail(row['email'].trim())) {
-				errs.push({ row: i, field: 'email', message: `Row ${i + 1}: Invalid email format "${row['email']}"` })
-			}
-			// Validate phone format if present
-			if (row['guardian_phone'] && row['guardian_phone'].trim() && !isValidPhone(row['guardian_phone'].trim())) {
-				errs.push({ row: i, field: 'guardian_phone', message: `Row ${i + 1}: Invalid phone format "${row['guardian_phone']}"` })
+function validateRows() {
+	const errs: { row: number; field: string; message: string }[] = []
+	for (let i = 0; i < parsedRows.length; i++) {
+		const row = parsedRows[i]
+		// Check required fields
+		for (const col of requiredColumns) {
+			if (!row[col] || !row[col].trim()) {
+				errs.push({ row: i, field: col, message: `Row ${i + 1}: Missing required field "${col}"` })
 			}
 		}
-		errors = errs
+		// Validate email format if present
+		if (row['email'] && row['email'].trim() && !isValidEmail(row['email'].trim())) {
+			errs.push({
+				row: i,
+				field: 'email',
+				message: `Row ${i + 1}: Invalid email format "${row['email']}"`,
+			})
+		}
+		// Validate phone format if present
+		if (
+			row['guardian_phone'] &&
+			row['guardian_phone'].trim() &&
+			!isValidPhone(row['guardian_phone'].trim())
+		) {
+			errs.push({
+				row: i,
+				field: 'guardian_phone',
+				message: `Row ${i + 1}: Invalid phone format "${row['guardian_phone']}"`,
+			})
+		}
+	}
+	errors = errs
+}
+
+function errorsForRow(rowIndex: number): string {
+	return errors
+		.filter((e) => e.row === rowIndex)
+		.map((e) => e.message)
+		.join('; ')
+}
+
+function onFileInput(e: Event) {
+	const input = e.target as HTMLInputElement
+	if (input.files?.[0]) handleFile(input.files[0])
+}
+
+function onDrop(e: DragEvent) {
+	e.preventDefault()
+	isDragging = false
+	if (e.dataTransfer?.files?.[0]) handleFile(e.dataTransfer.files[0])
+}
+
+function onDragOver(e: DragEvent) {
+	e.preventDefault()
+	isDragging = true
+}
+
+function onDragLeave() {
+	isDragging = false
+}
+
+function clearFile() {
+	parsedRows = []
+	errors = []
+	fileName = ''
+}
+
+async function importValid() {
+	const valid = parsedRows.filter((_, i) => !errorRowSet.has(i))
+
+	const schoolId = getSchool()?.id
+	if (isConvexConfigured() && schoolId && valid.length > 0) {
+		try {
+			// Map CSV rows to the bulkEnrollStudents format
+			const students = valid.map((row) => ({
+				name: row['name'] ?? row['Name'] ?? '',
+				email:
+					row['email'] ??
+					row['Email'] ??
+					`${(row['name'] ?? 'student').toLowerCase().replace(/\s+/g, '.')}@import.local`,
+				rollNumber: row['roll_number'] ?? row['Roll Number'] ?? row['roll'] ?? '',
+				sectionId: row['section_id'] ?? selectedSectionId,
+				...(row['date_of_birth'] || row['dob']
+					? { dateOfBirth: row['date_of_birth'] ?? row['dob'] }
+					: {}),
+				admissionDate: new Date().toISOString().slice(0, 10),
+			}))
+
+			await convexMutation(api.csv.bulkEnrollStudents, {
+				students,
+				schoolId,
+			})
+			alert(`Imported ${valid.length} students successfully via Convex!`)
+		} catch (err) {
+			console.warn('[import] Convex bulkEnrollStudents failed:', err)
+			alert(`Imported ${valid.length} students locally. Convex sync failed — check console.`)
+		}
+	} else {
+		alert(`Imported ${valid.length} students successfully!`)
 	}
 
-	function errorsForRow(rowIndex: number): string {
-		return errors
-			.filter((e) => e.row === rowIndex)
-			.map((e) => e.message)
-			.join('; ')
-	}
+	goto('/students')
+}
 
-	function onFileInput(e: Event) {
-		const input = e.target as HTMLInputElement
-		if (input.files?.[0]) handleFile(input.files[0])
-	}
+// ── Template download ─────────────────────────────────────────────
+function downloadTemplate() {
+	const headers = [
+		'name',
+		'email',
+		'roll_number',
+		'class',
+		'section',
+		'guardian_name',
+		'guardian_phone',
+	]
+	const exampleRow = [
+		'Ram Prasad',
+		'ram@student.edu.np',
+		'001',
+		'Grade 10',
+		'A',
+		'Sita Prasad',
+		'9841000000',
+	]
+	const csv = Papa.unparse({ fields: headers, data: [exampleRow] })
+	const blob = new Blob([csv], { type: 'text/csv' })
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = 'student_import_template.csv'
+	a.click()
+	URL.revokeObjectURL(url)
+}
 
-	function onDrop(e: DragEvent) {
-		e.preventDefault()
-		isDragging = false
-		if (e.dataTransfer?.files?.[0]) handleFile(e.dataTransfer.files[0])
-	}
+// ── Export utility ────────────────────────────────────────────────
+function exportToCSV(data: Record<string, unknown>[], filename: string) {
+	const csv = Papa.unparse(data)
+	const blob = new Blob([csv], { type: 'text/csv' })
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = filename
+	a.click()
+	URL.revokeObjectURL(url)
+}
 
-	function onDragOver(e: DragEvent) {
-		e.preventDefault()
-		isDragging = true
-	}
+async function exportSample(type: string) {
+	const schoolId = getSchool()?.id
 
-	function onDragLeave() {
-		isDragging = false
-	}
-
-	function clearFile() {
-		parsedRows = []
-		errors = []
-		fileName = ''
-	}
-
-	async function importValid() {
-		const valid = parsedRows.filter((_, i) => !errorRowSet.has(i))
-
-		const schoolId = getSchool()?.id
-		if (isConvexConfigured() && schoolId && valid.length > 0) {
+	if (type === 'students') {
+		// Try to export real data from Convex
+		if (isConvexConfigured() && schoolId) {
 			try {
-				// Map CSV rows to the bulkEnrollStudents format
-				const students = valid.map((row) => ({
-					name: row['name'] ?? row['Name'] ?? '',
-					email: row['email'] ?? row['Email'] ?? `${(row['name'] ?? 'student').toLowerCase().replace(/\s+/g, '.')}@import.local`,
-					rollNumber: row['roll_number'] ?? row['Roll Number'] ?? row['roll'] ?? '',
-					sectionId: row['section_id'] ?? selectedSectionId,
-					...(row['date_of_birth'] || row['dob'] ? { dateOfBirth: row['date_of_birth'] ?? row['dob'] } : {}),
-					admissionDate: new Date().toISOString().slice(0, 10),
-				}))
-
-				await convexMutation(api.csv.bulkEnrollStudents, {
-					students,
-					schoolId,
-				})
-				alert(`Imported ${valid.length} students successfully via Convex!`)
-			} catch (err) {
-				console.warn('[import] Convex bulkEnrollStudents failed:', err)
-				alert(`Imported ${valid.length} students locally. Convex sync failed — check console.`)
-			}
-		} else {
-			alert(`Imported ${valid.length} students successfully!`)
-		}
-
-		goto('/students')
-	}
-
-	// ── Template download ─────────────────────────────────────────────
-	function downloadTemplate() {
-		const headers = ['name', 'email', 'roll_number', 'class', 'section', 'guardian_name', 'guardian_phone']
-		const exampleRow = ['Ram Prasad', 'ram@student.edu.np', '001', 'Grade 10', 'A', 'Sita Prasad', '9841000000']
-		const csv = Papa.unparse({ fields: headers, data: [exampleRow] })
-		const blob = new Blob([csv], { type: 'text/csv' })
-		const url = URL.createObjectURL(blob)
-		const a = document.createElement('a')
-		a.href = url
-		a.download = 'student_import_template.csv'
-		a.click()
-		URL.revokeObjectURL(url)
-	}
-
-	// ── Export utility ────────────────────────────────────────────────
-	function exportToCSV(data: Record<string, unknown>[], filename: string) {
-		const csv = Papa.unparse(data)
-		const blob = new Blob([csv], { type: 'text/csv' })
-		const url = URL.createObjectURL(blob)
-		const a = document.createElement('a')
-		a.href = url
-		a.download = filename
-		a.click()
-		URL.revokeObjectURL(url)
-	}
-
-	async function exportSample(type: string) {
-		const schoolId = getSchool()?.id
-
-		if (type === 'students') {
-			// Try to export real data from Convex
-			if (isConvexConfigured() && schoolId) {
-				try {
-					const realData = await convexQuery(api.csv.exportStudents, { schoolId }, null)
-					if (Array.isArray(realData) && realData.length > 0) {
-						exportToCSV(realData, 'students_export.csv')
-						return
-					}
-				} catch (err) {
-					console.warn('[export] Convex exportStudents failed, using sample:', err)
+				const realData = await convexQuery(api.csv.exportStudents, { schoolId }, null)
+				if (Array.isArray(realData) && realData.length > 0) {
+					exportToCSV(realData, 'students_export.csv')
+					return
 				}
+			} catch (err) {
+				console.warn('[export] Convex exportStudents failed, using sample:', err)
 			}
-			// Fallback to sample data
-			exportToCSV([
-				{ 'Roll#': '001', Name: 'Aayush Bhandari', Class: 'Grade 10', Section: 'A', Status: 'Active' },
+		}
+		// Fallback to sample data
+		exportToCSV(
+			[
+				{
+					'Roll#': '001',
+					Name: 'Aayush Bhandari',
+					Class: 'Grade 10',
+					Section: 'A',
+					Status: 'Active',
+				},
 				{ 'Roll#': '002', Name: 'Priya Tamang', Class: 'Grade 10', Section: 'A', Status: 'Active' },
-			], 'students_export.csv')
-		} else if (type === 'attendance') {
-			exportToCSV([
+			],
+			'students_export.csv',
+		)
+	} else if (type === 'attendance') {
+		exportToCSV(
+			[
 				{ Date: '2026-03-19', 'Roll#': '001', Name: 'Aayush Bhandari', Status: 'Present' },
 				{ Date: '2026-03-19', 'Roll#': '002', Name: 'Priya Tamang', Status: 'Absent' },
-			], 'attendance_export.csv')
-		} else if (type === 'results') {
-			exportToCSV([
+			],
+			'attendance_export.csv',
+		)
+	} else if (type === 'results') {
+		exportToCSV(
+			[
 				{ 'Roll#': '001', Name: 'Aayush Bhandari', Subject: 'Math', Marks: '85', Total: '100' },
 				{ 'Roll#': '002', Name: 'Priya Tamang', Subject: 'Math', Marks: '92', Total: '100' },
-			], 'results_export.csv')
-		}
+			],
+			'results_export.csv',
+		)
 	}
+}
 </script>
 
 <div class="flex flex-col gap-6">

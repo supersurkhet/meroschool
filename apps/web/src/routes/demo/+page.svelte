@@ -1,53 +1,53 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Card from "$lib/components/ui/card.svelte";
-	import Badge from "$lib/components/ui/badge.svelte";
-	import Button from "$lib/components/ui/button.svelte";
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	let activeTab = $state<"student" | "teacher" | "parent" | "admin">("student");
+let activeTab = $state<'student' | 'teacher' | 'parent' | 'admin'>('student')
 
-	const tabs = [
-		{ key: "student" as const, icon: "🎓", labelKey: "demo.student" },
-		{ key: "teacher" as const, icon: "👩‍🏫", labelKey: "demo.teacher" },
-		{ key: "parent" as const, icon: "👨‍👩‍👧", labelKey: "demo.parent" },
-		{ key: "admin" as const, icon: "🏫", labelKey: "demo.admin" },
-	];
+const tabs = [
+	{ key: 'student' as const, icon: '🎓', labelKey: 'demo.student' },
+	{ key: 'teacher' as const, icon: '👩‍🏫', labelKey: 'demo.teacher' },
+	{ key: 'parent' as const, icon: '👨‍👩‍👧', labelKey: 'demo.parent' },
+	{ key: 'admin' as const, icon: '🏫', labelKey: 'demo.admin' },
+]
 
-	// Demo preview data (intentional for demo page)
-	const studentSchedule = [
-		{ time: "10:00", subject: "Mathematics", teacher: "R. Sharma", room: "201" },
-		{ time: "10:45", subject: "Science", teacher: "S. Thapa", room: "Lab 1" },
-		{ time: "11:30", subject: "English", teacher: "K. Adhikari", room: "105" },
-		{ time: "12:15", subject: "Lunch Break", teacher: "—", room: "—" },
-		{ time: "13:00", subject: "Nepali", teacher: "P. Poudel", room: "201" },
-		{ time: "13:45", subject: "Social Studies", teacher: "M. Gurung", room: "302" },
-	];
+// Demo preview data (intentional for demo page)
+const studentSchedule = [
+	{ time: '10:00', subject: 'Mathematics', teacher: 'R. Sharma', room: '201' },
+	{ time: '10:45', subject: 'Science', teacher: 'S. Thapa', room: 'Lab 1' },
+	{ time: '11:30', subject: 'English', teacher: 'K. Adhikari', room: '105' },
+	{ time: '12:15', subject: 'Lunch Break', teacher: '—', room: '—' },
+	{ time: '13:00', subject: 'Nepali', teacher: 'P. Poudel', room: '201' },
+	{ time: '13:45', subject: 'Social Studies', teacher: 'M. Gurung', room: '302' },
+]
 
-	const studentGrades = [
-		{ subject: "Mathematics", grade: "A", marks: 88 },
-		{ subject: "Science", grade: "A+", marks: 92 },
-		{ subject: "English", grade: "B+", marks: 78 },
-		{ subject: "Nepali", grade: "A", marks: 85 },
-		{ subject: "Social Studies", grade: "A", marks: 86 },
-	];
+const studentGrades = [
+	{ subject: 'Mathematics', grade: 'A', marks: 88 },
+	{ subject: 'Science', grade: 'A+', marks: 92 },
+	{ subject: 'English', grade: 'B+', marks: 78 },
+	{ subject: 'Nepali', grade: 'A', marks: 85 },
+	{ subject: 'Social Studies', grade: 'A', marks: 86 },
+]
 
-	const teacherClasses = [
-		{ class: "Class 10 - A", students: 42, subject: "Mathematics", nextClass: "10:00 AM" },
-		{ class: "Class 9 - B", students: 38, subject: "Mathematics", nextClass: "11:30 AM" },
-		{ class: "Class 10 - C", students: 40, subject: "Mathematics", nextClass: "1:00 PM" },
-	];
+const teacherClasses = [
+	{ class: 'Class 10 - A', students: 42, subject: 'Mathematics', nextClass: '10:00 AM' },
+	{ class: 'Class 9 - B', students: 38, subject: 'Mathematics', nextClass: '11:30 AM' },
+	{ class: 'Class 10 - C', students: 40, subject: 'Mathematics', nextClass: '1:00 PM' },
+]
 
-	const parentChildren = [
-		{ name: "Aarav Sharma", class: "Class 10 - A", attendance: "94%", rank: 5 },
-		{ name: "Ananya Sharma", class: "Class 7 - B", attendance: "97%", rank: 3 },
-	];
+const parentChildren = [
+	{ name: 'Aarav Sharma', class: 'Class 10 - A', attendance: '94%', rank: 5 },
+	{ name: 'Ananya Sharma', class: 'Class 7 - B', attendance: '97%', rank: 3 },
+]
 
-	const adminStats = [
-		{ label: "Total Students", value: "1,247", change: "+12" },
-		{ label: "Total Teachers", value: "86", change: "+2" },
-		{ label: "Attendance Today", value: "94.2%", change: "+1.1%" },
-		{ label: "Fee Collection", value: "Rs.12,40,000", change: "+Rs.85K" },
-	];
+const adminStats = [
+	{ label: 'Total Students', value: '1,247', change: '+12' },
+	{ label: 'Total Teachers', value: '86', change: '+2' },
+	{ label: 'Attendance Today', value: '94.2%', change: '+1.1%' },
+	{ label: 'Fee Collection', value: 'Rs.12,40,000', change: '+Rs.85K' },
+]
 </script>
 
 <svelte:head>

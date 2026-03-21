@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Card from "$lib/components/ui/card.svelte";
-	import Badge from "$lib/components/ui/badge.svelte";
+import Badge from '$lib/components/ui/badge.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	const values = [
-		{ key: "value1", descKey: "value1Desc", icon: "🎓" },
-		{ key: "value2", descKey: "value2Desc", icon: "🌐" },
-		{ key: "value3", descKey: "value3Desc", icon: "🇳🇵" },
-		{ key: "value4", descKey: "value4Desc", icon: "🔒" },
-	];
+const values = [
+	{ key: 'value1', descKey: 'value1Desc', icon: '🎓' },
+	{ key: 'value2', descKey: 'value2Desc', icon: '🌐' },
+	{ key: 'value3', descKey: 'value3Desc', icon: '🇳🇵' },
+	{ key: 'value4', descKey: 'value4Desc', icon: '🔒' },
+]
 </script>
 
 <svelte:head>

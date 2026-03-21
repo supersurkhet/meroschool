@@ -1,23 +1,23 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Button from "$lib/components/ui/button.svelte";
-	import Badge from "$lib/components/ui/badge.svelte";
-	import Card from "$lib/components/ui/card.svelte";
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	const features = [
-		{ icon: "📋", key: "attendance", descKey: "attendanceDesc" },
-		{ icon: "📚", key: "academics", descKey: "academicsDesc" },
-		{ icon: "💰", key: "fees", descKey: "feesDesc" },
-		{ icon: "💬", key: "communication", descKey: "communicationDesc" },
-		{ icon: "📊", key: "reports", descKey: "reportsDesc" },
-		{ icon: "📱", key: "mobile", descKey: "mobileDesc" },
-	];
+const features = [
+	{ icon: '📋', key: 'attendance', descKey: 'attendanceDesc' },
+	{ icon: '📚', key: 'academics', descKey: 'academicsDesc' },
+	{ icon: '💰', key: 'fees', descKey: 'feesDesc' },
+	{ icon: '💬', key: 'communication', descKey: 'communicationDesc' },
+	{ icon: '📊', key: 'reports', descKey: 'reportsDesc' },
+	{ icon: '📱', key: 'mobile', descKey: 'mobileDesc' },
+]
 
-	const stats = [
-		{ key: "hero.schools", value: "500+" },
-		{ key: "hero.students", value: "100K+" },
-		{ key: "hero.uptime", value: "99.9%" },
-	];
+const stats = [
+	{ key: 'hero.schools', value: '500+' },
+	{ key: 'hero.students', value: '100K+' },
+	{ key: 'hero.uptime', value: '99.9%' },
+]
 </script>
 
 <svelte:head>

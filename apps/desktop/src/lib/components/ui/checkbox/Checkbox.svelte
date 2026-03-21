@@ -1,30 +1,30 @@
 <script lang="ts">
-  import { Checkbox } from "bits-ui";
-  import { cn } from "$lib/utils";
+import { cn } from '$lib/utils'
+import { Checkbox } from 'bits-ui'
 
-  let {
-    class: className,
-    checked = $bindable(false),
-    disabled = false,
-    required = false,
-    indeterminate = $bindable(false),
-    name,
-    value = "on",
-    id,
-    onCheckedChange,
-    ...rest
-  }: {
-    class?: string;
-    checked?: boolean;
-    disabled?: boolean;
-    required?: boolean;
-    indeterminate?: boolean;
-    name?: string;
-    value?: string;
-    id?: string;
-    onCheckedChange?: (checked: boolean | "indeterminate") => void;
-    [key: string]: any;
-  } = $props();
+let {
+	class: className,
+	checked = $bindable(false),
+	disabled = false,
+	required = false,
+	indeterminate = $bindable(false),
+	name,
+	value = 'on',
+	id,
+	onCheckedChange,
+	...rest
+}: {
+	class?: string
+	checked?: boolean
+	disabled?: boolean
+	required?: boolean
+	indeterminate?: boolean
+	name?: string
+	value?: string
+	id?: string
+	onCheckedChange?: (checked: boolean | 'indeterminate') => void
+	[key: string]: any
+} = $props()
 </script>
 
 <Checkbox.Root

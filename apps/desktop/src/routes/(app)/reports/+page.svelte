@@ -1,271 +1,275 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Select } from '$lib/components/ui/select';
-  import { Input } from '$lib/components/ui/input';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Label } from '$lib/components/ui/label';
-  import { Separator } from '$lib/components/ui/separator';
-  import {
-    Users,
-    CheckCircle,
-    XCircle,
-    Clock,
-    TrendingUp,
-    Award,
-    BarChart2,
-    BookOpen,
-  } from 'lucide-svelte';
-  import { convexQuery, api } from '$lib/convex';
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { Input } from '$lib/components/ui/input'
+import { Label } from '$lib/components/ui/label'
+import { Select } from '$lib/components/ui/select'
+import { Separator } from '$lib/components/ui/separator'
+import { api, convexQuery } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import {
+	Award,
+	BarChart2,
+	BookOpen,
+	CheckCircle,
+	Clock,
+	TrendingUp,
+	Users,
+	XCircle,
+} from 'lucide-svelte'
 
-  // ── Tab state ──────────────────────────────────────────────────
-  type Tab = 'attendance' | 'results' | 'performance';
-  let activeTab = $state<Tab>('attendance');
+// ── Tab state ──────────────────────────────────────────────────
+type Tab = 'attendance' | 'results' | 'performance'
+let activeTab = $state<Tab>('attendance')
 
-  // ── Attendance data ────────────────────────────────────────────
-  let attendanceFrom = $state('2026-03-01');
-  let attendanceTo = $state('2026-03-20');
-  let attendanceClass = $state('all');
+// ── Attendance data ────────────────────────────────────────────
+let attendanceFrom = $state('2026-03-01')
+let attendanceTo = $state('2026-03-20')
+let attendanceClass = $state('all')
 
-  interface AttendanceRecord {
-    id: string;
-    name: string;
-    rollNo: string;
-    class: string;
-    present: number;
-    absent: number;
-    late: number;
-    total: number;
-  }
+interface AttendanceRecord {
+	id: string
+	name: string
+	rollNo: string
+	class: string
+	present: number
+	absent: number
+	late: number
+	total: number
+}
 
-  const attendanceData = $state<AttendanceRecord[]>([]);
+let attendanceData = $state<AttendanceRecord[]>([])
 
-  const filteredAttendance = $derived(
-    attendanceClass === 'all'
-      ? attendanceData
-      : attendanceData.filter((r) => r.class === attendanceClass)
-  );
+const filteredAttendance = $derived(
+	attendanceClass === 'all'
+		? attendanceData
+		: attendanceData.filter((r) => r.class === attendanceClass),
+)
 
-  const attendanceSummary = $derived({
-    total: filteredAttendance.length,
-    presentPct: Math.round(
-      (filteredAttendance.reduce((s, r) => s + r.present, 0) /
-        (filteredAttendance.reduce((s, r) => s + r.total, 0) || 1)) *
-        100
-    ),
-    absentPct: Math.round(
-      (filteredAttendance.reduce((s, r) => s + r.absent, 0) /
-        (filteredAttendance.reduce((s, r) => s + r.total, 0) || 1)) *
-        100
-    ),
-    latePct: Math.round(
-      (filteredAttendance.reduce((s, r) => s + r.late, 0) /
-        (filteredAttendance.reduce((s, r) => s + r.total, 0) || 1)) *
-        100
-    ),
-  });
+const attendanceSummary = $derived({
+	total: filteredAttendance.length,
+	presentPct: Math.round(
+		(filteredAttendance.reduce((s, r) => s + r.present, 0) /
+			(filteredAttendance.reduce((s, r) => s + r.total, 0) || 1)) *
+			100,
+	),
+	absentPct: Math.round(
+		(filteredAttendance.reduce((s, r) => s + r.absent, 0) /
+			(filteredAttendance.reduce((s, r) => s + r.total, 0) || 1)) *
+			100,
+	),
+	latePct: Math.round(
+		(filteredAttendance.reduce((s, r) => s + r.late, 0) /
+			(filteredAttendance.reduce((s, r) => s + r.total, 0) || 1)) *
+			100,
+	),
+})
 
-  // ── Exam Results data ──────────────────────────────────────────
-  let selectedExam = $state('midterm-2026');
-  let resultsClass = $state('all');
+// ── Exam Results data ──────────────────────────────────────────
+let selectedExam = $state('midterm-2026')
+let resultsClass = $state('all')
 
-  interface ExamResult {
-    id: string;
-    name: string;
-    rollNo: string;
-    class: string;
-    marks: number;
-    totalMarks: number;
-  }
+interface ExamResult {
+	id: string
+	name: string
+	rollNo: string
+	class: string
+	marks: number
+	totalMarks: number
+}
 
-  const examResults = $state<ExamResult[]>([]);
+let examResults = $state<ExamResult[]>([])
 
-  const filteredResults = $derived(
-    resultsClass === 'all'
-      ? examResults
-      : examResults.filter((r) => r.class === resultsClass)
-  );
+const filteredResults = $derived(
+	resultsClass === 'all' ? examResults : examResults.filter((r) => r.class === resultsClass),
+)
 
-  function gradeFor(pct: number): string {
-    if (pct >= 90) return 'A+';
-    if (pct >= 80) return 'A';
-    if (pct >= 70) return 'B+';
-    if (pct >= 60) return 'B';
-    if (pct >= 50) return 'C';
-    if (pct >= 40) return 'D';
-    return 'F';
-  }
+function gradeFor(pct: number): string {
+	if (pct >= 90) return 'A+'
+	if (pct >= 80) return 'A'
+	if (pct >= 70) return 'B+'
+	if (pct >= 60) return 'B'
+	if (pct >= 50) return 'C'
+	if (pct >= 40) return 'D'
+	return 'F'
+}
 
-  function gradeColor(grade: string): string {
-    if (grade === 'A+' || grade === 'A') return 'text-success';
-    if (grade === 'B+' || grade === 'B') return 'text-primary';
-    if (grade === 'C') return 'text-warning';
-    return 'text-destructive';
-  }
+function gradeColor(grade: string): string {
+	if (grade === 'A+' || grade === 'A') return 'text-success'
+	if (grade === 'B+' || grade === 'B') return 'text-primary'
+	if (grade === 'C') return 'text-warning'
+	return 'text-destructive'
+}
 
-  const sortedResults = $derived(
-    [...filteredResults]
-      .map((r) => ({ ...r, pct: Math.round((r.marks / r.totalMarks) * 100) }))
-      .sort((a, b) => b.pct - a.pct)
-      .map((r, i) => ({ ...r, rank: i + 1, grade: gradeFor(r.pct) }))
-  );
+const sortedResults = $derived(
+	[...filteredResults]
+		.map((r) => ({ ...r, pct: Math.round((r.marks / r.totalMarks) * 100) }))
+		.sort((a, b) => b.pct - a.pct)
+		.map((r, i) => ({ ...r, rank: i + 1, grade: gradeFor(r.pct) })),
+)
 
-  const resultsSummary = $derived({
-    avg: sortedResults.length
-      ? Math.round(sortedResults.reduce((s, r) => s + r.pct, 0) / sortedResults.length)
-      : 0,
-    highest: sortedResults.length ? sortedResults[0].pct : 0,
-    lowest: sortedResults.length ? sortedResults[sortedResults.length - 1].pct : 0,
-    passRate: sortedResults.length
-      ? Math.round((sortedResults.filter((r) => r.pct >= 40).length / sortedResults.length) * 100)
-      : 0,
-  });
+const resultsSummary = $derived({
+	avg: sortedResults.length
+		? Math.round(sortedResults.reduce((s, r) => s + r.pct, 0) / sortedResults.length)
+		: 0,
+	highest: sortedResults.length ? sortedResults[0].pct : 0,
+	lowest: sortedResults.length ? sortedResults[sortedResults.length - 1].pct : 0,
+	passRate: sortedResults.length
+		? Math.round((sortedResults.filter((r) => r.pct >= 40).length / sortedResults.length) * 100)
+		: 0,
+})
 
-  const gradeDistribution = $derived.by(() => {
-    const groups = { 'A+': 0, A: 0, 'B+': 0, B: 0, C: 0, D: 0, F: 0 };
-    for (const r of sortedResults) {
-      groups[r.grade as keyof typeof groups]++;
-    }
-    return Object.entries(groups).filter(([, v]) => v > 0);
-  });
+const gradeDistribution = $derived.by(() => {
+	const groups = { 'A+': 0, A: 0, 'B+': 0, B: 0, C: 0, D: 0, F: 0 }
+	for (const r of sortedResults) {
+		groups[r.grade as keyof typeof groups]++
+	}
+	return Object.entries(groups).filter(([, v]) => v > 0)
+})
 
-  const gradeBarColors: Record<string, string> = {
-    'A+': 'bg-success',
-    A: 'bg-emerald-500',
-    'B+': 'bg-primary',
-    B: 'bg-blue-400',
-    C: 'bg-warning',
-    D: 'bg-orange-400',
-    F: 'bg-destructive',
-  };
+const gradeBarColors: Record<string, string> = {
+	'A+': 'bg-success',
+	A: 'bg-emerald-500',
+	'B+': 'bg-primary',
+	B: 'bg-blue-400',
+	C: 'bg-warning',
+	D: 'bg-orange-400',
+	F: 'bg-destructive',
+}
 
-  // ── Class Performance data ─────────────────────────────────────
-  interface ClassPerf {
-    class: string;
-    avgScore: number;
-    students: number;
-    subjects: { name: string; avg: number }[];
-  }
+// ── Class Performance data ─────────────────────────────────────
+interface ClassPerf {
+	class: string
+	avgScore: number
+	students: number
+	subjects: { name: string; avg: number }[]
+}
 
-  const classPerformance = $state<ClassPerf[]>([]);
+let classPerformance = $state<ClassPerf[]>([])
 
-  let selectedPerfClass = $state<string | null>(null);
-  const perfDetail = $derived(
-    selectedPerfClass ? classPerformance.find((c) => c.class === selectedPerfClass) : null
-  );
+let selectedPerfClass = $state<string | null>(null)
+const perfDetail = $derived(
+	selectedPerfClass ? classPerformance.find((c) => c.class === selectedPerfClass) : null,
+)
 
-  // ── Convex: Attendance tab ────────────────────────────────────────────────────
-  $effect(() => {
-    if (activeTab !== 'attendance') return;
-    const sectionId = attendanceClass === 'all' ? undefined : attendanceClass;
-    const month = attendanceFrom.slice(0, 7); // "YYYY-MM"
-    (async () => {
-      try {
-        if (sectionId) {
-          // Get attendance rate summary for the section
-          const rate = await convexQuery(
-            api.reports.getSectionAttendanceRate,
-            { sectionId, month },
-            null,
-          );
-          if (rate && Array.isArray(rate.records) && rate.records.length > 0) {
-            attendanceData.splice(0, attendanceData.length, ...rate.records.map((r: any) => ({
-              id: r.studentId ?? r.id,
-              name: r.name ?? '',
-              rollNo: r.rollNumber ?? r.rollNo ?? '',
-              class: r.class ?? sectionId,
-              present: r.present ?? 0,
-              absent: r.absent ?? 0,
-              late: r.late ?? 0,
-              total: r.total ?? ((r.present ?? 0) + (r.absent ?? 0) + (r.late ?? 0)),
-            })));
-          }
-        }
-      } catch {
-        // Convex load failed; empty state shown
-      }
-    })();
-  });
+// ── Convex: Attendance tab ────────────────────────────────────────────────────
+$effect(() => {
+	if (activeTab !== 'attendance') return
+	const sectionId = attendanceClass === 'all' ? undefined : attendanceClass
+	const month = attendanceFrom.slice(0, 7) // "YYYY-MM"
+	;(async () => {
+		try {
+			if (sectionId) {
+				// Get attendance rate summary for the section
+				const rate = await convexQuery(
+					api.reports.getSectionAttendanceRate,
+					{ sectionId, month },
+					null,
+				)
+				if (rate && Array.isArray(rate.records) && rate.records.length > 0) {
+					attendanceData.splice(
+						0,
+						attendanceData.length,
+						...rate.records.map((r: any) => ({
+							id: r.studentId ?? r.id,
+							name: r.name ?? '',
+							rollNo: r.rollNumber ?? r.rollNo ?? '',
+							class: r.class ?? sectionId,
+							present: r.present ?? 0,
+							absent: r.absent ?? 0,
+							late: r.late ?? 0,
+							total: r.total ?? (r.present ?? 0) + (r.absent ?? 0) + (r.late ?? 0),
+						})),
+					)
+				}
+			}
+		} catch {
+			// Convex load failed; empty state shown
+		}
+	})()
+})
 
-  // ── Convex: Exam Results tab ──────────────────────────────────────────────────
-  $effect(() => {
-    if (activeTab !== 'results') return;
-    const classId = resultsClass === 'all' ? undefined : resultsClass;
-    (async () => {
-      try {
-        if (classId) {
-          const averages = await convexQuery(
-            api.reports.getClassTestAverages,
-            { classId },
-            null,
-          );
-          // averages returns subject averages; update examResults if student-level data included
-          if (averages && Array.isArray(averages.students) && averages.students.length > 0) {
-            examResults.splice(0, examResults.length, ...averages.students.map((s: any) => ({
-              id: s.studentId ?? s.id,
-              name: s.name ?? '',
-              rollNo: s.rollNumber ?? s.rollNo ?? '',
-              class: classId,
-              marks: Math.round((s.averagePercent ?? 0)),
-              totalMarks: 100,
-            })));
-          }
-        }
-      } catch {
-        // Convex load failed; empty state shown
-      }
-    })();
-  });
+// ── Convex: Exam Results tab ──────────────────────────────────────────────────
+$effect(() => {
+	if (activeTab !== 'results') return
+	const classId = resultsClass === 'all' ? undefined : resultsClass
+	;(async () => {
+		try {
+			if (classId) {
+				const averages = await convexQuery(api.reports.getClassTestAverages, { classId }, null)
+				// averages returns subject averages; update examResults if student-level data included
+				if (averages && Array.isArray(averages.students) && averages.students.length > 0) {
+					examResults.splice(
+						0,
+						examResults.length,
+						...averages.students.map((s: any) => ({
+							id: s.studentId ?? s.id,
+							name: s.name ?? '',
+							rollNo: s.rollNumber ?? s.rollNo ?? '',
+							class: classId,
+							marks: Math.round(s.averagePercent ?? 0),
+							totalMarks: 100,
+						})),
+					)
+				}
+			}
+		} catch {
+			// Convex load failed; empty state shown
+		}
+	})()
+})
 
-  // ── Convex: Class Performance tab ─────────────────────────────────────────────
-  $effect(() => {
-    if (activeTab !== 'performance') return;
-    (async () => {
-      try {
-        const perfResults = await Promise.all(
-          classPerformance.map(async (cls) => {
-            const progress = await convexQuery(
-              api.progress.getSectionProgress,
-              { sectionId: cls.class },
-              null,
-            );
-            return { cls, progress };
-          })
-        );
-        const updated = perfResults
-          .filter(({ progress }) => Array.isArray(progress) && progress.length > 0)
-          .map(({ cls, progress }) => {
-            const arr = progress as any[];
-            const avgAttendance = arr.reduce((s: number, r: any) => s + (r.attendancePercent ?? 0), 0) / arr.length;
-            const avgTest = arr.reduce((s: number, r: any) => s + (r.testAveragePercent ?? 0), 0) / arr.length;
-            const avgScore = Math.round((avgAttendance + avgTest) / 2);
-            return {
-              ...cls,
-              students: arr.length,
-              avgScore,
-            };
-          });
-        if (updated.length > 0) {
-          for (const u of updated) {
-            const idx = classPerformance.findIndex(c => c.class === u.class);
-            if (idx !== -1) {
-              classPerformance[idx] = { ...classPerformance[idx], ...u };
-            }
-          }
-        }
-      } catch {
-        // Convex load failed; empty state shown
-      }
-    })();
-  });
+// ── Convex: Class Performance tab ─────────────────────────────────────────────
+$effect(() => {
+	if (activeTab !== 'performance') return
+	;(async () => {
+		try {
+			const perfResults = await Promise.all(
+				classPerformance.map(async (cls) => {
+					const progress = await convexQuery(
+						api.progress.getSectionProgress,
+						{ sectionId: cls.class },
+						null,
+					)
+					return { cls, progress }
+				}),
+			)
+			const updated = perfResults
+				.filter(({ progress }) => Array.isArray(progress) && progress.length > 0)
+				.map(({ cls, progress }) => {
+					const arr = progress as any[]
+					const avgAttendance =
+						arr.reduce((s: number, r: any) => s + (r.attendancePercent ?? 0), 0) / arr.length
+					const avgTest =
+						arr.reduce((s: number, r: any) => s + (r.testAveragePercent ?? 0), 0) / arr.length
+					const avgScore = Math.round((avgAttendance + avgTest) / 2)
+					return {
+						...cls,
+						students: arr.length,
+						avgScore,
+					}
+				})
+			if (updated.length > 0) {
+				for (const u of updated) {
+					const idx = classPerformance.findIndex((c) => c.class === u.class)
+					if (idx !== -1) {
+						classPerformance[idx] = { ...classPerformance[idx], ...u }
+					}
+				}
+			}
+		} catch {
+			// Convex load failed; empty state shown
+		}
+	})()
+})
 
-  function barColor(avg: number): string {
-    if (avg >= 80) return 'bg-success';
-    if (avg >= 70) return 'bg-primary';
-    if (avg >= 60) return 'bg-warning';
-    return 'bg-destructive';
-  }
+function barColor(avg: number): string {
+	if (avg >= 80) return 'bg-success'
+	if (avg >= 70) return 'bg-primary'
+	if (avg >= 60) return 'bg-warning'
+	return 'bg-destructive'
+}
 </script>
 
 <div class="flex flex-col gap-6 p-6">

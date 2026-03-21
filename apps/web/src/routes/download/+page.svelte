@@ -1,120 +1,141 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Button from "$lib/components/ui/button.svelte";
-	import Card from "$lib/components/ui/card.svelte";
-	import Badge from "$lib/components/ui/badge.svelte";
-	import { onMount } from "svelte";
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import { t } from '$lib/i18n/index.js'
+import { onMount } from 'svelte'
 
-	type Platform = "macos" | "windows" | "linux" | "android" | "ios" | "unknown";
-	type Role = "student" | "teacher" | "parent" | "admin";
+type Platform = 'macos' | 'windows' | 'linux' | 'android' | 'ios' | 'unknown'
+type Role = 'student' | 'teacher' | 'parent' | 'admin'
 
-	let detectedPlatform = $state<Platform>("unknown");
-	let selectedRole = $state<Role>("student");
+let detectedPlatform = $state<Platform>('unknown')
+let selectedRole = $state<Role>('student')
 
-	const RELEASES_URL = "https://github.com/supersurkhet/meroschool/releases/latest";
+const RELEASES_URL = 'https://github.com/supersurkhet/meroschool/releases/latest'
 
-	const roles: { key: Role; icon: string; labelKey: string; descKey: string }[] = [
-		{ key: "student", icon: "🎓", labelKey: "download.roleStudent", descKey: "download.roleStudentDesc" },
-		{ key: "teacher", icon: "👩‍🏫", labelKey: "download.roleTeacher", descKey: "download.roleTeacherDesc" },
-		{ key: "parent", icon: "👨‍👩‍👧", labelKey: "download.roleParent", descKey: "download.roleParentDesc" },
-		{ key: "admin", icon: "🏫", labelKey: "download.roleAdmin", descKey: "download.roleAdminDesc" },
-	];
+const roles: { key: Role; icon: string; labelKey: string; descKey: string }[] = [
+	{
+		key: 'student',
+		icon: '🎓',
+		labelKey: 'download.roleStudent',
+		descKey: 'download.roleStudentDesc',
+	},
+	{
+		key: 'teacher',
+		icon: '👩‍🏫',
+		labelKey: 'download.roleTeacher',
+		descKey: 'download.roleTeacherDesc',
+	},
+	{
+		key: 'parent',
+		icon: '👨‍👩‍👧',
+		labelKey: 'download.roleParent',
+		descKey: 'download.roleParentDesc',
+	},
+	{ key: 'admin', icon: '🏫', labelKey: 'download.roleAdmin', descKey: 'download.roleAdminDesc' },
+]
 
-	const platformInfo: Record<Platform, { name: string; icon: string }> = {
-		macos: { name: "macOS", icon: "🍎" },
-		windows: { name: "Windows", icon: "🪟" },
-		linux: { name: "Linux", icon: "🐧" },
-		android: { name: "Android", icon: "🤖" },
-		ios: { name: "iOS", icon: "📱" },
-		unknown: { name: "Your Device", icon: "💻" },
-	};
+const platformInfo: Record<Platform, { name: string; icon: string }> = {
+	macos: { name: 'macOS', icon: '🍎' },
+	windows: { name: 'Windows', icon: '🪟' },
+	linux: { name: 'Linux', icon: '🐧' },
+	android: { name: 'Android', icon: '🤖' },
+	ios: { name: 'iOS', icon: '📱' },
+	unknown: { name: 'Your Device', icon: '💻' },
+}
 
-	function detectPlatform(): Platform {
-		if (typeof navigator === "undefined") return "unknown";
-		const ua = navigator.userAgent.toLowerCase();
-		const platform = (navigator as any).userAgentData?.platform?.toLowerCase() ?? "";
-		if (/android/.test(ua)) return "android";
-		if (/iphone|ipad|ipod/.test(ua)) return "ios";
-		if (/macintosh|macos|mac os/.test(ua) || platform === "macos") return "macos";
-		if (/win/.test(ua) || platform === "windows") return "windows";
-		if (/linux/.test(ua)) return "linux";
-		return "unknown";
+function detectPlatform(): Platform {
+	if (typeof navigator === 'undefined') return 'unknown'
+	const ua = navigator.userAgent.toLowerCase()
+	const platform = (navigator as any).userAgentData?.platform?.toLowerCase() ?? ''
+	if (/android/.test(ua)) return 'android'
+	if (/iphone|ipad|ipod/.test(ua)) return 'ios'
+	if (/macintosh|macos|mac os/.test(ua) || platform === 'macos') return 'macos'
+	if (/win/.test(ua) || platform === 'windows') return 'windows'
+	if (/linux/.test(ua)) return 'linux'
+	return 'unknown'
+}
+
+const isDesktop = $derived(
+	detectedPlatform === 'macos' || detectedPlatform === 'windows' || detectedPlatform === 'linux',
+)
+const isAdminRole = $derived(selectedRole === 'admin')
+
+// Desktop download info per platform
+const desktopDownloads: Record<string, { ext: string; file: string }> = {
+	macos: { ext: '.dmg', file: 'MeroSchool.dmg' },
+	windows: { ext: '.msi', file: 'MeroSchool.msi' },
+	linux: { ext: '.AppImage', file: 'MeroSchool.AppImage' },
+}
+
+// The primary (hero) download for the detected platform
+const heroPlatform = $derived<Platform>(
+	isAdminRole
+		? isDesktop
+			? detectedPlatform
+			: 'macos' // admin on mobile → default to macOS
+		: detectedPlatform === 'ios'
+			? 'ios'
+			: 'android', // non-admin → mobile, default android
+)
+
+function heroUrl(): string {
+	if (isAdminRole) {
+		const dl = desktopDownloads[heroPlatform]
+		return dl ? `${RELEASES_URL}/download/${dl.file}` : RELEASES_URL
 	}
+	if (heroPlatform === 'ios') return '#'
+	return `${RELEASES_URL}/download/meroschool.apk`
+}
 
-	let isDesktop = $derived(detectedPlatform === "macos" || detectedPlatform === "windows" || detectedPlatform === "linux");
-	let isAdminRole = $derived(selectedRole === "admin");
-
-	// Desktop download info per platform
-	const desktopDownloads: Record<string, { ext: string; file: string }> = {
-		macos: { ext: ".dmg", file: "MeroSchool.dmg" },
-		windows: { ext: ".msi", file: "MeroSchool.msi" },
-		linux: { ext: ".AppImage", file: "MeroSchool.AppImage" },
-	};
-
-	// The primary (hero) download for the detected platform
-	let heroPlatform = $derived<Platform>(
-		isAdminRole
-			? (isDesktop ? detectedPlatform : "macos") // admin on mobile → default to macOS
-			: (detectedPlatform === "ios" ? "ios" : "android") // non-admin → mobile, default android
-	);
-
-	function heroUrl(): string {
-		if (isAdminRole) {
-			const dl = desktopDownloads[heroPlatform];
-			return dl ? `${RELEASES_URL}/download/${dl.file}` : RELEASES_URL;
-		}
-		if (heroPlatform === "ios") return "#";
-		return `${RELEASES_URL}/download/meroschool.apk`;
+function heroLabel(): string {
+	if (isAdminRole) {
+		const dl = desktopDownloads[heroPlatform]
+		return dl
+			? `Download for ${platformInfo[heroPlatform].name} (${dl.ext})`
+			: `Download for ${platformInfo[heroPlatform].name}`
 	}
+	if (heroPlatform === 'ios') return 'Coming soon on App Store'
+	return 'Download APK for Android'
+}
 
-	function heroLabel(): string {
-		if (isAdminRole) {
-			const dl = desktopDownloads[heroPlatform];
-			return dl
-				? `Download for ${platformInfo[heroPlatform].name} (${dl.ext})`
-				: `Download for ${platformInfo[heroPlatform].name}`;
-		}
-		if (heroPlatform === "ios") return "Coming soon on App Store";
-		return "Download APK for Android";
+const heroDisabled = $derived(heroPlatform === 'ios' && !isAdminRole)
+
+// "Also available" platforms — everything except the hero
+const altPlatforms = $derived<Platform[]>(
+	isAdminRole
+		? (['macos', 'windows', 'linux'] as Platform[]).filter((p) => p !== heroPlatform)
+		: (['android', 'ios'] as Platform[]).filter((p) => p !== heroPlatform),
+)
+
+function altUrl(p: Platform): string {
+	if (isAdminRole) {
+		const dl = desktopDownloads[p]
+		return dl ? `${RELEASES_URL}/download/${dl.file}` : RELEASES_URL
 	}
+	if (p === 'android') return `${RELEASES_URL}/download/meroschool.apk`
+	return '#'
+}
 
-	let heroDisabled = $derived(heroPlatform === "ios" && !isAdminRole);
-
-	// "Also available" platforms — everything except the hero
-	let altPlatforms = $derived<Platform[]>(
-		isAdminRole
-			? (["macos", "windows", "linux"] as Platform[]).filter(p => p !== heroPlatform)
-			: (["android", "ios"] as Platform[]).filter(p => p !== heroPlatform)
-	);
-
-	function altUrl(p: Platform): string {
-		if (isAdminRole) {
-			const dl = desktopDownloads[p];
-			return dl ? `${RELEASES_URL}/download/${dl.file}` : RELEASES_URL;
-		}
-		if (p === "android") return `${RELEASES_URL}/download/meroschool.apk`;
-		return "#";
+function altLabel(p: Platform): string {
+	if (isAdminRole) {
+		const dl = desktopDownloads[p]
+		return `${platformInfo[p].name} (${dl?.ext ?? ''})`
 	}
+	if (p === 'ios') return 'App Store (coming soon)'
+	return 'Android APK'
+}
 
-	function altLabel(p: Platform): string {
-		if (isAdminRole) {
-			const dl = desktopDownloads[p];
-			return `${platformInfo[p].name} (${dl?.ext ?? ""})`;
-		}
-		if (p === "ios") return "App Store (coming soon)";
-		return "Android APK";
-	}
+const features: { icon: string; titleKey: string; descKey: string }[] = [
+	{ icon: '⚡', titleKey: 'download.featureFast', descKey: 'download.featureFastDesc' },
+	{ icon: '🔒', titleKey: 'download.featureSecure', descKey: 'download.featureSecureDesc' },
+	{ icon: '📶', titleKey: 'download.featureOffline', descKey: 'download.featureOfflineDesc' },
+	{ icon: '🔔', titleKey: 'download.featureNotify', descKey: 'download.featureNotifyDesc' },
+]
 
-	const features: { icon: string; titleKey: string; descKey: string }[] = [
-		{ icon: "⚡", titleKey: "download.featureFast", descKey: "download.featureFastDesc" },
-		{ icon: "🔒", titleKey: "download.featureSecure", descKey: "download.featureSecureDesc" },
-		{ icon: "📶", titleKey: "download.featureOffline", descKey: "download.featureOfflineDesc" },
-		{ icon: "🔔", titleKey: "download.featureNotify", descKey: "download.featureNotifyDesc" },
-	];
-
-	onMount(() => {
-		detectedPlatform = detectPlatform();
-	});
+onMount(() => {
+	detectedPlatform = detectPlatform()
+})
 </script>
 
 <svelte:head>

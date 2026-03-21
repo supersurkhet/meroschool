@@ -1,149 +1,151 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Button from "$lib/components/ui/button.svelte";
-	import Input from "$lib/components/ui/input.svelte";
-	import Select from "$lib/components/ui/select.svelte";
-	import Card from "$lib/components/ui/card.svelte";
-	import Badge from "$lib/components/ui/badge.svelte";
-	import { page } from "$app/stores";
-	import { enhance } from "$app/forms";
+import { enhance } from '$app/forms'
+import { page } from '$app/stores'
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import Input from '$lib/components/ui/input.svelte'
+import Select from '$lib/components/ui/select.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	let step = $state(1);
-	let submitted = $state(false);
-	let submitting = $state(false);
-	let errorMsg = $state("");
+let step = $state(1)
+let submitted = $state(false)
+let submitting = $state(false)
+let errorMsg = $state('')
 
-	// Check if user is authenticated (via user_info cookie — not httpOnly)
-	let isAuthenticated = $derived(typeof document !== "undefined" && document.cookie.includes("user_info="));
+// Check if user is authenticated (via user_info cookie — not httpOnly)
+const isAuthenticated = $derived(
+	typeof document !== 'undefined' && document.cookie.includes('user_info='),
+)
 
-	// School info (step 1)
-	let schoolName = $state("");
-	let address = $state("");
-	let phone = $state("");
-	let email = $state("");
-	let schoolType = $state("private");
-	let province = $state("Bagmati Pradesh");
-	let district = $state("");
+// School info (step 1)
+let schoolName = $state('')
+let address = $state('')
+let phone = $state('')
+let email = $state('')
+let schoolType = $state('private')
+let province = $state('Bagmati Pradesh')
+let district = $state('')
 
-	// Step 2: Classes
-	let classes = $state<string[]>([]);
-	let newClassName = $state("");
+// Step 2: Classes
+let classes = $state<string[]>([])
+let newClassName = $state('')
 
-	// Step 3: Sections
-	let sections = $state<Record<string, string[]>>({});
-	let newSectionInputs = $state<Record<string, string>>({});
+// Step 3: Sections
+let sections = $state<Record<string, string[]>>({})
+let newSectionInputs = $state<Record<string, string>>({})
 
-	// Step 4: Teacher invites
-	let teacherEmails = $state<string[]>([]);
-	let newTeacherEmail = $state("");
+// Step 4: Teacher invites
+let teacherEmails = $state<string[]>([])
+let newTeacherEmail = $state('')
 
-	const provinces = [
-		"Koshi Pradesh",
-		"Madhesh Pradesh",
-		"Bagmati Pradesh",
-		"Gandaki Pradesh",
-		"Lumbini Pradesh",
-		"Karnali Pradesh",
-		"Sudurpashchim Pradesh",
-	];
+const provinces = [
+	'Koshi Pradesh',
+	'Madhesh Pradesh',
+	'Bagmati Pradesh',
+	'Gandaki Pradesh',
+	'Lumbini Pradesh',
+	'Karnali Pradesh',
+	'Sudurpashchim Pradesh',
+]
 
-	const steps = [
-		{ num: 1, key: "onboard.step1" },
-		{ num: 2, key: "onboard.step2Title" },
-		{ num: 3, key: "onboard.step3Title" },
-		{ num: 4, key: "onboard.step4Title" },
-	];
+const steps = [
+	{ num: 1, key: 'onboard.step1' },
+	{ num: 2, key: 'onboard.step2Title' },
+	{ num: 3, key: 'onboard.step3Title' },
+	{ num: 4, key: 'onboard.step4Title' },
+]
 
-	function nextStep() {
-		if (step < 4) step++;
-	}
+function nextStep() {
+	if (step < 4) step++
+}
 
-	function prevStep() {
-		if (step > 1) step--;
-	}
+function prevStep() {
+	if (step > 1) step--
+}
 
-	async function handleSubmit() {
-		submitting = true;
-		errorMsg = "";
+async function handleSubmit() {
+	submitting = true
+	errorMsg = ''
 
-		try {
-			const formData = new FormData();
-			formData.set("schoolName", schoolName);
-			formData.set("address", address);
-			formData.set("phone", phone);
-			formData.set("email", email);
-			formData.set("schoolType", schoolType);
-			formData.set("province", province);
-			formData.set("district", district);
-			formData.set("classes", JSON.stringify(classes));
-			formData.set("sections", JSON.stringify(sections));
-			formData.set("teacherEmails", JSON.stringify(teacherEmails));
+	try {
+		const formData = new FormData()
+		formData.set('schoolName', schoolName)
+		formData.set('address', address)
+		formData.set('phone', phone)
+		formData.set('email', email)
+		formData.set('schoolType', schoolType)
+		formData.set('province', province)
+		formData.set('district', district)
+		formData.set('classes', JSON.stringify(classes))
+		formData.set('sections', JSON.stringify(sections))
+		formData.set('teacherEmails', JSON.stringify(teacherEmails))
 
-			const res = await fetch("?/register", { method: "POST", body: formData });
-			const result = await res.json();
+		const res = await fetch('?/register', { method: 'POST', body: formData })
+		const result = await res.json()
 
-			// SvelteKit form action returns nested data
-			const data = result?.data?.[0] ?? result?.data ?? result;
-			if (data?.error) {
-				errorMsg = data.error;
-			} else {
-				submitted = true;
-			}
-		} catch {
-			// If Convex/server isn't available, still show success for demo
-			submitted = true;
-		} finally {
-			submitting = false;
+		// SvelteKit form action returns nested data
+		const data = result?.data?.[0] ?? result?.data ?? result
+		if (data?.error) {
+			errorMsg = data.error
+		} else {
+			submitted = true
 		}
+	} catch {
+		// If Convex/server isn't available, still show success for demo
+		submitted = true
+	} finally {
+		submitting = false
 	}
+}
 
-	function addClass() {
-		const name = newClassName.trim();
-		if (name && !classes.includes(name)) {
-			classes = [...classes, name];
-			sections[name] = [];
-			newSectionInputs[name] = "";
-			newClassName = "";
-		}
+function addClass() {
+	const name = newClassName.trim()
+	if (name && !classes.includes(name)) {
+		classes = [...classes, name]
+		sections[name] = []
+		newSectionInputs[name] = ''
+		newClassName = ''
 	}
+}
 
-	function removeClass(name: string) {
-		classes = classes.filter((c) => c !== name);
-		const { [name]: _, ...rest } = sections;
-		sections = rest;
-		const { [name]: __, ...restInputs } = newSectionInputs;
-		newSectionInputs = restInputs;
-	}
+function removeClass(name: string) {
+	classes = classes.filter((c) => c !== name)
+	const { [name]: _, ...rest } = sections
+	sections = rest
+	const { [name]: __, ...restInputs } = newSectionInputs
+	newSectionInputs = restInputs
+}
 
-	function addSection(className: string) {
-		const sectionName = (newSectionInputs[className] ?? "").trim();
-		if (sectionName && !(sections[className] ?? []).includes(sectionName)) {
-			sections = {
-				...sections,
-				[className]: [...(sections[className] ?? []), sectionName],
-			};
-			newSectionInputs = { ...newSectionInputs, [className]: "" };
-		}
-	}
-
-	function removeSection(className: string, sectionName: string) {
+function addSection(className: string) {
+	const sectionName = (newSectionInputs[className] ?? '').trim()
+	if (sectionName && !(sections[className] ?? []).includes(sectionName)) {
 		sections = {
 			...sections,
-			[className]: (sections[className] ?? []).filter((s) => s !== sectionName),
-		};
-	}
-
-	function addTeacher() {
-		const email = newTeacherEmail.trim();
-		if (email && !teacherEmails.includes(email)) {
-			teacherEmails = [...teacherEmails, email];
-			newTeacherEmail = "";
+			[className]: [...(sections[className] ?? []), sectionName],
 		}
+		newSectionInputs = { ...newSectionInputs, [className]: '' }
 	}
+}
 
-	function removeTeacher(email: string) {
-		teacherEmails = teacherEmails.filter((e) => e !== email);
+function removeSection(className: string, sectionName: string) {
+	sections = {
+		...sections,
+		[className]: (sections[className] ?? []).filter((s) => s !== sectionName),
 	}
+}
+
+function addTeacher() {
+	const email = newTeacherEmail.trim()
+	if (email && !teacherEmails.includes(email)) {
+		teacherEmails = [...teacherEmails, email]
+		newTeacherEmail = ''
+	}
+}
+
+function removeTeacher(email: string) {
+	teacherEmails = teacherEmails.filter((e) => e !== email)
+}
 </script>
 
 <svelte:head>

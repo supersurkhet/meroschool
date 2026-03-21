@@ -1,14 +1,14 @@
-import { useState, useCallback } from "react"
-import { View, Text, Pressable, FlatList, Linking, ActivityIndicator } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import { useTranslation } from "react-i18next"
-import { useQuery } from "convex/react"
-import { api } from "@/lib/convex/api"
-import { useAuth } from "@/lib/auth"
-import { useTheme } from "@/lib/theme"
-import { ScreenHeader } from "@/components/shared/ScreenHeader"
-import { Card } from "@/components/ui/Card"
-import { Badge } from "@/components/ui/Badge"
+import { Ionicons } from '@expo/vector-icons'
+import { useQuery } from 'convex/react'
+import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ActivityIndicator, FlatList, Linking, Pressable, Text, View } from 'react-native'
+import { ScreenHeader } from '@/components/shared/ScreenHeader'
+import { Badge } from '@/components/ui/Badge'
+import { Card } from '@/components/ui/Card'
+import { useAuth } from '@/lib/auth'
+import { api } from '@/lib/convex/api'
+import { useTheme } from '@/lib/theme'
 
 // Types matching what the Convex backend returns
 interface Subject {
@@ -33,39 +33,39 @@ interface Topic {
 interface Material {
 	_id: string
 	title: string
-	type: "video" | "pdf" | "link"
+	type: 'video' | 'pdf' | 'link'
 	detail?: string
 	url: string
 }
 
-type ViewLevel = "subjects" | "modules" | "topics" | "materials"
+type ViewLevel = 'subjects' | 'modules' | 'topics' | 'materials'
 
 const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
-	video: "videocam-outline",
-	pdf: "document-outline",
-	link: "link-outline",
+	video: 'videocam-outline',
+	pdf: 'document-outline',
+	link: 'link-outline',
 }
 const typeColors: Record<string, string> = {
-	video: "#DC2626",
-	pdf: "#1A73E8",
-	link: "#059669",
+	video: '#DC2626',
+	pdf: '#1A73E8',
+	link: '#059669',
 }
 const typeEmojis: Record<string, string> = {
-	video: "🎬",
-	pdf: "📄",
-	link: "🔗",
+	video: '🎬',
+	pdf: '📄',
+	link: '🔗',
 }
 
 // Fallback icon/color for subjects that don't specify one
-const subjectIconFallback: keyof typeof Ionicons.glyphMap = "book-outline"
-const subjectColorFallback = "#1A73E8"
+const subjectIconFallback: keyof typeof Ionicons.glyphMap = 'book-outline'
+const subjectColorFallback = '#1A73E8'
 
 export default function MaterialsScreen() {
 	const { t } = useTranslation()
 	const { colors } = useTheme()
 	const { user } = useAuth()
 
-	const [level, setLevel] = useState<ViewLevel>("subjects")
+	const [level, setLevel] = useState<ViewLevel>('subjects')
 	const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null)
 	const [selectedModule, setSelectedModule] = useState<Module | null>(null)
 	const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null)
@@ -73,13 +73,13 @@ export default function MaterialsScreen() {
 	// Fetch subjects for the student's class
 	const subjectsData = useQuery(
 		api.academics.listSubjectsByClass,
-		user?.sectionId ? { classId: user.sectionId as any } : "skip"
+		user?.sectionId ? { classId: user.sectionId as any } : 'skip',
 	)
 
 	// Fetch hierarchy (modules → topics → materials) when a subject is selected
 	const hierarchyData = useQuery(
 		api.academics.getSubjectHierarchy,
-		selectedSubject ? { subjectId: selectedSubject._id as any } : "skip"
+		selectedSubject ? { subjectId: selectedSubject._id as any } : 'skip',
 	)
 
 	const subjects: Subject[] = subjectsData ?? []
@@ -89,18 +89,18 @@ export default function MaterialsScreen() {
 	const currentModuleData = modules.find((m) => m._id === selectedModule?._id) ?? selectedModule
 
 	const goBack = useCallback(() => {
-		if (level === "materials") setLevel("topics")
-		else if (level === "topics") setLevel("modules")
-		else if (level === "modules") {
-			setLevel("subjects")
+		if (level === 'materials') setLevel('topics')
+		else if (level === 'topics') setLevel('modules')
+		else if (level === 'modules') {
+			setLevel('subjects')
 			setSelectedSubject(null)
 		}
 	}, [level])
 
 	const breadcrumb = () => {
-		if (level === "subjects") return t("student.browseBySubject")
-		if (level === "modules") return selectedSubject?.name ?? ""
-		if (level === "topics") return `${selectedSubject?.name} > ${selectedModule?.name}`
+		if (level === 'subjects') return t('student.browseBySubject')
+		if (level === 'modules') return selectedSubject?.name ?? ''
+		if (level === 'topics') return `${selectedSubject?.name} > ${selectedModule?.name}`
 		return `${selectedModule?.name} > ${selectedTopic?.name}`
 	}
 
@@ -111,10 +111,10 @@ export default function MaterialsScreen() {
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.bg }}>
 			<ScreenHeader
-				title={t("student.materials")}
+				title={t('student.materials')}
 				subtitle={breadcrumb()}
 				right={
-					level !== "subjects" ? (
+					level !== 'subjects' ? (
 						<Pressable onPress={goBack}>
 							<Ionicons name="arrow-back" size={24} color={colors.primary} />
 						</Pressable>
@@ -123,18 +123,25 @@ export default function MaterialsScreen() {
 			/>
 
 			{/* Subjects Grid */}
-			{level === "subjects" && (
+			{level === 'subjects' && (
 				<>
 					{subjectsData === undefined && (
-						<View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+						<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
 							<ActivityIndicator size="large" color={colors.primary} />
 						</View>
 					)}
 
 					{subjectsData !== undefined && subjects.length === 0 && (
-						<View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 40 }}>
+						<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
 							<Ionicons name="book-outline" size={48} color={colors.textMuted} />
-							<Text style={{ fontSize: 16, color: colors.textSecondary, marginTop: 12, textAlign: "center" }}>
+							<Text
+								style={{
+									fontSize: 16,
+									color: colors.textSecondary,
+									marginTop: 12,
+									textAlign: 'center',
+								}}
+							>
 								No subjects found
 							</Text>
 						</View>
@@ -154,24 +161,24 @@ export default function MaterialsScreen() {
 									<Card
 										onPress={() => {
 											setSelectedSubject(item)
-											setLevel("modules")
+											setLevel('modules')
 										}}
 										style={{ flex: 1 }}
 									>
-										<View style={{ alignItems: "center", paddingVertical: 12, gap: 10 }}>
+										<View style={{ alignItems: 'center', paddingVertical: 12, gap: 10 }}>
 											<View
 												style={{
 													width: 52,
 													height: 52,
 													borderRadius: 16,
-													backgroundColor: iconColor + "18",
-													alignItems: "center",
-													justifyContent: "center",
+													backgroundColor: iconColor + '18',
+													alignItems: 'center',
+													justifyContent: 'center',
 												}}
 											>
 												<Ionicons name={iconName} size={26} color={iconColor} />
 											</View>
-											<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>
+											<Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
 												{item.name}
 											</Text>
 										</View>
@@ -184,18 +191,25 @@ export default function MaterialsScreen() {
 			)}
 
 			{/* Modules List */}
-			{level === "modules" && selectedSubject && (
+			{level === 'modules' && selectedSubject && (
 				<>
 					{hierarchyData === undefined && (
-						<View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+						<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
 							<ActivityIndicator size="large" color={colors.primary} />
 						</View>
 					)}
 
 					{hierarchyData !== undefined && modules.length === 0 && (
-						<View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 40 }}>
+						<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
 							<Ionicons name="folder-open-outline" size={48} color={colors.textMuted} />
-							<Text style={{ fontSize: 16, color: colors.textSecondary, marginTop: 12, textAlign: "center" }}>
+							<Text
+								style={{
+									fontSize: 16,
+									color: colors.textSecondary,
+									marginTop: 12,
+									textAlign: 'center',
+								}}
+							>
 								No modules found
 							</Text>
 						</View>
@@ -210,16 +224,23 @@ export default function MaterialsScreen() {
 								<Card
 									onPress={() => {
 										setSelectedModule(item)
-										setLevel("topics")
+										setLevel('topics')
 									}}
 								>
-									<View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+									<View
+										style={{
+											flexDirection: 'row',
+											alignItems: 'center',
+											justifyContent: 'space-between',
+										}}
+									>
 										<View style={{ flex: 1 }}>
-											<Text style={{ fontSize: 16, fontWeight: "600", color: colors.text }}>
+											<Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
 												{item.name}
 											</Text>
 											<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
-												{item.topics.length} {t("student.topics")} · {item.topics.reduce((a, t2) => a + t2.materials.length, 0)} materials
+												{item.topics.length} {t('student.topics')} ·{' '}
+												{item.topics.reduce((a, t2) => a + t2.materials.length, 0)} materials
 											</Text>
 										</View>
 										<Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
@@ -232,14 +253,14 @@ export default function MaterialsScreen() {
 			)}
 
 			{/* Topics List */}
-			{level === "topics" && currentModuleData && (
+			{level === 'topics' && currentModuleData && (
 				<FlatList
 					data={currentModuleData.topics}
 					keyExtractor={(item) => item._id}
 					contentContainerStyle={{ padding: 20, gap: 10 }}
 					ListEmptyComponent={
-						<View style={{ alignItems: "center", justifyContent: "center", padding: 40 }}>
-							<Text style={{ fontSize: 16, color: colors.textSecondary, textAlign: "center" }}>
+						<View style={{ alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+							<Text style={{ fontSize: 16, color: colors.textSecondary, textAlign: 'center' }}>
 								No topics found
 							</Text>
 						</View>
@@ -248,26 +269,37 @@ export default function MaterialsScreen() {
 						<Card
 							onPress={() => {
 								setSelectedTopic(item)
-								setLevel("materials")
+								setLevel('materials')
 							}}
 						>
-							<View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+							<View
+								style={{
+									flexDirection: 'row',
+									alignItems: 'center',
+									justifyContent: 'space-between',
+								}}
+							>
 								<View style={{ flex: 1 }}>
-									<Text style={{ fontSize: 16, fontWeight: "600", color: colors.text }}>
+									<Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
 										{item.name}
 									</Text>
 									<Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
 										{item.materials.length} materials
 									</Text>
 								</View>
-								<View style={{ flexDirection: "row", gap: 4 }}>
+								<View style={{ flexDirection: 'row', gap: 4 }}>
 									{item.materials.map((m) => (
 										<Text key={m._id} style={{ fontSize: 14 }}>
-											{typeEmojis[m.type] ?? "📎"}
+											{typeEmojis[m.type] ?? '📎'}
 										</Text>
 									))}
 								</View>
-								<Ionicons name="chevron-forward" size={20} color={colors.textMuted} style={{ marginLeft: 8 }} />
+								<Ionicons
+									name="chevron-forward"
+									size={20}
+									color={colors.textMuted}
+									style={{ marginLeft: 8 }}
+								/>
 							</View>
 						</Card>
 					)}
@@ -275,46 +307,52 @@ export default function MaterialsScreen() {
 			)}
 
 			{/* Materials List */}
-			{level === "materials" && selectedTopic && (
+			{level === 'materials' && selectedTopic && (
 				<FlatList
 					data={selectedTopic.materials}
 					keyExtractor={(item) => item._id}
 					contentContainerStyle={{ padding: 20, gap: 10 }}
 					ListEmptyComponent={
-						<View style={{ alignItems: "center", justifyContent: "center", padding: 40 }}>
-							<Text style={{ fontSize: 16, color: colors.textSecondary, textAlign: "center" }}>
+						<View style={{ alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+							<Text style={{ fontSize: 16, color: colors.textSecondary, textAlign: 'center' }}>
 								No materials found
 							</Text>
 						</View>
 					}
 					renderItem={({ item }) => (
 						<Card onPress={() => openMaterial(item)}>
-							<View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+							<View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
 								<View
 									style={{
 										width: 44,
 										height: 44,
 										borderRadius: 12,
-										backgroundColor: (typeColors[item.type] ?? "#666") + "18",
-										alignItems: "center",
-										justifyContent: "center",
+										backgroundColor: (typeColors[item.type] ?? '#666') + '18',
+										alignItems: 'center',
+										justifyContent: 'center',
 									}}
 								>
-									<Ionicons name={typeIcons[item.type] ?? "document-outline"} size={22} color={typeColors[item.type] ?? "#666"} />
+									<Ionicons
+										name={typeIcons[item.type] ?? 'document-outline'}
+										size={22}
+										color={typeColors[item.type] ?? '#666'}
+									/>
 								</View>
 								<View style={{ flex: 1 }}>
-									<Text style={{ fontSize: 15, fontWeight: "600", color: colors.text }}>
+									<Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
 										{item.title}
 									</Text>
 									{item.detail ? (
 										<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
-											{typeEmojis[item.type] ?? "📎"} {item.detail}
+											{typeEmojis[item.type] ?? '📎'} {item.detail}
 										</Text>
 									) : null}
 								</View>
 								<Badge
 									text={item.type.toUpperCase()}
-									variant={item.type === "video" ? "danger" : item.type === "pdf" ? "primary" : "success"}
+									variant={
+										item.type === 'video' ? 'danger' : item.type === 'pdf' ? 'primary' : 'success'
+									}
 								/>
 							</View>
 						</Card>

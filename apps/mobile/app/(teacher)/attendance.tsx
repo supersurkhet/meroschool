@@ -1,31 +1,31 @@
-import { useState, useCallback, useEffect } from "react"
-import { View, Text, FlatList, Pressable, Alert, ActivityIndicator } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import { useTranslation } from "react-i18next"
-import { useQuery, useMutation } from "convex/react"
-import { api } from "@/lib/convex/api"
-import { useAuth } from "@/lib/auth"
-import { useTheme } from "@/lib/theme"
-import { ScreenHeader } from "@/components/shared/ScreenHeader"
-import { Button } from "@/components/ui/Button"
-import { EmptyState } from "@/components/ui/EmptyState"
-import { SkeletonList } from "@/components/ui/Skeleton"
+import { Ionicons } from '@expo/vector-icons'
+import { useMutation, useQuery } from 'convex/react'
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from 'react-native'
+import { ScreenHeader } from '@/components/shared/ScreenHeader'
+import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { SkeletonList } from '@/components/ui/Skeleton'
+import { useAuth } from '@/lib/auth'
+import { api } from '@/lib/convex/api'
+import { useTheme } from '@/lib/theme'
 
-type AttendanceStatus = "present" | "absent" | "late"
+type AttendanceStatus = 'present' | 'absent' | 'late'
 
 function toYMD(date: Date): string {
 	const y = date.getFullYear()
-	const m = String(date.getMonth() + 1).padStart(2, "0")
-	const d = String(date.getDate()).padStart(2, "0")
+	const m = String(date.getMonth() + 1).padStart(2, '0')
+	const d = String(date.getDate()).padStart(2, '0')
 	return `${y}-${m}-${d}`
 }
 
 function formatDate(date: Date): string {
-	return date.toLocaleDateString("en-US", {
-		weekday: "long",
-		year: "numeric",
-		month: "long",
-		day: "numeric",
+	return date.toLocaleDateString('en-US', {
+		weekday: 'long',
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
 	})
 }
 
@@ -39,14 +39,11 @@ export default function AttendanceScreen() {
 
 	const sectionId = user?.sectionId as any
 
-	const students = useQuery(
-		api.people.listStudentsBySection,
-		sectionId ? { sectionId } : "skip"
-	)
+	const students = useQuery(api.people.listStudentsBySection, sectionId ? { sectionId } : 'skip')
 
 	const existingRecords = useQuery(
 		api.attendance.getBySectionDate,
-		sectionId ? { sectionId, date: toYMD(currentDate) } : "skip"
+		sectionId ? { sectionId, date: toYMD(currentDate) } : 'skip',
 	)
 
 	const markBulk = useMutation(api.attendance.markBulk)
@@ -55,7 +52,7 @@ export default function AttendanceScreen() {
 	useEffect(() => {
 		if (!students) return
 		const base: Record<string, AttendanceStatus | null> = Object.fromEntries(
-			students.map((s: any) => [s._id, null])
+			students.map((s: any) => [s._id, null]),
 		)
 		if (existingRecords) {
 			for (const rec of existingRecords as any[]) {
@@ -74,7 +71,7 @@ export default function AttendanceScreen() {
 
 	const markAllPresent = useCallback(() => {
 		if (!students) return
-		setAttendance(Object.fromEntries(students.map((s: any) => [s._id, "present" as const])))
+		setAttendance(Object.fromEntries(students.map((s: any) => [s._id, 'present' as const])))
 	}, [students])
 
 	const changeDate = useCallback((delta: number) => {
@@ -92,25 +89,25 @@ export default function AttendanceScreen() {
 	const studentList: any[] = students ?? []
 
 	const counts = {
-		present: Object.values(attendance).filter((v) => v === "present").length,
-		absent: Object.values(attendance).filter((v) => v === "absent").length,
-		late: Object.values(attendance).filter((v) => v === "late").length,
+		present: Object.values(attendance).filter((v) => v === 'present').length,
+		absent: Object.values(attendance).filter((v) => v === 'absent').length,
+		late: Object.values(attendance).filter((v) => v === 'late').length,
 		total: studentList.length,
 		marked: Object.values(attendance).filter((v) => v !== null).length,
 	}
 
 	const handleSubmit = useCallback(async () => {
 		if (counts.marked === 0) {
-			Alert.alert("No Data", "Please mark attendance for at least one student.")
+			Alert.alert('No Data', 'Please mark attendance for at least one student.')
 			return
 		}
 		Alert.alert(
-			"Submit Attendance",
+			'Submit Attendance',
 			`Submit attendance?\n\nPresent: ${counts.present}\nAbsent: ${counts.absent}\nLate: ${counts.late}\nUnmarked: ${counts.total - counts.marked}`,
 			[
-				{ text: t("common.cancel"), style: "cancel" },
+				{ text: t('common.cancel'), style: 'cancel' },
 				{
-					text: t("common.submit"),
+					text: t('common.submit'),
 					onPress: async () => {
 						setSubmitting(true)
 						try {
@@ -122,22 +119,29 @@ export default function AttendanceScreen() {
 								date: toYMD(currentDate),
 								records,
 							} as any)
-							Alert.alert("Success", `Attendance submitted for ${formatDate(currentDate)}.`, [{ text: "OK" }])
+							Alert.alert('Success', `Attendance submitted for ${formatDate(currentDate)}.`, [
+								{ text: 'OK' },
+							])
 						} catch (err: any) {
-							Alert.alert("Error", err?.message ?? "Failed to submit attendance.")
+							Alert.alert('Error', err?.message ?? 'Failed to submit attendance.')
 						} finally {
 							setSubmitting(false)
 						}
 					},
 				},
-			]
+			],
 		)
 	}, [counts, attendance, currentDate, sectionId, markBulk, t])
 
-	const statusButtons: { status: AttendanceStatus; label: string; activeColor: string; activeBg: string }[] = [
-		{ status: "present", label: "P", activeColor: colors.success, activeBg: colors.successLight },
-		{ status: "absent", label: "A", activeColor: colors.danger, activeBg: colors.dangerLight },
-		{ status: "late", label: "L", activeColor: colors.warning, activeBg: colors.warningLight },
+	const statusButtons: {
+		status: AttendanceStatus
+		label: string
+		activeColor: string
+		activeBg: string
+	}[] = [
+		{ status: 'present', label: 'P', activeColor: colors.success, activeBg: colors.successLight },
+		{ status: 'absent', label: 'A', activeColor: colors.danger, activeBg: colors.dangerLight },
+		{ status: 'late', label: 'L', activeColor: colors.warning, activeBg: colors.warningLight },
 	]
 
 	const renderStudent = useCallback(
@@ -151,8 +155,8 @@ export default function AttendanceScreen() {
 					marginBottom: 6,
 					borderWidth: 1,
 					borderColor: colors.border,
-					flexDirection: "row",
-					alignItems: "center",
+					flexDirection: 'row',
+					alignItems: 'center',
 					gap: 10,
 				}}
 			>
@@ -162,18 +166,18 @@ export default function AttendanceScreen() {
 						height: 32,
 						borderRadius: 16,
 						backgroundColor: colors.surfaceAlt,
-						alignItems: "center",
-						justifyContent: "center",
+						alignItems: 'center',
+						justifyContent: 'center',
 					}}
 				>
-					<Text style={{ fontSize: 13, fontWeight: "600", color: colors.textSecondary }}>
-						{item.rollNumber ?? item.roll ?? "—"}
+					<Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary }}>
+						{item.rollNumber ?? item.roll ?? '—'}
 					</Text>
 				</View>
-				<Text style={{ flex: 1, fontSize: 15, fontWeight: "500", color: colors.text }}>
-					{item.name ?? item.user?.name ?? "Unknown"}
+				<Text style={{ flex: 1, fontSize: 15, fontWeight: '500', color: colors.text }}>
+					{item.name ?? item.user?.name ?? 'Unknown'}
 				</Text>
-				<View style={{ flexDirection: "row", gap: 6 }}>
+				<View style={{ flexDirection: 'row', gap: 6 }}>
 					{statusButtons.map((btn) => {
 						const isActive = attendance[item._id] === btn.status
 						return (
@@ -185,8 +189,8 @@ export default function AttendanceScreen() {
 									height: 36,
 									borderRadius: 10,
 									backgroundColor: isActive ? btn.activeBg : colors.surface,
-									alignItems: "center",
-									justifyContent: "center",
+									alignItems: 'center',
+									justifyContent: 'center',
 									borderWidth: 1.5,
 									borderColor: isActive ? btn.activeColor : colors.border,
 								}}
@@ -194,7 +198,7 @@ export default function AttendanceScreen() {
 								<Text
 									style={{
 										fontSize: 13,
-										fontWeight: "700",
+										fontWeight: '700',
 										color: isActive ? btn.activeColor : colors.textMuted,
 									}}
 								>
@@ -206,19 +210,19 @@ export default function AttendanceScreen() {
 				</View>
 			</View>
 		),
-		[attendance, colors, markStudent, statusButtons]
+		[attendance, colors, markStudent, statusButtons],
 	)
 
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.bg }}>
-			<ScreenHeader title={t("teacher.markAttendance")} />
+			<ScreenHeader title={t('teacher.markAttendance')} />
 
 			{/* Date Navigator */}
 			<View
 				style={{
-					flexDirection: "row",
-					alignItems: "center",
-					justifyContent: "center",
+					flexDirection: 'row',
+					alignItems: 'center',
+					justifyContent: 'center',
 					paddingHorizontal: 20,
 					paddingVertical: 8,
 					gap: 12,
@@ -231,14 +235,14 @@ export default function AttendanceScreen() {
 						height: 36,
 						borderRadius: 10,
 						backgroundColor: colors.surfaceAlt,
-						alignItems: "center",
-						justifyContent: "center",
+						alignItems: 'center',
+						justifyContent: 'center',
 					}}
 				>
 					<Ionicons name="chevron-back" size={18} color={colors.text} />
 				</Pressable>
 				<Pressable onPress={resetToToday}>
-					<Text style={{ fontSize: 14, fontWeight: "600", color: colors.text }}>
+					<Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>
 						{formatDate(currentDate)}
 					</Text>
 				</Pressable>
@@ -249,8 +253,8 @@ export default function AttendanceScreen() {
 						height: 36,
 						borderRadius: 10,
 						backgroundColor: colors.surfaceAlt,
-						alignItems: "center",
-						justifyContent: "center",
+						alignItems: 'center',
+						justifyContent: 'center',
 					}}
 				>
 					<Ionicons name="chevron-forward" size={18} color={colors.text} />
@@ -260,35 +264,35 @@ export default function AttendanceScreen() {
 			{/* Summary Bar + Mark All */}
 			<View
 				style={{
-					flexDirection: "row",
+					flexDirection: 'row',
 					paddingHorizontal: 20,
 					paddingVertical: 8,
 					gap: 8,
-					alignItems: "center",
+					alignItems: 'center',
 				}}
 			>
 				<View
 					style={{
 						flex: 1,
-						flexDirection: "row",
+						flexDirection: 'row',
 						backgroundColor: colors.surfaceAlt,
 						borderRadius: 10,
 						padding: 10,
 						gap: 14,
-						alignItems: "center",
+						alignItems: 'center',
 					}}
 				>
-					<Text style={{ fontSize: 14, fontWeight: "700", color: colors.text }}>
+					<Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>
 						{counts.present}/{counts.total} Present
 					</Text>
-					<Text style={{ fontSize: 12, color: colors.danger, fontWeight: "600" }}>
+					<Text style={{ fontSize: 12, color: colors.danger, fontWeight: '600' }}>
 						A:{counts.absent}
 					</Text>
-					<Text style={{ fontSize: 12, color: colors.warning, fontWeight: "600" }}>
+					<Text style={{ fontSize: 12, color: colors.warning, fontWeight: '600' }}>
 						L:{counts.late}
 					</Text>
 				</View>
-				<Button title={t("teacher.markAll")} variant="outline" size="sm" onPress={markAllPresent} />
+				<Button title={t('teacher.markAll')} variant="outline" size="sm" onPress={markAllPresent} />
 			</View>
 
 			{/* Student List */}
@@ -297,7 +301,7 @@ export default function AttendanceScreen() {
 					<SkeletonList count={5} />
 				</View>
 			) : studentList.length === 0 ? (
-				<View style={{ flex: 1, justifyContent: "center" }}>
+				<View style={{ flex: 1, justifyContent: 'center' }}>
 					<EmptyState
 						icon="people-outline"
 						title="No Students"
@@ -317,7 +321,7 @@ export default function AttendanceScreen() {
 			{/* Submit Button */}
 			<View
 				style={{
-					position: "absolute",
+					position: 'absolute',
 					bottom: 0,
 					left: 0,
 					right: 0,
@@ -329,11 +333,15 @@ export default function AttendanceScreen() {
 				}}
 			>
 				<Button
-					title={submitting ? "Submitting..." : `Submit Attendance (${counts.marked}/${counts.total})`}
+					title={
+						submitting ? 'Submitting...' : `Submit Attendance (${counts.marked}/${counts.total})`
+					}
 					onPress={handleSubmit}
 					loading={submitting}
 					disabled={counts.marked === 0 || submitting}
-					icon={!submitting ? <Ionicons name="checkmark-circle" size={18} color="#FFF" /> : undefined}
+					icon={
+						!submitting ? <Ionicons name="checkmark-circle" size={18} color="#FFF" /> : undefined
+					}
 				/>
 			</View>
 		</View>

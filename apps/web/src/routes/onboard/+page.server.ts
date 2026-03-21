@@ -48,9 +48,7 @@ export const actions = {
 			if (locals.user?.id) {
 				try {
 					const users = await query('auth:getUsersByRole', { role: 'admin' }, [])
-					const adminUser = (users as any[]).find(
-						(u: any) => u.workosUserId === locals.user?.id
-					)
+					const adminUser = (users as any[]).find((u: any) => u.workosUserId === locals.user?.id)
 					if (adminUser) {
 						await mutate('people:updateUser', {
 							id: adminUser._id,

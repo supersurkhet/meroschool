@@ -1,45 +1,46 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { startOAuthLogin, isOAuthAvailable, getIsAuthenticated } from '$lib/stores/auth.svelte';
-  import { toggleTheme, getResolvedTheme } from '$lib/stores/theme.svelte';
-  import { t, setLocale, getLocale } from '$lib/i18n/index.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Sun, Moon, ArrowRight, AlertCircle, ExternalLink } from 'lucide-svelte';
+import { goto } from '$app/navigation'
+import { Button } from '$lib/components/ui/button'
+import { getLocale, setLocale, t } from '$lib/i18n/index.svelte'
+import { getIsAuthenticated, isOAuthAvailable, startOAuthLogin } from '$lib/stores/auth.svelte'
+import { getResolvedTheme, toggleTheme } from '$lib/stores/theme.svelte'
+import { AlertCircle, ArrowRight, ExternalLink, Moon, Sun } from 'lucide-svelte'
 
-  let isLoading = $state(false);
-  let errorMessage = $state('');
-  let mounted = $state(false);
+let isLoading = $state(false)
+let errorMessage = $state('')
+let mounted = $state(false)
 
-  let isDark = $derived(getResolvedTheme() === 'dark');
-  let locale = $derived(getLocale());
-  let oauthReady = $derived(isOAuthAvailable());
+const isDark = $derived(getResolvedTheme() === 'dark')
+const locale = $derived(getLocale())
+const oauthReady = $derived(isOAuthAvailable())
 
-  $effect(() => {
-    mounted = true;
-    // If already authenticated, redirect
-    if (getIsAuthenticated()) {
-      goto('/dashboard', { replaceState: true });
-    }
-  });
+$effect(() => {
+	mounted = true
+	// If already authenticated, redirect
+	if (getIsAuthenticated()) {
+		goto('/dashboard', { replaceState: true })
+	}
+})
 
-  function handleLogin() {
-    if (!oauthReady) {
-      errorMessage = 'Authentication is not configured. Set VITE_WORKOS_CLIENT_ID and VITE_WORKOS_API_KEY in .env.local';
-      return;
-    }
-    isLoading = true;
-    errorMessage = '';
-    try {
-      startOAuthLogin();
-    } catch (err) {
-      errorMessage = err instanceof Error ? err.message : 'Failed to start login.';
-      isLoading = false;
-    }
-  }
+function handleLogin() {
+	if (!oauthReady) {
+		errorMessage =
+			'Authentication is not configured. Set VITE_WORKOS_CLIENT_ID and VITE_WORKOS_API_KEY in .env.local'
+		return
+	}
+	isLoading = true
+	errorMessage = ''
+	try {
+		startOAuthLogin()
+	} catch (err) {
+		errorMessage = err instanceof Error ? err.message : 'Failed to start login.'
+		isLoading = false
+	}
+}
 
-  function toggleLocale() {
-    setLocale(locale === 'en' ? 'ne' : 'en');
-  }
+function toggleLocale() {
+	setLocale(locale === 'en' ? 'ne' : 'en')
+}
 </script>
 
 <svelte:head>

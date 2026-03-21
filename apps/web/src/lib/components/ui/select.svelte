@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
-	import type { Snippet } from "svelte";
-	import type { HTMLSelectAttributes } from "svelte/elements";
+import { cn } from '$lib/utils.js'
+import type { Snippet } from 'svelte'
+import type { HTMLSelectAttributes } from 'svelte/elements'
 
-	interface Props extends HTMLSelectAttributes {
-		children: Snippet;
-		class?: string;
-		value?: string | number;
-	}
+interface Props extends HTMLSelectAttributes {
+	children: Snippet
+	class?: string
+	value?: string | number
+}
 
-	let { children, class: className, value = $bindable(""), ...rest }: Props = $props();
+let { children, class: className, value = $bindable(''), ...rest }: Props = $props()
 </script>
 
 <select

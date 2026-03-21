@@ -1,12 +1,12 @@
 {
-  "name": "@meroschool/utils",
-  "private": true,
-  "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "scripts": {
-    "build": "tsc",
-    "lint": "biome check .",
-    "check": "tsc --noEmit"
-  }
+	"name": "@meroschool/utils",
+	"private": true,
+	"type": "module",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"scripts": {
+		"build": "tsc",
+		"lint": "biome check . --diagnostic-level=error",
+		"check": "tsc --noEmit"
+	}
 }

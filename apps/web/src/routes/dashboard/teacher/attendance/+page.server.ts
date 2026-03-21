@@ -1,6 +1,6 @@
-import type { PageServerLoad, Actions } from './$types'
-import { query, mutate } from '$lib/server/convex'
+import { mutate, query } from '$lib/server/convex'
 import { fail } from '@sveltejs/kit'
+import type { Actions, PageServerLoad } from './$types'
 
 const FALLBACK_SECTIONS = ['10-A', '10-B', '9-A', '9-B', '8-A', '8-B']
 

@@ -1,13 +1,13 @@
-import { View } from "react-native"
-import { Skeleton, SkeletonCard } from "./Skeleton"
-import { useTheme } from "@/lib/theme"
+import { View } from 'react-native'
+import { useTheme } from '@/lib/theme'
+import { Skeleton, SkeletonCard } from './Skeleton'
 
 export function DashboardSkeleton() {
 	const { colors } = useTheme()
 	return (
 		<View style={{ padding: 20, gap: 20 }}>
 			{/* Stats row */}
-			<View style={{ flexDirection: "row", gap: 12 }}>
+			<View style={{ flexDirection: 'row', gap: 12 }}>
 				<View
 					style={{
 						flex: 1,
@@ -62,8 +62,8 @@ export function ListSkeleton({ count = 4 }: { count?: number }) {
 						padding: 16,
 						borderWidth: 1,
 						borderColor: colors.border,
-						flexDirection: "row",
-						alignItems: "center",
+						flexDirection: 'row',
+						alignItems: 'center',
 						gap: 12,
 					}}
 				>

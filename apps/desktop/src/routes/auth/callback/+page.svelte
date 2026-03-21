@@ -1,32 +1,32 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
-  import { exchangeCodeForUser } from '$lib/stores/auth.svelte';
-  import { AlertCircle } from 'lucide-svelte';
+import { goto } from '$app/navigation'
+import { page } from '$app/stores'
+import { exchangeCodeForUser } from '$lib/stores/auth.svelte'
+import { AlertCircle } from 'lucide-svelte'
 
-  let error = $state('');
-  let status = $state<'exchanging' | 'success' | 'error'>('exchanging');
+let error = $state('')
+let status = $state<'exchanging' | 'success' | 'error'>('exchanging')
 
-  $effect(() => {
-    const code = $page.url.searchParams.get('code');
-    if (!code) {
-      error = 'No authorization code received. Please try logging in again.';
-      status = 'error';
-      return;
-    }
+$effect(() => {
+	const code = $page.url.searchParams.get('code')
+	if (!code) {
+		error = 'No authorization code received. Please try logging in again.'
+		status = 'error'
+		return
+	}
 
-    (async () => {
-      try {
-        await exchangeCodeForUser(code);
-        status = 'success';
-        // Small delay so user sees success state
-        setTimeout(() => goto('/dashboard', { replaceState: true }), 500);
-      } catch (err) {
-        error = err instanceof Error ? err.message : 'Authentication failed.';
-        status = 'error';
-      }
-    })();
-  });
+	;(async () => {
+		try {
+			await exchangeCodeForUser(code)
+			status = 'success'
+			// Small delay so user sees success state
+			setTimeout(() => goto('/dashboard', { replaceState: true }), 500)
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Authentication failed.'
+			status = 'error'
+		}
+	})()
+})
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-background">

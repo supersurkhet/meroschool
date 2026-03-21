@@ -1,275 +1,294 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Select } from '$lib/components/ui/select';
-  import { Input } from '$lib/components/ui/input';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Label } from '$lib/components/ui/label';
-  import { Separator } from '$lib/components/ui/separator';
-  import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent,
-    CardFooter,
-  } from '$lib/components/ui/card';
-  import { onMount } from 'svelte';
-  import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
-  import { getSchool } from '$lib/stores/school.svelte';
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { Input } from '$lib/components/ui/input'
+import { Label } from '$lib/components/ui/label'
+import { Select } from '$lib/components/ui/select'
+import { Separator } from '$lib/components/ui/separator'
+import { api, convexMutation, convexQuery, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
+import { onMount } from 'svelte'
 
-  // ── Types ────────────────────────────────────────────────────────────────────
-  type Teacher = {
-    id: number;
-    name: string;
-    email: string;
-    phone: string;
-    employeeId: string;
-    department: string;
-    joinDate: string;
-    subjects: string[];
-    classes: string[];
-    initials: string;
-    avatarColor: string;
-  };
+// ── Types ────────────────────────────────────────────────────────────────────
+type Teacher = {
+	id: number
+	name: string
+	email: string
+	phone: string
+	employeeId: string
+	department: string
+	joinDate: string
+	subjects: string[]
+	classes: string[]
+	initials: string
+	avatarColor: string
+}
 
-  // ── Constants ──────────────────────────────────────────────────────────────
-  const ALL_SUBJECTS = [
-    'Mathematics', 'Science', 'English', 'Nepali',
-    'Social Studies', 'Computer Science', 'Physical Education',
-    'Arts', 'Music', 'Health',
-  ];
+// ── Constants ──────────────────────────────────────────────────────────────
+const ALL_SUBJECTS = [
+	'Mathematics',
+	'Science',
+	'English',
+	'Nepali',
+	'Social Studies',
+	'Computer Science',
+	'Physical Education',
+	'Arts',
+	'Music',
+	'Health',
+]
 
-  const ALL_CLASSES = [
-    'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-    'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-  ];
+const ALL_CLASSES = [
+	'Class 1',
+	'Class 2',
+	'Class 3',
+	'Class 4',
+	'Class 5',
+	'Class 6',
+	'Class 7',
+	'Class 8',
+	'Class 9',
+	'Class 10',
+]
 
-  const DEPARTMENTS = [
-    'Science & Math', 'Humanities', 'Languages', 'Arts & PE', 'Technology',
-  ];
+const DEPARTMENTS = ['Science & Math', 'Humanities', 'Languages', 'Arts & PE', 'Technology']
 
-  const AVATAR_COLORS = [
-    'bg-violet-500', 'bg-blue-500', 'bg-emerald-500',
-    'bg-rose-500', 'bg-amber-500', 'bg-cyan-500',
-  ];
+const AVATAR_COLORS = [
+	'bg-violet-500',
+	'bg-blue-500',
+	'bg-emerald-500',
+	'bg-rose-500',
+	'bg-amber-500',
+	'bg-cyan-500',
+]
 
-  function makeInitials(name: string) {
-    return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
-  }
+function makeInitials(name: string) {
+	return name
+		.split(' ')
+		.map((p) => p[0])
+		.join('')
+		.slice(0, 2)
+		.toUpperCase()
+}
 
-  let teachers = $state<Teacher[]>([]);
+let teachers = $state<Teacher[]>([])
 
-  // ── Convex loading ────────────────────────────────────────────────────────────
-  onMount(async () => {
-    if (!isConvexConfigured()) return;
-    const schoolId = getSchool()?.id;
-    if (!schoolId) return;
+// ── Convex loading ────────────────────────────────────────────────────────────
+onMount(async () => {
+	if (!isConvexConfigured()) return
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
 
-    try {
-      const convexTeachers = await convexQuery(
-        api.people.listTeachersBySchool,
-        { schoolId },
-        [] as any[],
-      );
-      if (!convexTeachers || convexTeachers.length === 0) return;
+	try {
+		const convexTeachers = await convexQuery(
+			api.people.listTeachersBySchool,
+			{ schoolId },
+			[] as any[],
+		)
+		if (!convexTeachers || convexTeachers.length === 0) return
 
-      const colorIdx = (i: number) => AVATAR_COLORS[i % AVATAR_COLORS.length];
-      teachers = convexTeachers.map((ct: any, i: number) => ({
-        id: ct._id ?? ct.id ?? i,
-        name: ct.user?.name ?? '',
-        email: ct.user?.email ?? '',
-        phone: ct.user?.phone ?? '',
-        employeeId: ct.employeeId ?? '',
-        department: ct.department ?? '',
-        joinDate: ct.joinDate ?? '',
-        subjects: ct.subjects ?? [],
-        classes: ct.classes ?? [],
-        initials: makeInitials(ct.user?.name ?? '?'),
-        avatarColor: colorIdx(i),
-      }));
-    } catch (err) {
-      console.warn('[teachers] Convex load failed:', err);
-      teachers = [];
-    }
-  });
+		const colorIdx = (i: number) => AVATAR_COLORS[i % AVATAR_COLORS.length]
+		teachers = convexTeachers.map((ct: any, i: number) => ({
+			id: ct._id ?? ct.id ?? i,
+			name: ct.user?.name ?? '',
+			email: ct.user?.email ?? '',
+			phone: ct.user?.phone ?? '',
+			employeeId: ct.employeeId ?? '',
+			department: ct.department ?? '',
+			joinDate: ct.joinDate ?? '',
+			subjects: ct.subjects ?? [],
+			classes: ct.classes ?? [],
+			initials: makeInitials(ct.user?.name ?? '?'),
+			avatarColor: colorIdx(i),
+		}))
+	} catch (err) {
+		console.warn('[teachers] Convex load failed:', err)
+		teachers = []
+	}
+})
 
-  // ── UI state ─────────────────────────────────────────────────────────────────
-  let searchQuery = $state('');
-  let showAddForm = $state(false);
-  let editingId = $state<number | null>(null);
+// ── UI state ─────────────────────────────────────────────────────────────────
+let searchQuery = $state('')
+let showAddForm = $state(false)
+let editingId = $state<number | null>(null)
 
-  // Form fields
-  let formName = $state('');
-  let formEmail = $state('');
-  let formPhone = $state('');
-  let formEmployeeId = $state('');
-  let formDepartment = $state('');
-  let formJoinDate = $state('');
-  let formSubjects = $state<string[]>([]);
-  let formClasses = $state<string[]>([]);
+// Form fields
+let formName = $state('')
+let formEmail = $state('')
+let formPhone = $state('')
+let formEmployeeId = $state('')
+let formDepartment = $state('')
+let formJoinDate = $state('')
+let formSubjects = $state<string[]>([])
+let formClasses = $state<string[]>([])
 
-  // ── Derived ──────────────────────────────────────────────────────────────────
-  let filteredTeachers = $derived(
-    teachers.filter(t =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.department.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+// ── Derived ──────────────────────────────────────────────────────────────────
+const filteredTeachers = $derived(
+	teachers.filter(
+		(t) =>
+			t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			t.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			t.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			t.department.toLowerCase().includes(searchQuery.toLowerCase()),
+	),
+)
 
-  // ── Actions ──────────────────────────────────────────────────────────────────
-  function resetForm() {
-    formName = '';
-    formEmail = '';
-    formPhone = '';
-    formEmployeeId = '';
-    formDepartment = '';
-    formJoinDate = '';
-    formSubjects = [];
-    formClasses = [];
-    editingId = null;
-  }
+// ── Actions ──────────────────────────────────────────────────────────────────
+function resetForm() {
+	formName = ''
+	formEmail = ''
+	formPhone = ''
+	formEmployeeId = ''
+	formDepartment = ''
+	formJoinDate = ''
+	formSubjects = []
+	formClasses = []
+	editingId = null
+}
 
-  function generateEmployeeId(): string {
-    const maxNum = teachers.reduce((max, t) => {
-      const match = t.employeeId.match(/EMP-(\d+)/);
-      return match ? Math.max(max, parseInt(match[1])) : max;
-    }, 0);
-    return `EMP-${String(maxNum + 1).padStart(3, '0')}`;
-  }
+function generateEmployeeId(): string {
+	const maxNum = teachers.reduce((max, t) => {
+		const match = t.employeeId.match(/EMP-(\d+)/)
+		return match ? Math.max(max, parseInt(match[1])) : max
+	}, 0)
+	return `EMP-${String(maxNum + 1).padStart(3, '0')}`
+}
 
-  function openAddForm() {
-    resetForm();
-    formEmployeeId = generateEmployeeId();
-    formJoinDate = new Date().toISOString().slice(0, 10);
-    showAddForm = true;
-  }
+function openAddForm() {
+	resetForm()
+	formEmployeeId = generateEmployeeId()
+	formJoinDate = new Date().toISOString().slice(0, 10)
+	showAddForm = true
+}
 
-  function cancelForm() {
-    showAddForm = false;
-    resetForm();
-  }
+function cancelForm() {
+	showAddForm = false
+	resetForm()
+}
 
-  function startEdit(teacher: Teacher) {
-    editingId = teacher.id;
-    formName = teacher.name;
-    formEmail = teacher.email;
-    formPhone = teacher.phone;
-    formEmployeeId = teacher.employeeId;
-    formDepartment = teacher.department;
-    formJoinDate = teacher.joinDate;
-    formSubjects = [...teacher.subjects];
-    formClasses = [...teacher.classes];
-    showAddForm = true;
-    // Scroll to form
-    setTimeout(() => {
-      document.getElementById('teacher-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
-  }
+function startEdit(teacher: Teacher) {
+	editingId = teacher.id
+	formName = teacher.name
+	formEmail = teacher.email
+	formPhone = teacher.phone
+	formEmployeeId = teacher.employeeId
+	formDepartment = teacher.department
+	formJoinDate = teacher.joinDate
+	formSubjects = [...teacher.subjects]
+	formClasses = [...teacher.classes]
+	showAddForm = true
+	// Scroll to form
+	setTimeout(() => {
+		document.getElementById('teacher-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+	}, 50)
+}
 
-  async function saveTeacher() {
-    if (!formName.trim() || !formEmail.trim()) return;
-    if (!formEmployeeId.trim()) formEmployeeId = generateEmployeeId();
+async function saveTeacher() {
+	if (!formName.trim() || !formEmail.trim()) return
+	if (!formEmployeeId.trim()) formEmployeeId = generateEmployeeId()
 
-    if (editingId !== null) {
-      // Edit: update local state only (no general update API)
-      const idx = teachers.findIndex(t => t.id === editingId);
-      if (idx !== -1) {
-        teachers[idx] = {
-          ...teachers[idx],
-          name: formName,
-          email: formEmail,
-          phone: formPhone,
-          employeeId: formEmployeeId,
-          department: formDepartment,
-          joinDate: formJoinDate,
-          subjects: [...formSubjects],
-          classes: [...formClasses],
-          initials: makeInitials(formName),
-        };
-      }
-    } else {
-      const optimisticId = Date.now();
-      const colorIdx = teachers.length % AVATAR_COLORS.length;
-      const newTeacher: Teacher = {
-        id: optimisticId,
-        name: formName,
-        email: formEmail,
-        phone: formPhone,
-        employeeId: formEmployeeId,
-        department: formDepartment,
-        joinDate: formJoinDate,
-        subjects: [...formSubjects],
-        classes: [...formClasses],
-        initials: makeInitials(formName),
-        avatarColor: AVATAR_COLORS[colorIdx],
-      };
-      // Optimistically add to local state
-      teachers = [...teachers, newTeacher];
+	if (editingId !== null) {
+		// Edit: update local state only (no general update API)
+		const idx = teachers.findIndex((t) => t.id === editingId)
+		if (idx !== -1) {
+			teachers[idx] = {
+				...teachers[idx],
+				name: formName,
+				email: formEmail,
+				phone: formPhone,
+				employeeId: formEmployeeId,
+				department: formDepartment,
+				joinDate: formJoinDate,
+				subjects: [...formSubjects],
+				classes: [...formClasses],
+				initials: makeInitials(formName),
+			}
+		}
+	} else {
+		const optimisticId = Date.now()
+		const colorIdx = teachers.length % AVATAR_COLORS.length
+		const newTeacher: Teacher = {
+			id: optimisticId,
+			name: formName,
+			email: formEmail,
+			phone: formPhone,
+			employeeId: formEmployeeId,
+			department: formDepartment,
+			joinDate: formJoinDate,
+			subjects: [...formSubjects],
+			classes: [...formClasses],
+			initials: makeInitials(formName),
+			avatarColor: AVATAR_COLORS[colorIdx],
+		}
+		// Optimistically add to local state
+		teachers = [...teachers, newTeacher]
 
-      const schoolId = getSchool()?.id;
-      if (isConvexConfigured() && schoolId) {
-        try {
-          const userId = await convexMutation(api.auth.upsertUser, {
-            name: formName,
-            email: formEmail,
-            workosUserId: `pending-${Date.now()}-${optimisticId}`,
-            role: 'teacher',
-          });
-          const teacherId = await convexMutation(api.people.createTeacher, {
-            userId,
-            schoolId,
-            employeeId: formEmployeeId,
-            ...(formDepartment ? { department: formDepartment } : {}),
-            ...(formJoinDate ? { joinDate: formJoinDate } : {}),
-          });
-          // Replace optimistic ID with real Convex ID
-          teachers = teachers.map(t => t.id === optimisticId ? { ...t, id: teacherId } : t);
-        } catch (err) {
-          console.warn('[teachers] Convex createTeacher failed, keeping local entry:', err);
-        }
-      }
-    }
+		const schoolId = getSchool()?.id
+		if (isConvexConfigured() && schoolId) {
+			try {
+				const userId = await convexMutation(api.auth.upsertUser, {
+					name: formName,
+					email: formEmail,
+					workosUserId: `pending-${Date.now()}-${optimisticId}`,
+					role: 'teacher',
+				})
+				const teacherId = await convexMutation(api.people.createTeacher, {
+					userId,
+					schoolId,
+					employeeId: formEmployeeId,
+					...(formDepartment ? { department: formDepartment } : {}),
+					...(formJoinDate ? { joinDate: formJoinDate } : {}),
+				})
+				// Replace optimistic ID with real Convex ID
+				teachers = teachers.map((t) => (t.id === optimisticId ? { ...t, id: teacherId } : t))
+			} catch (err) {
+				console.warn('[teachers] Convex createTeacher failed, keeping local entry:', err)
+			}
+		}
+	}
 
-    showAddForm = false;
-    resetForm();
-  }
+	showAddForm = false
+	resetForm()
+}
 
-  function deleteTeacher(id: number) {
-    teachers = teachers.filter(t => t.id !== id);
-  }
+function deleteTeacher(id: number) {
+	teachers = teachers.filter((t) => t.id !== id)
+}
 
-  function toggleSubject(subject: string) {
-    if (formSubjects.includes(subject)) {
-      formSubjects = formSubjects.filter(s => s !== subject);
-    } else {
-      formSubjects = [...formSubjects, subject];
-    }
-  }
+function toggleSubject(subject: string) {
+	if (formSubjects.includes(subject)) {
+		formSubjects = formSubjects.filter((s) => s !== subject)
+	} else {
+		formSubjects = [...formSubjects, subject]
+	}
+}
 
-  function toggleClass(cls: string) {
-    if (formClasses.includes(cls)) {
-      formClasses = formClasses.filter(c => c !== cls);
-    } else {
-      formClasses = [...formClasses, cls];
-    }
-  }
+function toggleClass(cls: string) {
+	if (formClasses.includes(cls)) {
+		formClasses = formClasses.filter((c) => c !== cls)
+	} else {
+		formClasses = [...formClasses, cls]
+	}
+}
 
-  function formatDate(dateStr: string): string {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      year: 'numeric', month: 'short', day: 'numeric',
-    });
-  }
+function formatDate(dateStr: string): string {
+	if (!dateStr) return '—'
+	return new Date(dateStr).toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+	})
+}
 
-  const DEPT_COLORS: Record<string, string> = {
-    'Science & Math': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-    'Humanities': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-    'Languages': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-    'Arts & PE': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
-    'Technology': 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
-  };
+const DEPT_COLORS: Record<string, string> = {
+	'Science & Math': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+	Humanities: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+	Languages: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+	'Arts & PE': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+	Technology: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+}
 </script>
 
 <div class="min-h-screen bg-background p-6">

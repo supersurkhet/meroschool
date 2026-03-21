@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { page } from "$app/stores";
-	import Button from "$lib/components/ui/button.svelte";
-	import Card from "$lib/components/ui/card.svelte";
+import { page } from '$app/stores'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
 </script>
 
 <div class="flex min-h-[50vh] items-center justify-center p-4">

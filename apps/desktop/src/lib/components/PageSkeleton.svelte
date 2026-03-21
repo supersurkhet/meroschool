@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Skeleton } from '$lib/components/ui/skeleton';
+import { Skeleton } from '$lib/components/ui/skeleton'
 
-  let { variant = 'default' }: { variant?: 'default' | 'table' | 'cards' | 'form' } = $props();
+const { variant = 'default' }: { variant?: 'default' | 'table' | 'cards' | 'form' } = $props()
 </script>
 
 {#if variant === 'default'}

@@ -1,5 +1,5 @@
-import { WorkOS } from '@workos-inc/node'
 import { env } from '$env/dynamic/private'
+import { WorkOS } from '@workos-inc/node'
 
 let _workos: WorkOS | null = null
 

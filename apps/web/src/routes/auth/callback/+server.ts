@@ -1,8 +1,8 @@
-import { redirect, error } from '@sveltejs/kit'
-import type { RequestHandler } from './$types'
-import { WorkOS } from '@workos-inc/node'
 import { env } from '$env/dynamic/private'
 import { mutate } from '$lib/server/convex'
+import { error, redirect } from '@sveltejs/kit'
+import { WorkOS } from '@workos-inc/node'
+import type { RequestHandler } from './$types'
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	const code = url.searchParams.get('code')
@@ -51,18 +51,22 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		maxAge: 60 * 60 * 24 * 7,
 	})
 
-	cookies.set('user_info', JSON.stringify({
-		id: user.id,
-		name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
-		email: user.email,
-		role,
-	}), {
-		httpOnly: false,
-		secure: false,
-		sameSite: 'lax',
-		path: '/',
-		maxAge: 60 * 60 * 24 * 7,
-	})
+	cookies.set(
+		'user_info',
+		JSON.stringify({
+			id: user.id,
+			name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
+			email: user.email,
+			role,
+		}),
+		{
+			httpOnly: false,
+			secure: false,
+			sameSite: 'lax',
+			path: '/',
+			maxAge: 60 * 60 * 24 * 7,
+		},
+	)
 
 	if (returnTo) {
 		throw redirect(302, returnTo)

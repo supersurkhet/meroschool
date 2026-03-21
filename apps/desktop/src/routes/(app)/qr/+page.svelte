@@ -1,147 +1,147 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Download, Printer, QrCode, ChevronLeft } from 'lucide-svelte';
-  import QRCodeLib from 'qrcode';
-  import { convexQuery, isConvexConfigured, api } from '$lib/convex';
-  import { getSchool } from '$lib/stores/school.svelte';
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { api, convexQuery, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
+import { ChevronLeft, Download, Printer, QrCode } from 'lucide-svelte'
+import QRCodeLib from 'qrcode'
 
-  interface Section {
-    name: string;
-    id: string;
-  }
+interface Section {
+	name: string
+	id: string
+}
 
-  interface SchoolClass {
-    id: string;
-    name: string;
-    sections: Section[];
-    color: string;
-  }
+interface SchoolClass {
+	id: string
+	name: string
+	sections: Section[]
+	color: string
+}
 
-  let classes = $state<SchoolClass[]>([]);
+let classes = $state<SchoolClass[]>([])
 
-  let selectedClass = $state<SchoolClass | null>(null);
-  let selectedSection = $state<Section | null>(null);
+let selectedClass = $state<SchoolClass | null>(null)
+let selectedSection = $state<Section | null>(null)
 
-  // QR code data URLs keyed by "classId/sectionId"
-  let qrDataUrls = $state<Record<string, string>>({});
+// QR code data URLs keyed by "classId/sectionId"
+let qrDataUrls = $state<Record<string, string>>({})
 
-  // Generate QR code for a class+section combination
-  async function generateQR(cls: SchoolClass, sec: Section): Promise<string> {
-    const key = `${cls.id}/${sec.id}`;
-    if (qrDataUrls[key]) return qrDataUrls[key];
+// Generate QR code for a class+section combination
+async function generateQR(cls: SchoolClass, sec: Section): Promise<string> {
+	const key = `${cls.id}/${sec.id}`
+	if (qrDataUrls[key]) return qrDataUrls[key]
 
-    const data = `meroschool://class/${cls.id}/${sec.name}`;
-    try {
-      const url = await QRCodeLib.toDataURL(data, {
-        width: 300,
-        margin: 2,
-        color: { dark: '#000000', light: '#ffffff' },
-      });
-      qrDataUrls[key] = url;
-      return url;
-    } catch {
-      return '';
-    }
-  }
+	const data = `meroschool://class/${cls.id}/${sec.name}`
+	try {
+		const url = await QRCodeLib.toDataURL(data, {
+			width: 300,
+			margin: 2,
+			color: { dark: '#000000', light: '#ffffff' },
+		})
+		qrDataUrls[key] = url
+		return url
+	} catch {
+		return ''
+	}
+}
 
-  // Thumbnail QR URLs for the grid view (smaller)
-  let thumbUrls = $state<Record<string, string>>({});
+// Thumbnail QR URLs for the grid view (smaller)
+let thumbUrls = $state<Record<string, string>>({})
 
-  async function generateThumb(cls: SchoolClass, sec: Section): Promise<string> {
-    const key = `thumb-${cls.id}/${sec.id}`;
-    if (thumbUrls[key]) return thumbUrls[key];
+async function generateThumb(cls: SchoolClass, sec: Section): Promise<string> {
+	const key = `thumb-${cls.id}/${sec.id}`
+	if (thumbUrls[key]) return thumbUrls[key]
 
-    const data = `meroschool://class/${cls.id}/${sec.name}`;
-    try {
-      const url = await QRCodeLib.toDataURL(data, {
-        width: 120,
-        margin: 1,
-        color: { dark: '#000000', light: '#ffffff' },
-      });
-      thumbUrls[key] = url;
-      return url;
-    } catch {
-      return '';
-    }
-  }
+	const data = `meroschool://class/${cls.id}/${sec.name}`
+	try {
+		const url = await QRCodeLib.toDataURL(data, {
+			width: 120,
+			margin: 1,
+			color: { dark: '#000000', light: '#ffffff' },
+		})
+		thumbUrls[key] = url
+		return url
+	} catch {
+		return ''
+	}
+}
 
-  // Reactive: when class/section is selected, generate the QR
-  let currentQrUrl = $state('');
-  let isGenerating = $state(false);
+// Reactive: when class/section is selected, generate the QR
+let currentQrUrl = $state('')
+let isGenerating = $state(false)
 
-  $effect(() => {
-    if (selectedClass && selectedSection) {
-      isGenerating = true;
-      generateQR(selectedClass, selectedSection).then((url) => {
-        currentQrUrl = url;
-        isGenerating = false;
-      });
-    } else {
-      currentQrUrl = '';
-    }
-  });
+$effect(() => {
+	if (selectedClass && selectedSection) {
+		isGenerating = true
+		generateQR(selectedClass, selectedSection).then((url) => {
+			currentQrUrl = url
+			isGenerating = false
+		})
+	} else {
+		currentQrUrl = ''
+	}
+})
 
-  // Thumbnail loading — trigger for all classes on mount
-  let thumbsReady = $state(false);
-  $effect(() => {
-    const tasks: Promise<void>[] = [];
-    for (const cls of classes) {
-      for (const sec of cls.sections) {
-        tasks.push(
-          generateThumb(cls, sec).then(() => {
-            // trigger reactivity by reassigning the whole object
-            thumbUrls = { ...thumbUrls };
-          })
-        );
-      }
-    }
-    Promise.all(tasks).then(() => {
-      thumbsReady = true;
-    });
-  });
+// Thumbnail loading — trigger for all classes on mount
+let thumbsReady = $state(false)
+$effect(() => {
+	const tasks: Promise<void>[] = []
+	for (const cls of classes) {
+		for (const sec of cls.sections) {
+			tasks.push(
+				generateThumb(cls, sec).then(() => {
+					// trigger reactivity by reassigning the whole object
+					thumbUrls = { ...thumbUrls }
+				}),
+			)
+		}
+	}
+	Promise.all(tasks).then(() => {
+		thumbsReady = true
+	})
+})
 
-  function selectClass(cls: SchoolClass) {
-    selectedClass = cls;
-    selectedSection = cls.sections[0] ?? null;
-  }
+function selectClass(cls: SchoolClass) {
+	selectedClass = cls
+	selectedSection = cls.sections[0] ?? null
+}
 
-  function goBack() {
-    selectedClass = null;
-    selectedSection = null;
-    currentQrUrl = '';
-  }
+function goBack() {
+	selectedClass = null
+	selectedSection = null
+	currentQrUrl = ''
+}
 
-  function downloadQR() {
-    if (!currentQrUrl || !selectedClass || !selectedSection) return;
-    const a = document.createElement('a');
-    a.href = currentQrUrl;
-    a.download = `qr-${selectedClass.name}-${selectedSection.name}.png`.replace(/\s+/g, '-');
-    a.click();
-  }
+function downloadQR() {
+	if (!currentQrUrl || !selectedClass || !selectedSection) return
+	const a = document.createElement('a')
+	a.href = currentQrUrl
+	a.download = `qr-${selectedClass.name}-${selectedSection.name}.png`.replace(/\s+/g, '-')
+	a.click()
+}
 
-  function downloadAll() {
-    for (const cls of classes) {
-      for (const sec of cls.sections) {
-        const key = `${cls.id}/${sec.id}`;
-        const url = qrDataUrls[key];
-        if (url) {
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `qr-${cls.name}-${sec.name}.png`.replace(/\s+/g, '-');
-          a.click();
-        }
-      }
-    }
-  }
+function downloadAll() {
+	for (const cls of classes) {
+		for (const sec of cls.sections) {
+			const key = `${cls.id}/${sec.id}`
+			const url = qrDataUrls[key]
+			if (url) {
+				const a = document.createElement('a')
+				a.href = url
+				a.download = `qr-${cls.name}-${sec.name}.png`.replace(/\s+/g, '-')
+				a.click()
+			}
+		}
+	}
+}
 
-  function printQR() {
-    if (!currentQrUrl) return;
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`
+function printQR() {
+	if (!currentQrUrl) return
+	const win = window.open('', '_blank')
+	if (!win) return
+	win.document.write(`
       <html><head><title>QR Code - ${selectedClass?.name} ${selectedSection?.name}</title></head>
       <body style="display:flex;flex-direction:column;align-items:center;padding:40px;font-family:sans-serif">
         <h2 style="margin-bottom:8px">${selectedClass?.name} — ${selectedSection?.name}</h2>
@@ -149,57 +149,58 @@
         <img src="${currentQrUrl}" style="width:280px;height:280px" />
         <p style="margin-top:16px;font-size:12px;color:#999">meroschool://class/${selectedClass?.id}/${selectedSection?.name}</p>
       </body></html>
-    `);
-    win.document.close();
-    win.print();
-  }
+    `)
+	win.document.close()
+	win.print()
+}
 
-  const firstThumbKey = (cls: SchoolClass) => `thumb-${cls.id}/${cls.sections[0]?.id}`;
+const firstThumbKey = (cls: SchoolClass) => `thumb-${cls.id}/${cls.sections[0]?.id}`
 
-  // ── Convex: load real class/section hierarchy on mount ───────────────────────
-  // Colour palette cycled for classes that come from Convex
-  const CLASS_COLORS = [
-    'bg-purple-500', 'bg-blue-500', 'bg-cyan-500', 'bg-teal-500',
-    'bg-green-500', 'bg-yellow-500', 'bg-orange-500', 'bg-pink-500',
-    'bg-rose-500', 'bg-indigo-500',
-  ];
+// ── Convex: load real class/section hierarchy on mount ───────────────────────
+// Colour palette cycled for classes that come from Convex
+const CLASS_COLORS = [
+	'bg-purple-500',
+	'bg-blue-500',
+	'bg-cyan-500',
+	'bg-teal-500',
+	'bg-green-500',
+	'bg-yellow-500',
+	'bg-orange-500',
+	'bg-pink-500',
+	'bg-rose-500',
+	'bg-indigo-500',
+]
 
-  $effect(() => {
-    if (!isConvexConfigured()) return;
-    const schoolId = getSchool()?.id;
-    if (!schoolId) return;
+$effect(() => {
+	if (!isConvexConfigured()) return
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
 
-    (async () => {
-      const hierarchy = await convexQuery(
-        api.schools.getSchoolHierarchy,
-        { schoolId },
-        null as any
-      );
+	;(async () => {
+		const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId }, null as any)
 
-      if (!hierarchy?.classes?.length) return;
+		if (!hierarchy?.classes?.length) return
 
-      const realClasses: SchoolClass[] = hierarchy.classes.map(
-        (cls: any, idx: number) => ({
-          id: cls._id ?? cls.id,
-          name: cls.name,
-          color: CLASS_COLORS[idx % CLASS_COLORS.length],
-          sections: (cls.sections ?? []).map((sec: any) => ({
-            id: sec._id ?? sec.id,
-            name: sec.name,
-          })),
-        })
-      );
+		const realClasses: SchoolClass[] = hierarchy.classes.map((cls: any, idx: number) => ({
+			id: cls._id ?? cls.id,
+			name: cls.name,
+			color: CLASS_COLORS[idx % CLASS_COLORS.length],
+			sections: (cls.sections ?? []).map((sec: any) => ({
+				id: sec._id ?? sec.id,
+				name: sec.name,
+			})),
+		}))
 
-      classes = realClasses;
+		classes = realClasses
 
-      // Reset selection state since IDs changed
-      selectedClass = null;
-      selectedSection = null;
-      currentQrUrl = '';
-      qrDataUrls = {};
-      thumbUrls = {};
-    })();
-  });
+		// Reset selection state since IDs changed
+		selectedClass = null
+		selectedSection = null
+		currentQrUrl = ''
+		qrDataUrls = {}
+		thumbUrls = {}
+	})()
+})
 </script>
 
 <div class="flex flex-col gap-6 p-6">

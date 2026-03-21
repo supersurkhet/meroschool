@@ -1,385 +1,398 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte';
-  import Button from '$lib/components/ui/button/Button.svelte';
-  import Input from '$lib/components/ui/input/Input.svelte';
-  import { Select } from '$lib/components/ui/select';
-  import Card from '$lib/components/ui/card/Card.svelte';
-  import CardHeader from '$lib/components/ui/card/CardHeader.svelte';
-  import CardTitle from '$lib/components/ui/card/CardTitle.svelte';
-  import CardContent from '$lib/components/ui/card/CardContent.svelte';
-  import Badge from '$lib/components/ui/badge/Badge.svelte';
-  import Label from '$lib/components/ui/label/Label.svelte';
-  import Separator from '$lib/components/ui/separator/Separator.svelte';
-  import { onMount } from 'svelte';
-  import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
-  import { getSchool } from '$lib/stores/school.svelte';
+import Badge from '$lib/components/ui/badge/Badge.svelte'
+import Button from '$lib/components/ui/button/Button.svelte'
+import Card from '$lib/components/ui/card/Card.svelte'
+import CardContent from '$lib/components/ui/card/CardContent.svelte'
+import CardHeader from '$lib/components/ui/card/CardHeader.svelte'
+import CardTitle from '$lib/components/ui/card/CardTitle.svelte'
+import Input from '$lib/components/ui/input/Input.svelte'
+import Label from '$lib/components/ui/label/Label.svelte'
+import { Select } from '$lib/components/ui/select'
+import Separator from '$lib/components/ui/separator/Separator.svelte'
+import { api, convexMutation, convexQuery, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
+import { onMount } from 'svelte'
 
-  // ─── Types ────────────────────────────────────────────────────────────────
-  type Student = {
-    id: string;
-    rollNumber: string;
-    name: string;
-    email: string;
-    classId: string;
-    sectionId: string;
-    dateOfBirth: string;
-    admissionDate: string;
-  };
+// ─── Types ────────────────────────────────────────────────────────────────
+type Student = {
+	id: string
+	rollNumber: string
+	name: string
+	email: string
+	classId: string
+	sectionId: string
+	dateOfBirth: string
+	admissionDate: string
+}
 
-  type ClassEntry = { id: string; name: string; grade: number };
-  type SectionEntry = { id: string; classId: string; name: string };
+type ClassEntry = { id: string; name: string; grade: number }
+type SectionEntry = { id: string; classId: string; name: string }
 
-  let CLASSES = $state<ClassEntry[]>([]);
-  let SECTIONS = $state<SectionEntry[]>([]);
-  let students = $state<Student[]>([]);
+let CLASSES = $state<ClassEntry[]>([])
+let SECTIONS = $state<SectionEntry[]>([])
+let students = $state<Student[]>([])
 
-  // ─── Convex loading ───────────────────────────────────────────────────────
-  onMount(async () => {
-    if (!isConvexConfigured()) return;
-    const schoolId = getSchool()?.id;
-    if (!schoolId) return;
+// ─── Convex loading ───────────────────────────────────────────────────────
+onMount(async () => {
+	if (!isConvexConfigured()) return
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
 
-    try {
-      const hierarchy = await convexQuery(
-        api.schools.getSchoolHierarchy,
-        { schoolId },
-        null,
-      );
-      if (!hierarchy) return;
+	try {
+		const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId }, null)
+		if (!hierarchy) return
 
-      // Build flat CLASSES and SECTIONS from hierarchy
-      const loadedClasses: ClassEntry[] = [];
-      const loadedSections: SectionEntry[] = [];
-      const loadedStudents: Student[] = [];
+		// Build flat CLASSES and SECTIONS from hierarchy
+		const loadedClasses: ClassEntry[] = []
+		const loadedSections: SectionEntry[] = []
+		const loadedStudents: Student[] = []
 
-      for (const cls of hierarchy.classes ?? []) {
-        loadedClasses.push({ id: cls._id, name: cls.name, grade: cls.grade ?? 0 });
-        for (const sec of cls.sections ?? []) {
-          loadedSections.push({ id: sec._id, classId: cls._id, name: sec.name });
+		for (const cls of hierarchy.classes ?? []) {
+			loadedClasses.push({ id: cls._id, name: cls.name, grade: cls.grade ?? 0 })
+			for (const sec of cls.sections ?? []) {
+				loadedSections.push({ id: sec._id, classId: cls._id, name: sec.name })
 
-          // Load students per section
-          const sectionStudents = await convexQuery(
-            api.people.listStudentsBySection,
-            { sectionId: sec._id },
-            [] as any[],
-          );
-          for (const s of sectionStudents) {
-            loadedStudents.push({
-              id: s._id,
-              rollNumber: s.rollNumber ?? '',
-              name: s.user?.name ?? '',
-              email: s.user?.email ?? '',
-              classId: cls._id,
-              sectionId: sec._id,
-              dateOfBirth: s.dateOfBirth ?? '',
-              admissionDate: s.admissionDate ?? '',
-            });
-          }
-        }
-      }
+				// Load students per section
+				const sectionStudents = await convexQuery(
+					api.people.listStudentsBySection,
+					{ sectionId: sec._id },
+					[] as any[],
+				)
+				for (const s of sectionStudents) {
+					loadedStudents.push({
+						id: s._id,
+						rollNumber: s.rollNumber ?? '',
+						name: s.user?.name ?? '',
+						email: s.user?.email ?? '',
+						classId: cls._id,
+						sectionId: sec._id,
+						dateOfBirth: s.dateOfBirth ?? '',
+						admissionDate: s.admissionDate ?? '',
+					})
+				}
+			}
+		}
 
-      if (loadedClasses.length > 0) CLASSES = loadedClasses;
-      if (loadedSections.length > 0) SECTIONS = loadedSections;
-      if (loadedStudents.length > 0) students = loadedStudents;
-    } catch (err) {
-      console.warn('[students] Convex load failed:', err);
-      CLASSES = [];
-      SECTIONS = [];
-      students = [];
-    }
-  });
+		if (loadedClasses.length > 0) CLASSES = loadedClasses
+		if (loadedSections.length > 0) SECTIONS = loadedSections
+		if (loadedStudents.length > 0) students = loadedStudents
+	} catch (err) {
+		console.warn('[students] Convex load failed:', err)
+		CLASSES = []
+		SECTIONS = []
+		students = []
+	}
+})
 
-  // ─── Filter & search state ────────────────────────────────────────────────
-  let searchQuery = $state('');
-  let filterClassId = $state('');
-  let filterSectionId = $state('');
-  let sortColumn = $state<'rollNumber' | 'name' | 'dateOfBirth'>('rollNumber');
-  let sortAsc = $state(true);
+// ─── Filter & search state ────────────────────────────────────────────────
+let searchQuery = $state('')
+let filterClassId = $state('')
+let filterSectionId = $state('')
+let sortColumn = $state<'rollNumber' | 'name' | 'dateOfBirth'>('rollNumber')
+let sortAsc = $state(true)
 
-  const filteredSections = $derived(
-    filterClassId ? SECTIONS.filter(s => s.classId === filterClassId) : []
-  );
+const filteredSections = $derived(
+	filterClassId ? SECTIONS.filter((s) => s.classId === filterClassId) : [],
+)
 
-  const filteredStudents = $derived.by(() => {
-    let result = students;
+const filteredStudents = $derived.by(() => {
+	let result = students
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(s =>
-        s.name.toLowerCase().includes(q) ||
-        s.email.toLowerCase().includes(q) ||
-        s.rollNumber.includes(q)
-      );
-    }
+	if (searchQuery.trim()) {
+		const q = searchQuery.toLowerCase()
+		result = result.filter(
+			(s) =>
+				s.name.toLowerCase().includes(q) ||
+				s.email.toLowerCase().includes(q) ||
+				s.rollNumber.includes(q),
+		)
+	}
 
-    if (filterClassId) result = result.filter(s => s.classId === filterClassId);
-    if (filterSectionId) result = result.filter(s => s.sectionId === filterSectionId);
+	if (filterClassId) result = result.filter((s) => s.classId === filterClassId)
+	if (filterSectionId) result = result.filter((s) => s.sectionId === filterSectionId)
 
-    return [...result].sort((a, b) => {
-      const av = a[sortColumn];
-      const bv = b[sortColumn];
-      const cmp = av.localeCompare(bv);
-      return sortAsc ? cmp : -cmp;
-    });
-  });
+	return [...result].sort((a, b) => {
+		const av = a[sortColumn]
+		const bv = b[sortColumn]
+		const cmp = av.localeCompare(bv)
+		return sortAsc ? cmp : -cmp
+	})
+})
 
-  function toggleSort(col: typeof sortColumn) {
-    if (sortColumn === col) sortAsc = !sortAsc;
-    else { sortColumn = col; sortAsc = true; }
-  }
+function toggleSort(col: typeof sortColumn) {
+	if (sortColumn === col) sortAsc = !sortAsc
+	else {
+		sortColumn = col
+		sortAsc = true
+	}
+}
 
-  function sortIcon(col: typeof sortColumn): string {
-    if (sortColumn !== col) return 'none';
-    return sortAsc ? 'asc' : 'desc';
-  }
+function sortIcon(col: typeof sortColumn): string {
+	if (sortColumn !== col) return 'none'
+	return sortAsc ? 'asc' : 'desc'
+}
 
-  function getClassName(classId: string): string {
-    return CLASSES.find(c => c.id === classId)?.name ?? '—';
-  }
+function getClassName(classId: string): string {
+	return CLASSES.find((c) => c.id === classId)?.name ?? '—'
+}
 
-  function getSectionName(sectionId: string): string {
-    return SECTIONS.find(s => s.id === sectionId)?.name ?? '—';
-  }
+function getSectionName(sectionId: string): string {
+	return SECTIONS.find((s) => s.id === sectionId)?.name ?? '—'
+}
 
-  function formatDate(dateStr: string): string {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
+function formatDate(dateStr: string): string {
+	if (!dateStr) return '—'
+	return new Date(dateStr).toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+	})
+}
 
-  // ─── Add Student modal ────────────────────────────────────────────────────
-  let showAddForm = $state(false);
-  let editingStudent = $state<Student | null>(null);
+// ─── Add Student modal ────────────────────────────────────────────────────
+let showAddForm = $state(false)
+let editingStudent = $state<Student | null>(null)
 
-  let formName = $state('');
-  let formEmail = $state('');
-  let formRollNumber = $state('');
-  let formDob = $state('');
-  let formAdmissionDate = $state('');
-  let formClassId = $state('');
-  let formSectionId = $state('');
-  let formErrors = $state<Record<string, string>>({});
+let formName = $state('')
+let formEmail = $state('')
+let formRollNumber = $state('')
+let formDob = $state('')
+let formAdmissionDate = $state('')
+let formClassId = $state('')
+let formSectionId = $state('')
+let formErrors = $state<Record<string, string>>({})
 
-  const formSections = $derived(
-    formClassId ? SECTIONS.filter(s => s.classId === formClassId) : []
-  );
+const formSections = $derived(formClassId ? SECTIONS.filter((s) => s.classId === formClassId) : [])
 
-  function generateRollNumber(sectionId?: string): string {
-    const sectionStudents = sectionId
-      ? students.filter(s => s.sectionId === sectionId)
-      : students;
-    const maxRoll = sectionStudents.reduce((max, s) => {
-      const num = parseInt(s.rollNumber);
-      return isNaN(num) ? max : Math.max(max, num);
-    }, 0);
-    return String(maxRoll + 1).padStart(3, '0');
-  }
+function generateRollNumber(sectionId?: string): string {
+	const sectionStudents = sectionId ? students.filter((s) => s.sectionId === sectionId) : students
+	const maxRoll = sectionStudents.reduce((max, s) => {
+		const num = parseInt(s.rollNumber)
+		return isNaN(num) ? max : Math.max(max, num)
+	}, 0)
+	return String(maxRoll + 1).padStart(3, '0')
+}
 
-  function openAddForm() {
-    editingStudent = null;
-    formName = '';
-    formEmail = '';
-    formRollNumber = '';
-    formDob = '';
-    formAdmissionDate = new Date().toISOString().slice(0, 10);
-    formClassId = '';
-    formSectionId = '';
-    formErrors = {};
-    showAddForm = true;
-  }
+function openAddForm() {
+	editingStudent = null
+	formName = ''
+	formEmail = ''
+	formRollNumber = ''
+	formDob = ''
+	formAdmissionDate = new Date().toISOString().slice(0, 10)
+	formClassId = ''
+	formSectionId = ''
+	formErrors = {}
+	showAddForm = true
+}
 
-  function openEditForm(student: Student) {
-    editingStudent = student;
-    formName = student.name;
-    formEmail = student.email;
-    formRollNumber = student.rollNumber;
-    formDob = student.dateOfBirth;
-    formAdmissionDate = student.admissionDate;
-    formClassId = student.classId;
-    formSectionId = student.sectionId;
-    formErrors = {};
-    showAddForm = true;
-  }
+function openEditForm(student: Student) {
+	editingStudent = student
+	formName = student.name
+	formEmail = student.email
+	formRollNumber = student.rollNumber
+	formDob = student.dateOfBirth
+	formAdmissionDate = student.admissionDate
+	formClassId = student.classId
+	formSectionId = student.sectionId
+	formErrors = {}
+	showAddForm = true
+}
 
-  function validateForm(): boolean {
-    const errors: Record<string, string> = {};
-    if (!formName.trim()) errors.name = 'Name is required';
-    if (!formEmail.trim()) errors.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formEmail)) errors.email = 'Invalid email';
-    if (!formRollNumber.trim()) formRollNumber = generateRollNumber(formSectionId || undefined);
-    if (!formDob) errors.dob = 'Date of birth is required';
-    if (!formAdmissionDate) formAdmissionDate = new Date().toISOString().slice(0, 10);
-    if (!formClassId) errors.classId = 'Please select a class';
-    if (!formSectionId) errors.sectionId = 'Please select a section';
-    formErrors = errors;
-    return Object.keys(errors).length === 0;
-  }
+function validateForm(): boolean {
+	const errors: Record<string, string> = {}
+	if (!formName.trim()) errors.name = 'Name is required'
+	if (!formEmail.trim()) errors.email = 'Email is required'
+	else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formEmail)) errors.email = 'Invalid email'
+	if (!formRollNumber.trim()) formRollNumber = generateRollNumber(formSectionId || undefined)
+	if (!formDob) errors.dob = 'Date of birth is required'
+	if (!formAdmissionDate) formAdmissionDate = new Date().toISOString().slice(0, 10)
+	if (!formClassId) errors.classId = 'Please select a class'
+	if (!formSectionId) errors.sectionId = 'Please select a section'
+	formErrors = errors
+	return Object.keys(errors).length === 0
+}
 
-  async function saveStudent() {
-    if (!validateForm()) return;
+async function saveStudent() {
+	if (!validateForm()) return
 
-    if (editingStudent) {
-      // Edit: update local state only (no update API)
-      students = students.map(s =>
-        s.id === editingStudent!.id
-          ? { ...s, name: formName, email: formEmail, rollNumber: formRollNumber, dateOfBirth: formDob, admissionDate: formAdmissionDate, classId: formClassId, sectionId: formSectionId }
-          : s
-      );
-    } else {
-      const optimisticId = crypto.randomUUID();
-      const newStudent: Student = {
-        id: optimisticId,
-        name: formName,
-        email: formEmail,
-        rollNumber: formRollNumber,
-        dateOfBirth: formDob,
-        admissionDate: formAdmissionDate,
-        classId: formClassId,
-        sectionId: formSectionId,
-      };
-      // Optimistically add to local state
-      students = [...students, newStudent];
+	if (editingStudent) {
+		// Edit: update local state only (no update API)
+		students = students.map((s) =>
+			s.id === editingStudent!.id
+				? {
+						...s,
+						name: formName,
+						email: formEmail,
+						rollNumber: formRollNumber,
+						dateOfBirth: formDob,
+						admissionDate: formAdmissionDate,
+						classId: formClassId,
+						sectionId: formSectionId,
+					}
+				: s,
+		)
+	} else {
+		const optimisticId = crypto.randomUUID()
+		const newStudent: Student = {
+			id: optimisticId,
+			name: formName,
+			email: formEmail,
+			rollNumber: formRollNumber,
+			dateOfBirth: formDob,
+			admissionDate: formAdmissionDate,
+			classId: formClassId,
+			sectionId: formSectionId,
+		}
+		// Optimistically add to local state
+		students = [...students, newStudent]
 
-      if (isConvexConfigured()) {
-        try {
-          const userId = await convexMutation(api.auth.upsertUser, {
-            name: formName,
-            email: formEmail,
-            workosUserId: `pending-${Date.now()}-${optimisticId}`,
-            role: 'student',
-          });
-          const studentId = await convexMutation(api.people.createStudent, {
-            userId,
-            sectionId: formSectionId,
-            rollNumber: formRollNumber,
-            ...(formDob ? { dateOfBirth: formDob } : {}),
-            ...(formAdmissionDate ? { admissionDate: formAdmissionDate } : {}),
-          });
-          // Replace the optimistic entry with the real Convex ID
-          students = students.map(s => s.id === optimisticId ? { ...s, id: studentId } : s);
-        } catch (err) {
-          console.warn('[students] Convex createStudent failed, keeping local entry:', err);
-        }
-      }
-    }
-    showAddForm = false;
-    editingStudent = null;
-  }
+		if (isConvexConfigured()) {
+			try {
+				const userId = await convexMutation(api.auth.upsertUser, {
+					name: formName,
+					email: formEmail,
+					workosUserId: `pending-${Date.now()}-${optimisticId}`,
+					role: 'student',
+				})
+				const studentId = await convexMutation(api.people.createStudent, {
+					userId,
+					sectionId: formSectionId,
+					rollNumber: formRollNumber,
+					...(formDob ? { dateOfBirth: formDob } : {}),
+					...(formAdmissionDate ? { admissionDate: formAdmissionDate } : {}),
+				})
+				// Replace the optimistic entry with the real Convex ID
+				students = students.map((s) => (s.id === optimisticId ? { ...s, id: studentId } : s))
+			} catch (err) {
+				console.warn('[students] Convex createStudent failed, keeping local entry:', err)
+			}
+		}
+	}
+	showAddForm = false
+	editingStudent = null
+}
 
-  function deleteStudent(id: string) {
-    if (confirm('Delete this student record? This action cannot be undone.')) {
-      students = students.filter(s => s.id !== id);
-    }
-  }
+function deleteStudent(id: string) {
+	if (confirm('Delete this student record? This action cannot be undone.')) {
+		students = students.filter((s) => s.id !== id)
+	}
+}
 
-  // ─── CSV Import ───────────────────────────────────────────────────────────
-  let showImport = $state(false);
-  let isDraggingCsv = $state(false);
-  let csvPreviewRows = $state<string[][]>([]);
-  let csvHeaders = $state<string[]>([]);
-  let csvFileName = $state('');
-  let csvError = $state('');
+// ─── CSV Import ───────────────────────────────────────────────────────────
+let showImport = $state(false)
+let isDraggingCsv = $state(false)
+let csvPreviewRows = $state<string[][]>([])
+let csvHeaders = $state<string[]>([])
+let csvFileName = $state('')
+let csvError = $state('')
 
-  function parseCsv(text: string): string[][] {
-    return text.trim().split('\n').map(line =>
-      line.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''))
-    );
-  }
+function parseCsv(text: string): string[][] {
+	return text
+		.trim()
+		.split('\n')
+		.map((line) => line.split(',').map((cell) => cell.trim().replace(/^"|"$/g, '')))
+}
 
-  function handleCsvFile(file: File) {
-    if (!file.name.endsWith('.csv')) {
-      csvError = 'Please upload a CSV file';
-      return;
-    }
-    csvFileName = file.name;
-    csvError = '';
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const rows = parseCsv(text);
-      if (rows.length < 2) { csvError = 'CSV must have at least a header row and one data row'; return; }
-      csvHeaders = rows[0];
-      csvPreviewRows = rows.slice(1).slice(0, 10); // preview first 10 rows
-    };
-    reader.readAsText(file);
-  }
+function handleCsvFile(file: File) {
+	if (!file.name.endsWith('.csv')) {
+		csvError = 'Please upload a CSV file'
+		return
+	}
+	csvFileName = file.name
+	csvError = ''
+	const reader = new FileReader()
+	reader.onload = (e) => {
+		const text = e.target?.result as string
+		const rows = parseCsv(text)
+		if (rows.length < 2) {
+			csvError = 'CSV must have at least a header row and one data row'
+			return
+		}
+		csvHeaders = rows[0]
+		csvPreviewRows = rows.slice(1).slice(0, 10) // preview first 10 rows
+	}
+	reader.readAsText(file)
+}
 
-  function handleCsvDrop(e: DragEvent) {
-    e.preventDefault();
-    isDraggingCsv = false;
-    const file = e.dataTransfer?.files[0];
-    if (file) handleCsvFile(file);
-  }
+function handleCsvDrop(e: DragEvent) {
+	e.preventDefault()
+	isDraggingCsv = false
+	const file = e.dataTransfer?.files[0]
+	if (file) handleCsvFile(file)
+}
 
-  function handleCsvInput(e: Event) {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (file) handleCsvFile(file);
-  }
+function handleCsvInput(e: Event) {
+	const file = (e.target as HTMLInputElement).files?.[0]
+	if (file) handleCsvFile(file)
+}
 
-  async function importCsvStudents() {
-    // Map CSV rows to students using heuristic column matching
-    const nameIdx = csvHeaders.findIndex(h => /name/i.test(h));
-    const emailIdx = csvHeaders.findIndex(h => /email/i.test(h));
-    const rollIdx = csvHeaders.findIndex(h => /roll/i.test(h));
-    const dobIdx = csvHeaders.findIndex(h => /birth|dob/i.test(h));
+async function importCsvStudents() {
+	// Map CSV rows to students using heuristic column matching
+	const nameIdx = csvHeaders.findIndex((h) => /name/i.test(h))
+	const emailIdx = csvHeaders.findIndex((h) => /email/i.test(h))
+	const rollIdx = csvHeaders.findIndex((h) => /roll/i.test(h))
+	const dobIdx = csvHeaders.findIndex((h) => /birth|dob/i.test(h))
 
-    const defaultSectionId = SECTIONS[0]?.id ?? '';
-    const defaultClassId = CLASSES[0]?.id ?? '';
-    const today = new Date().toISOString().slice(0, 10);
+	const defaultSectionId = SECTIONS[0]?.id ?? ''
+	const defaultClassId = CLASSES[0]?.id ?? ''
+	const today = new Date().toISOString().slice(0, 10)
 
-    const newStudents: Student[] = csvPreviewRows
-      .filter(row => row.some(cell => cell.trim()))
-      .map(row => ({
-        id: crypto.randomUUID(),
-        name: nameIdx >= 0 ? row[nameIdx] : row[0] ?? '',
-        email: emailIdx >= 0 ? row[emailIdx] : '',
-        rollNumber: rollIdx >= 0 ? row[rollIdx] : '',
-        dateOfBirth: dobIdx >= 0 ? row[dobIdx] : '',
-        admissionDate: today,
-        classId: defaultClassId,
-        sectionId: defaultSectionId,
-      }));
+	const newStudents: Student[] = csvPreviewRows
+		.filter((row) => row.some((cell) => cell.trim()))
+		.map((row) => ({
+			id: crypto.randomUUID(),
+			name: nameIdx >= 0 ? row[nameIdx] : (row[0] ?? ''),
+			email: emailIdx >= 0 ? row[emailIdx] : '',
+			rollNumber: rollIdx >= 0 ? row[rollIdx] : '',
+			dateOfBirth: dobIdx >= 0 ? row[dobIdx] : '',
+			admissionDate: today,
+			classId: defaultClassId,
+			sectionId: defaultSectionId,
+		}))
 
-    // Optimistically add to local state
-    students = [...students, ...newStudents];
+	// Optimistically add to local state
+	students = [...students, ...newStudents]
 
-    const schoolId = getSchool()?.id;
-    if (isConvexConfigured() && schoolId && defaultSectionId) {
-      try {
-        const payload = newStudents.map(s => ({
-          name: s.name,
-          email: s.email,
-          rollNumber: s.rollNumber,
-          sectionId: defaultSectionId,
-          ...(s.dateOfBirth ? { dateOfBirth: s.dateOfBirth } : {}),
-          admissionDate: today,
-        }));
-        const ids: string[] = await convexMutation(api.csv.bulkEnrollStudents, {
-          students: payload,
-          schoolId,
-        });
-        // Replace optimistic IDs with real Convex IDs
-        const optimisticIds = newStudents.map(s => s.id);
-        students = students.map(s => {
-          const optimisticIdx = optimisticIds.indexOf(s.id);
-          if (optimisticIdx >= 0 && ids[optimisticIdx]) {
-            return { ...s, id: ids[optimisticIdx] };
-          }
-          return s;
-        });
-      } catch (err) {
-        console.warn('[students] Convex bulkEnrollStudents failed, keeping local entries:', err);
-      }
-    }
+	const schoolId = getSchool()?.id
+	if (isConvexConfigured() && schoolId && defaultSectionId) {
+		try {
+			const payload = newStudents.map((s) => ({
+				name: s.name,
+				email: s.email,
+				rollNumber: s.rollNumber,
+				sectionId: defaultSectionId,
+				...(s.dateOfBirth ? { dateOfBirth: s.dateOfBirth } : {}),
+				admissionDate: today,
+			}))
+			const ids: string[] = await convexMutation(api.csv.bulkEnrollStudents, {
+				students: payload,
+				schoolId,
+			})
+			// Replace optimistic IDs with real Convex IDs
+			const optimisticIds = newStudents.map((s) => s.id)
+			students = students.map((s) => {
+				const optimisticIdx = optimisticIds.indexOf(s.id)
+				if (optimisticIdx >= 0 && ids[optimisticIdx]) {
+					return { ...s, id: ids[optimisticIdx] }
+				}
+				return s
+			})
+		} catch (err) {
+			console.warn('[students] Convex bulkEnrollStudents failed, keeping local entries:', err)
+		}
+	}
 
-    showImport = false;
-    csvPreviewRows = [];
-    csvHeaders = [];
-    csvFileName = '';
-  }
+	showImport = false
+	csvPreviewRows = []
+	csvHeaders = []
+	csvFileName = ''
+}
 
-  const EXAMPLE_CSV = `Name,Email,Roll Number,Date of Birth
+const EXAMPLE_CSV = `Name,Email,Roll Number,Date of Birth
 Ram Prasad,ram@student.edu.np,001,2008-05-20
-Sita Devi,sita@student.edu.np,002,2009-01-15`;
+Sita Devi,sita@student.edu.np,002,2009-01-15`
 </script>
 
 <div class="min-h-screen bg-background p-6 space-y-6">

@@ -1,6 +1,6 @@
-import type { PageServerLoad, Actions } from './$types'
-import { query, mutate } from '$lib/server/convex'
+import { mutate, query } from '$lib/server/convex'
 import { fail } from '@sveltejs/kit'
+import type { Actions, PageServerLoad } from './$types'
 
 const FALLBACK_TESTS = [
 	{
@@ -62,8 +62,7 @@ export const actions: Actions = {
 			return { success: true }
 		} catch (e) {
 			return fail(500, {
-				error:
-					e instanceof Error ? e.message : 'Failed to create test',
+				error: e instanceof Error ? e.message : 'Failed to create test',
 			})
 		}
 	},

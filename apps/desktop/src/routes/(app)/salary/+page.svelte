@@ -1,258 +1,258 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Select } from '$lib/components/ui/select';
-  import { Input } from '$lib/components/ui/input';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Label } from '$lib/components/ui/label';
-  import { Separator } from '$lib/components/ui/separator';
-  import {
-    DollarSign,
-    CheckCircle,
-    Clock,
-    TrendingUp,
-    ChevronDown,
-    ChevronUp,
-    Plus,
-    X,
-  } from 'lucide-svelte';
-  import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
-  import { getSchool } from '$lib/stores/school.svelte';
-  import { onMount } from 'svelte';
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { Input } from '$lib/components/ui/input'
+import { Label } from '$lib/components/ui/label'
+import { Select } from '$lib/components/ui/select'
+import { Separator } from '$lib/components/ui/separator'
+import { api, convexMutation, convexQuery, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
+import {
+	CheckCircle,
+	ChevronDown,
+	ChevronUp,
+	Clock,
+	DollarSign,
+	Plus,
+	TrendingUp,
+	X,
+} from 'lucide-svelte'
+import { onMount } from 'svelte'
 
-  // ── Teacher list for dropdown ──────────────────────────────────────────────
-  type TeacherOption = { id: string; name: string; department: string; employeeId: string };
-  let teacherOptions = $state<TeacherOption[]>([]);
+// ── Teacher list for dropdown ──────────────────────────────────────────────
+type TeacherOption = { id: string; name: string; department: string; employeeId: string }
+let teacherOptions = $state<TeacherOption[]>([])
 
-  onMount(async () => {
-    if (!isConvexConfigured()) return;
-    const schoolId = getSchool()?.id;
-    if (!schoolId) return;
-    try {
-      const teachers = await convexQuery(api.people.listTeachersBySchool, { schoolId }, [] as any[]);
-      if (Array.isArray(teachers)) {
-        teacherOptions = teachers.map((t: any) => ({
-          id: t._id ?? t.id,
-          name: t.user?.name ?? '',
-          department: t.department ?? '',
-          employeeId: t.employeeId ?? '',
-        }));
-      }
-    } catch { /* ignore */ }
-  });
+onMount(async () => {
+	if (!isConvexConfigured()) return
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
+	try {
+		const teachers = await convexQuery(api.people.listTeachersBySchool, { schoolId }, [] as any[])
+		if (Array.isArray(teachers)) {
+			teacherOptions = teachers.map((t: any) => ({
+				id: t._id ?? t.id,
+				name: t.user?.name ?? '',
+				department: t.department ?? '',
+				employeeId: t.employeeId ?? '',
+			}))
+		}
+	} catch {
+		/* ignore */
+	}
+})
 
-  let formSelectedTeacherId = $state('');
+let formSelectedTeacherId = $state('')
 
-  function onTeacherSelected() {
-    const teacher = teacherOptions.find(t => t.id === formSelectedTeacherId);
-    if (teacher) {
-      formName = teacher.name;
-      formEmployeeId = teacher.employeeId;
-      formDepartment = teacher.department;
-    }
-  }
+function onTeacherSelected() {
+	const teacher = teacherOptions.find((t) => t.id === formSelectedTeacherId)
+	if (teacher) {
+		formName = teacher.name
+		formEmployeeId = teacher.employeeId
+		formDepartment = teacher.department
+	}
+}
 
-  type SalaryStatus = 'paid' | 'pending' | 'cancelled';
+type SalaryStatus = 'paid' | 'pending' | 'cancelled'
 
-  interface SalaryRecord {
-    id: string;
-    employeeId: string;
-    name: string;
-    department: string;
-    baseSalary: number;
-    deductions: number;
-    bonuses: number;
-    status: SalaryStatus;
-    notes: string;
-    expanded: boolean;
-  }
+interface SalaryRecord {
+	id: string
+	employeeId: string
+	name: string
+	department: string
+	baseSalary: number
+	deductions: number
+	bonuses: number
+	status: SalaryStatus
+	notes: string
+	expanded: boolean
+}
 
-  let selectedMonth = $state('2026-03');
+let selectedMonth = $state('2026-03')
 
-  // ── Convex loading (re-runs whenever selectedMonth changes) ──────────────────
-  $effect(() => {
-    const month = selectedMonth;
-    (async () => {
-      try {
-        const records = await convexQuery(
-          api.salary.listByMonth,
-          { month },
-          [],
-        );
-        if (Array.isArray(records) && records.length > 0) {
-          salaryRecords = records.map((r: any) => ({
-            id: r._id ?? r.id,
-            employeeId: r.teacherId ?? r.employeeId ?? '',
-            name: r.teacherName ?? r.name ?? '',
-            department: r.department ?? '',
-            baseSalary: r.baseSalary ?? 0,
-            deductions: r.deductions ?? 0,
-            bonuses: r.bonuses ?? 0,
-            status: r.status ?? 'pending',
-            notes: r.notes ?? '',
-            expanded: false,
-          }));
-        }
-      } catch {
-        salaryRecords = [];
-      }
-    })();
-  });
+// ── Convex loading (re-runs whenever selectedMonth changes) ──────────────────
+$effect(() => {
+	const month = selectedMonth
+	;(async () => {
+		try {
+			const records = await convexQuery(api.salary.listByMonth, { month }, [])
+			if (Array.isArray(records) && records.length > 0) {
+				salaryRecords = records.map((r: any) => ({
+					id: r._id ?? r.id,
+					employeeId: r.teacherId ?? r.employeeId ?? '',
+					name: r.teacherName ?? r.name ?? '',
+					department: r.department ?? '',
+					baseSalary: r.baseSalary ?? 0,
+					deductions: r.deductions ?? 0,
+					bonuses: r.bonuses ?? 0,
+					status: r.status ?? 'pending',
+					notes: r.notes ?? '',
+					expanded: false,
+				}))
+			}
+		} catch {
+			salaryRecords = []
+		}
+	})()
+})
 
-  let salaryRecords = $state<SalaryRecord[]>([]);
+let salaryRecords = $state<SalaryRecord[]>([])
 
-  const netSalary = (r: SalaryRecord) => r.baseSalary - r.deductions + r.bonuses;
+const netSalary = (r: SalaryRecord) => r.baseSalary - r.deductions + r.bonuses
 
-  const totalPayroll = $derived(salaryRecords.reduce((s, r) => s + netSalary(r), 0));
-  const totalPaid = $derived(
-    salaryRecords.filter((r) => r.status === 'paid').reduce((s, r) => s + netSalary(r), 0)
-  );
-  const totalPending = $derived(
-    salaryRecords.filter((r) => r.status === 'pending').reduce((s, r) => s + netSalary(r), 0)
-  );
-  const averageSalary = $derived(
-    salaryRecords.length > 0 ? Math.round(totalPayroll / salaryRecords.length) : 0
-  );
+const totalPayroll = $derived(salaryRecords.reduce((s, r) => s + netSalary(r), 0))
+const totalPaid = $derived(
+	salaryRecords.filter((r) => r.status === 'paid').reduce((s, r) => s + netSalary(r), 0),
+)
+const totalPending = $derived(
+	salaryRecords.filter((r) => r.status === 'pending').reduce((s, r) => s + netSalary(r), 0),
+)
+const averageSalary = $derived(
+	salaryRecords.length > 0 ? Math.round(totalPayroll / salaryRecords.length) : 0,
+)
 
-  // Form state
-  let showForm = $state(false);
-  let editingId = $state<string | null>(null);
-  let formName = $state('');
-  let formEmployeeId = $state('');
-  let formDepartment = $state('');
-  let formBaseSalary = $state('');
-  let formDeductions = $state('');
-  let formBonuses = $state('');
-  let formNotes = $state('');
-  let formNetSalary = $derived(
-    (Number(formBaseSalary) || 0) - (Number(formDeductions) || 0) + (Number(formBonuses) || 0)
-  );
+// Form state
+let showForm = $state(false)
+let editingId = $state<string | null>(null)
+let formName = $state('')
+let formEmployeeId = $state('')
+let formDepartment = $state('')
+let formBaseSalary = $state('')
+let formDeductions = $state('')
+let formBonuses = $state('')
+let formNotes = $state('')
+const formNetSalary = $derived(
+	(Number(formBaseSalary) || 0) - (Number(formDeductions) || 0) + (Number(formBonuses) || 0),
+)
 
-  function openAddForm() {
-    editingId = null;
-    formName = '';
-    formEmployeeId = '';
-    formDepartment = '';
-    formBaseSalary = '';
-    formDeductions = '';
-    formBonuses = '';
-    formNotes = '';
-    showForm = true;
-  }
+function openAddForm() {
+	editingId = null
+	formName = ''
+	formEmployeeId = ''
+	formDepartment = ''
+	formBaseSalary = ''
+	formDeductions = ''
+	formBonuses = ''
+	formNotes = ''
+	showForm = true
+}
 
-  function openEditForm(record: SalaryRecord) {
-    editingId = record.id;
-    formName = record.name;
-    formEmployeeId = record.employeeId;
-    formDepartment = record.department;
-    formBaseSalary = String(record.baseSalary);
-    formDeductions = String(record.deductions);
-    formBonuses = String(record.bonuses);
-    formNotes = record.notes;
-    formSelectedTeacherId = record.employeeId;
-    showForm = true;
-  }
+function openEditForm(record: SalaryRecord) {
+	editingId = record.id
+	formName = record.name
+	formEmployeeId = record.employeeId
+	formDepartment = record.department
+	formBaseSalary = String(record.baseSalary)
+	formDeductions = String(record.deductions)
+	formBonuses = String(record.bonuses)
+	formNotes = record.notes
+	formSelectedTeacherId = record.employeeId
+	showForm = true
+}
 
-  async function saveForm() {
-    const base = Number(formBaseSalary) || 0;
-    const ded = Number(formDeductions) || 0;
-    const bon = Number(formBonuses) || 0;
+async function saveForm() {
+	const base = Number(formBaseSalary) || 0
+	const ded = Number(formDeductions) || 0
+	const bon = Number(formBonuses) || 0
 
-    if (editingId) {
-      const idx = salaryRecords.findIndex((r) => r.id === editingId);
-      if (idx !== -1) {
-        salaryRecords[idx] = {
-          ...salaryRecords[idx],
-          name: formName,
-          employeeId: formEmployeeId,
-          department: formDepartment,
-          baseSalary: base,
-          deductions: ded,
-          bonuses: bon,
-          notes: formNotes,
-        };
-      }
-      // Convex: update the record
-      try {
-        await convexMutation(api.salary.update, {
-          id: editingId,
-          baseSalary: base,
-          deductions: ded,
-          bonuses: bon,
-          notes: formNotes || undefined,
-        });
-      } catch {
-        // Local state already updated; continue
-      }
-    } else {
-      const localId = String(Date.now());
-      salaryRecords.push({
-        id: localId,
-        employeeId: formEmployeeId,
-        name: formName,
-        department: formDepartment,
-        baseSalary: base,
-        deductions: ded,
-        bonuses: bon,
-        status: 'pending',
-        notes: formNotes,
-        expanded: false,
-      });
-      // Convex: create a new record
-      try {
-        await convexMutation(api.salary.create, {
-          teacherId: formEmployeeId,
-          month: selectedMonth,
-          baseSalary: base,
-          deductions: ded,
-          bonuses: bon,
-          notes: formNotes || undefined,
-        });
-      } catch {
-        // Keep local entry as fallback
-      }
-    }
-    showForm = false;
-  }
+	if (editingId) {
+		const idx = salaryRecords.findIndex((r) => r.id === editingId)
+		if (idx !== -1) {
+			salaryRecords[idx] = {
+				...salaryRecords[idx],
+				name: formName,
+				employeeId: formEmployeeId,
+				department: formDepartment,
+				baseSalary: base,
+				deductions: ded,
+				bonuses: bon,
+				notes: formNotes,
+			}
+		}
+		// Convex: update the record
+		try {
+			await convexMutation(api.salary.update, {
+				id: editingId,
+				baseSalary: base,
+				deductions: ded,
+				bonuses: bon,
+				notes: formNotes || undefined,
+			})
+		} catch {
+			// Local state already updated; continue
+		}
+	} else {
+		const localId = String(Date.now())
+		salaryRecords.push({
+			id: localId,
+			employeeId: formEmployeeId,
+			name: formName,
+			department: formDepartment,
+			baseSalary: base,
+			deductions: ded,
+			bonuses: bon,
+			status: 'pending',
+			notes: formNotes,
+			expanded: false,
+		})
+		// Convex: create a new record
+		try {
+			await convexMutation(api.salary.create, {
+				teacherId: formEmployeeId,
+				month: selectedMonth,
+				baseSalary: base,
+				deductions: ded,
+				bonuses: bon,
+				notes: formNotes || undefined,
+			})
+		} catch {
+			// Keep local entry as fallback
+		}
+	}
+	showForm = false
+}
 
-  async function markPaid(id: string) {
-    const idx = salaryRecords.findIndex((r) => r.id === id);
-    if (idx !== -1) salaryRecords[idx].status = 'paid';
-    // Convex: persist paid status
-    try {
-      await convexMutation(api.salary.markPaid, { id });
-    } catch {
-      // Local state already updated; continue
-    }
-  }
+async function markPaid(id: string) {
+	const idx = salaryRecords.findIndex((r) => r.id === id)
+	if (idx !== -1) salaryRecords[idx].status = 'paid'
+	// Convex: persist paid status
+	try {
+		await convexMutation(api.salary.markPaid, { id })
+	} catch {
+		// Local state already updated; continue
+	}
+}
 
-  async function payAll() {
-    const pending = salaryRecords.filter(r => r.status === 'pending');
-    // Update local state immediately
-    for (const r of pending) r.status = 'paid';
-    // Persist to Convex
-    if (isConvexConfigured()) {
-      for (const r of pending) {
-        try { await convexMutation(api.salary.markPaid, { id: r.id }); } catch {}
-      }
-    }
-  }
+async function payAll() {
+	const pending = salaryRecords.filter((r) => r.status === 'pending')
+	// Update local state immediately
+	for (const r of pending) r.status = 'paid'
+	// Persist to Convex
+	if (isConvexConfigured()) {
+		for (const r of pending) {
+			try {
+				await convexMutation(api.salary.markPaid, { id: r.id })
+			} catch {}
+		}
+	}
+}
 
-  function toggleExpand(id: string) {
-    const idx = salaryRecords.findIndex((r) => r.id === id);
-    if (idx !== -1) salaryRecords[idx].expanded = !salaryRecords[idx].expanded;
-  }
+function toggleExpand(id: string) {
+	const idx = salaryRecords.findIndex((r) => r.id === id)
+	if (idx !== -1) salaryRecords[idx].expanded = !salaryRecords[idx].expanded
+}
 
-  function formatNPR(amount: number) {
-    return `NPR ${amount.toLocaleString('en-IN')}`;
-  }
+function formatNPR(amount: number) {
+	return `NPR ${amount.toLocaleString('en-IN')}`
+}
 
-  const statusVariant = (status: SalaryStatus) => {
-    if (status === 'paid') return 'success';
-    if (status === 'pending') return 'warning';
-    return 'destructive';
-  };
+const statusVariant = (status: SalaryStatus) => {
+	if (status === 'paid') return 'success'
+	if (status === 'pending') return 'warning'
+	return 'destructive'
+}
 </script>
 
 <div class="flex flex-col gap-6 p-6">

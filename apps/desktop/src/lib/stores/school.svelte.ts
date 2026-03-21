@@ -2,40 +2,40 @@
 // Components read this to know which school/year is currently selected.
 
 export interface SchoolContext {
-  id: string;
-  name: string;
-  /** e.g. "2081-82" (Bikram Sambat) or "2024-25" (AD) */
-  academicYear: string;
-  /** Optional — populated after setup step 1 */
-  address?: string;
-  /** ISO timestamp of when setup was completed */
-  setupCompletedAt?: string;
+	id: string
+	name: string
+	/** e.g. "2081-82" (Bikram Sambat) or "2024-25" (AD) */
+	academicYear: string
+	/** Optional — populated after setup step 1 */
+	address?: string
+	/** ISO timestamp of when setup was completed */
+	setupCompletedAt?: string
 }
 
 // ─── Persistence key ─────────────────────────────────────────────────────────
 
-const SCHOOL_STORAGE_KEY = 'meroschool_school';
+const SCHOOL_STORAGE_KEY = 'meroschool_school'
 
 // ─── Reactive state (Svelte 5 runes) ─────────────────────────────────────────
 
-let school = $state<SchoolContext | null>(null);
+let school = $state<SchoolContext | null>(null)
 
 // Restore from localStorage on module load
 if (typeof window !== 'undefined') {
-  try {
-    const saved = localStorage.getItem(SCHOOL_STORAGE_KEY);
-    if (saved) school = JSON.parse(saved);
-  } catch {}
+	try {
+		const saved = localStorage.getItem(SCHOOL_STORAGE_KEY)
+		if (saved) school = JSON.parse(saved)
+	} catch {}
 }
 
 function persistSchool(): void {
-  if (typeof window !== 'undefined') {
-    if (school) {
-      localStorage.setItem(SCHOOL_STORAGE_KEY, JSON.stringify(school));
-    } else {
-      localStorage.removeItem(SCHOOL_STORAGE_KEY);
-    }
-  }
+	if (typeof window !== 'undefined') {
+		if (school) {
+			localStorage.setItem(SCHOOL_STORAGE_KEY, JSON.stringify(school))
+		} else {
+			localStorage.removeItem(SCHOOL_STORAGE_KEY)
+		}
+	}
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -45,15 +45,15 @@ function persistSchool(): void {
  * Overwrites any previously stored context.
  */
 export function setSchool(context: SchoolContext): void {
-  school = { ...context };
-  persistSchool();
+	school = { ...context }
+	persistSchool()
 }
 
 /**
  * Return the current school context, or null if setup has not been completed.
  */
 export function getSchool(): SchoolContext | null {
-  return school;
+	return school
 }
 
 /**
@@ -61,15 +61,15 @@ export function getSchool(): SchoolContext | null {
  * Use this to decide whether to redirect new sessions to the setup wizard.
  */
 export function isSetupComplete(): boolean {
-  return school !== null;
+	return school !== null
 }
 
 /**
  * Clear the school context (e.g., when switching schools or resetting the app).
  */
 export function clearSchool(): void {
-  school = null;
-  persistSchool();
+	school = null
+	persistSchool()
 }
 
 /**
@@ -77,9 +77,9 @@ export function clearSchool(): void {
  * Useful for updating the academic year mid-session without re-running setup.
  */
 export function updateSchool(patch: Partial<SchoolContext>): void {
-  if (school === null) {
-    throw new Error('Cannot update school context before setup is complete.');
-  }
-  school = { ...school, ...patch };
-  persistSchool();
+	if (school === null) {
+		throw new Error('Cannot update school context before setup is complete.')
+	}
+	school = { ...school, ...patch }
+	persistSchool()
 }

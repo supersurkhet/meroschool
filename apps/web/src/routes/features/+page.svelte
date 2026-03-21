@@ -1,22 +1,22 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Card from "$lib/components/ui/card.svelte";
-	import Badge from "$lib/components/ui/badge.svelte";
+import Badge from '$lib/components/ui/badge.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	const features = [
-		{ icon: "👨‍🎓", key: "studentMgmt", descKey: "studentMgmtDesc", color: "primary" },
-		{ icon: "👩‍🏫", key: "teacherMgmt", descKey: "teacherMgmtDesc", color: "accent" },
-		{ icon: "📝", key: "examMgmt", descKey: "examMgmtDesc", color: "chart-1" },
-		{ icon: "📋", key: "attendance", descKey: "attendanceDesc", color: "chart-2" },
-		{ icon: "💰", key: "fees", descKey: "feesDesc", color: "chart-4" },
-		{ icon: "💬", key: "communication", descKey: "communicationDesc", color: "primary" },
-		{ icon: "📊", key: "reports", descKey: "reportsDesc", color: "accent" },
-		{ icon: "📚", key: "library", descKey: "libraryDesc", color: "chart-1" },
-		{ icon: "🚌", key: "transport", descKey: "transportDesc", color: "chart-2" },
-		{ icon: "🏠", key: "hostel", descKey: "hostelDesc", color: "chart-4" },
-		{ icon: "📱", key: "mobile", descKey: "mobileDesc", color: "primary" },
-		{ icon: "📚", key: "academics", descKey: "academicsDesc", color: "accent" },
-	];
+const features = [
+	{ icon: '👨‍🎓', key: 'studentMgmt', descKey: 'studentMgmtDesc', color: 'primary' },
+	{ icon: '👩‍🏫', key: 'teacherMgmt', descKey: 'teacherMgmtDesc', color: 'accent' },
+	{ icon: '📝', key: 'examMgmt', descKey: 'examMgmtDesc', color: 'chart-1' },
+	{ icon: '📋', key: 'attendance', descKey: 'attendanceDesc', color: 'chart-2' },
+	{ icon: '💰', key: 'fees', descKey: 'feesDesc', color: 'chart-4' },
+	{ icon: '💬', key: 'communication', descKey: 'communicationDesc', color: 'primary' },
+	{ icon: '📊', key: 'reports', descKey: 'reportsDesc', color: 'accent' },
+	{ icon: '📚', key: 'library', descKey: 'libraryDesc', color: 'chart-1' },
+	{ icon: '🚌', key: 'transport', descKey: 'transportDesc', color: 'chart-2' },
+	{ icon: '🏠', key: 'hostel', descKey: 'hostelDesc', color: 'chart-4' },
+	{ icon: '📱', key: 'mobile', descKey: 'mobileDesc', color: 'primary' },
+	{ icon: '📚', key: 'academics', descKey: 'academicsDesc', color: 'accent' },
+]
 </script>
 
 <svelte:head>

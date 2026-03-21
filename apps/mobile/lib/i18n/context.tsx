@@ -1,10 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import i18n from "./index"
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react'
+import i18n from './index'
 
-const LANGUAGE_KEY = "@meroschool/language"
+const LANGUAGE_KEY = '@meroschool/language'
 
-type Locale = "en" | "ne"
+type Locale = 'en' | 'ne'
 
 interface I18nContextValue {
 	locale: Locale
@@ -13,7 +13,7 @@ interface I18nContextValue {
 }
 
 const I18nContext = createContext<I18nContextValue>({
-	locale: "en",
+	locale: 'en',
 	setLocale: () => {},
 	t: (key: string) => key,
 })
@@ -28,11 +28,11 @@ const I18nContext = createContext<I18nContextValue>({
  * in sync with i18next and provides a simpler t(key) API.
  */
 export function I18nProvider({ children }: { children: ReactNode }) {
-	const [locale, setLocaleState] = useState<Locale>((i18n.language as Locale) ?? "en")
+	const [locale, setLocaleState] = useState<Locale>((i18n.language as Locale) ?? 'en')
 
 	useEffect(() => {
 		AsyncStorage.getItem(LANGUAGE_KEY).then((stored) => {
-			if (stored === "en" || stored === "ne") {
+			if (stored === 'en' || stored === 'ne') {
 				setLocaleState(stored)
 				i18n.changeLanguage(stored)
 			}
@@ -51,11 +51,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 		[locale],
 	)
 
-	return (
-		<I18nContext.Provider value={{ locale, setLocale, t }}>
-			{children}
-		</I18nContext.Provider>
-	)
+	return <I18nContext.Provider value={{ locale, setLocale, t }}>{children}</I18nContext.Provider>
 }
 
 export const useI18n = () => useContext(I18nContext)

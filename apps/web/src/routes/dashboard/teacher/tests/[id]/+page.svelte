@@ -1,63 +1,81 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/index.js'
-	import Card from '$lib/components/ui/card.svelte'
-	import Button from '$lib/components/ui/button.svelte'
-	import Badge from '$lib/components/ui/badge.svelte'
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	let { data } = $props()
+const { data } = $props()
 
-	interface StudentResult {
-		name: string
-		score: number
-		total: number
-		percentage: number
-		timeTaken: string
-	}
+interface StudentResult {
+	name: string
+	score: number
+	total: number
+	percentage: number
+	timeTaken: string
+}
 
-	const testTitle = 'Mid-term Mathematics'
-	const totalMarks = 100
+const testTitle = 'Mid-term Mathematics'
+const totalMarks = 100
 
-	const results: StudentResult[] = [
-		{ name: 'Aarav Sharma', score: 92, total: totalMarks, percentage: 92, timeTaken: '45 min' },
-		{ name: 'Bipana Thapa', score: 88, total: totalMarks, percentage: 88, timeTaken: '52 min' },
-		{ name: 'Chandan Adhikari', score: 76, total: totalMarks, percentage: 76, timeTaken: '58 min' },
-		{ name: 'Deepa Gurung', score: 95, total: totalMarks, percentage: 95, timeTaken: '40 min' },
-		{ name: 'Eshan Karki', score: 62, total: totalMarks, percentage: 62, timeTaken: '55 min' },
-		{ name: 'Fatima Khatun', score: 45, total: totalMarks, percentage: 45, timeTaken: '60 min' },
-		{ name: 'Ganesh Poudel', score: 71, total: totalMarks, percentage: 71, timeTaken: '50 min' },
-		{ name: 'Hira Tamang', score: 83, total: totalMarks, percentage: 83, timeTaken: '48 min' },
-	]
+const results: StudentResult[] = [
+	{ name: 'Aarav Sharma', score: 92, total: totalMarks, percentage: 92, timeTaken: '45 min' },
+	{ name: 'Bipana Thapa', score: 88, total: totalMarks, percentage: 88, timeTaken: '52 min' },
+	{ name: 'Chandan Adhikari', score: 76, total: totalMarks, percentage: 76, timeTaken: '58 min' },
+	{ name: 'Deepa Gurung', score: 95, total: totalMarks, percentage: 95, timeTaken: '40 min' },
+	{ name: 'Eshan Karki', score: 62, total: totalMarks, percentage: 62, timeTaken: '55 min' },
+	{ name: 'Fatima Khatun', score: 45, total: totalMarks, percentage: 45, timeTaken: '60 min' },
+	{ name: 'Ganesh Poudel', score: 71, total: totalMarks, percentage: 71, timeTaken: '50 min' },
+	{ name: 'Hira Tamang', score: 83, total: totalMarks, percentage: 83, timeTaken: '48 min' },
+]
 
-	const avgScore = $derived(Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length))
-	const highestScore = $derived(Math.max(...results.map((r) => r.score)))
-	const lowestScore = $derived(Math.min(...results.map((r) => r.score)))
-	const passRate = $derived(Math.round((results.filter((r) => r.percentage >= 40).length / results.length) * 100))
+const avgScore = $derived(Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length))
+const highestScore = $derived(Math.max(...results.map((r) => r.score)))
+const lowestScore = $derived(Math.min(...results.map((r) => r.score)))
+const passRate = $derived(
+	Math.round((results.filter((r) => r.percentage >= 40).length / results.length) * 100),
+)
 
-	const stats = $derived([
-		{ label: $t('results.avgScore'), value: `${avgScore}/${totalMarks}`, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
-		{ label: $t('results.highest'), value: `${highestScore}/${totalMarks}`, color: 'bg-green-500/10 text-green-600 dark:text-green-400' },
-		{ label: $t('results.lowest'), value: `${lowestScore}/${totalMarks}`, color: 'bg-red-500/10 text-red-600 dark:text-red-400' },
-		{ label: $t('results.passRate'), value: `${passRate}%`, color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400' },
-	])
+const stats = $derived([
+	{
+		label: $t('results.avgScore'),
+		value: `${avgScore}/${totalMarks}`,
+		color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+	},
+	{
+		label: $t('results.highest'),
+		value: `${highestScore}/${totalMarks}`,
+		color: 'bg-green-500/10 text-green-600 dark:text-green-400',
+	},
+	{
+		label: $t('results.lowest'),
+		value: `${lowestScore}/${totalMarks}`,
+		color: 'bg-red-500/10 text-red-600 dark:text-red-400',
+	},
+	{
+		label: $t('results.passRate'),
+		value: `${passRate}%`,
+		color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+	},
+])
 
-	function exportCSV() {
-		const headers = ['Name', 'Score', 'Total', 'Percentage', 'Time Taken']
-		const rows = results.map((r) => [r.name, r.score, r.total, `${r.percentage}%`, r.timeTaken])
-		const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
-		const blob = new Blob([csv], { type: 'text/csv' })
-		const url = URL.createObjectURL(blob)
-		const a = document.createElement('a')
-		a.href = url
-		a.download = `test-results-${Date.now()}.csv`
-		a.click()
-		URL.revokeObjectURL(url)
-	}
+function exportCSV() {
+	const headers = ['Name', 'Score', 'Total', 'Percentage', 'Time Taken']
+	const rows = results.map((r) => [r.name, r.score, r.total, `${r.percentage}%`, r.timeTaken])
+	const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+	const blob = new Blob([csv], { type: 'text/csv' })
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = `test-results-${Date.now()}.csv`
+	a.click()
+	URL.revokeObjectURL(url)
+}
 
-	function percentageColor(pct: number): string {
-		if (pct >= 80) return 'text-green-600 dark:text-green-400'
-		if (pct >= 60) return 'text-yellow-600 dark:text-yellow-400'
-		return 'text-red-600 dark:text-red-400'
-	}
+function percentageColor(pct: number): string {
+	if (pct >= 80) return 'text-green-600 dark:text-green-400'
+	if (pct >= 60) return 'text-yellow-600 dark:text-yellow-400'
+	return 'text-red-600 dark:text-red-400'
+}
 </script>
 
 <svelte:head>

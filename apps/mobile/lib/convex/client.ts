@@ -1,6 +1,6 @@
-import { ConvexHttpClient } from "convex/browser"
+import { ConvexHttpClient } from 'convex/browser'
 
-const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL ?? ""
+const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL ?? ''
 
 let _client: ConvexHttpClient | null = null
 
@@ -25,11 +25,8 @@ export async function convexQuery<T>(
 	}
 }
 
-export async function convexMutate(
-	fn: string,
-	args: Record<string, any> = {},
-): Promise<any> {
+export async function convexMutate(fn: string, args: Record<string, any> = {}): Promise<any> {
 	const c = getConvexClient()
-	if (!c) throw new Error("Convex not configured")
+	if (!c) throw new Error('Convex not configured')
 	return c.mutation(fn as any, args)
 }

@@ -1,60 +1,84 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { Select } from '$lib/components/ui/select';
-  import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '$lib/components/ui/card';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Label } from '$lib/components/ui/label';
-  import { Separator } from '$lib/components/ui/separator';
-  import { t } from '$lib/i18n/index.svelte';
-  import { Download, FileText, FileSpreadsheet, Printer, CheckCircle2, Users } from 'lucide-svelte';
-  import { convexQuery, isConvexConfigured, api } from '$lib/convex';
-  import { getSchool } from '$lib/stores/school.svelte';
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { Label } from '$lib/components/ui/label'
+import { Select } from '$lib/components/ui/select'
+import { Separator } from '$lib/components/ui/separator'
+import { api, convexQuery, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
+import { CheckCircle2, Download, FileSpreadsheet, FileText, Printer, Users } from 'lucide-svelte'
 
-  type ExportFormat = 'csv' | 'pdf';
-  type ExportScope = 'class' | 'student';
+type ExportFormat = 'csv' | 'pdf'
+type ExportScope = 'class' | 'student'
 
-  let selectedFormat = $state<ExportFormat>('csv');
-  let selectedScope = $state<ExportScope>('class');
-  let selectedClass = $state('');
-  let selectedExam = $state('');
-  let isExporting = $state(false);
-  let exportSuccess = $state(false);
+let selectedFormat = $state<ExportFormat>('csv')
+let selectedScope = $state<ExportScope>('class')
+let selectedClass = $state('')
+let selectedExam = $state('')
+let isExporting = $state(false)
+let exportSuccess = $state(false)
 
-  let classes = $state<{id: string; name: string; grade: number}[]>([]);
+let classes = $state<{ id: string; name: string; grade: number }[]>([])
 
-  let exams = $state<{id: string; name: string}[]>([]);
+let exams = $state<{ id: string; name: string }[]>([])
 
-  // Convex: real test ID for the selected exam (used to fetch attempts)
-  let convexTestId = $state<string | null>(null);
-  // Convex: school ID (loaded from hierarchy)
-  let convexSchoolId = $state<string | null>(null);
-  // Convex: section ID for attendance export (first section of selected class)
-  let convexSectionId = $state<string | null>(null);
+// Convex: real test ID for the selected exam (used to fetch attempts)
+let convexTestId = $state<string | null>(null)
+// Convex: school ID (loaded from hierarchy)
+let convexSchoolId = $state<string | null>(null)
+// Convex: section ID for attendance export (first section of selected class)
+let convexSectionId = $state<string | null>(null)
 
-  let results = $state<any[]>([]);
+let results = $state<any[]>([])
 
-  const selectedClassName = $derived(classes.find(c => c.id === selectedClass)?.name ?? '');
-  const selectedExamName = $derived(exams.find(e => e.id === selectedExam)?.name ?? '');
+const selectedClassName = $derived(classes.find((c) => c.id === selectedClass)?.name ?? '')
+const selectedExamName = $derived(exams.find((e) => e.id === selectedExam)?.name ?? '')
 
-  function generateCSV(): string {
-    const headers = ['Roll No', 'Student Name', 'Mathematics', 'Science', 'English', 'Nepali', 'Social Studies', 'Total', 'Percentage', 'Grade'];
-    const rows = results.map(r => [r.roll, r.name, r.math, r.science, r.english, r.nepali, r.social, r.total, r.pct, r.grade].join(','));
-    return [headers.join(','), ...rows].join('\n');
-  }
+function generateCSV(): string {
+	const headers = [
+		'Roll No',
+		'Student Name',
+		'Mathematics',
+		'Science',
+		'English',
+		'Nepali',
+		'Social Studies',
+		'Total',
+		'Percentage',
+		'Grade',
+	]
+	const rows = results.map((r) =>
+		[
+			r.roll,
+			r.name,
+			r.math,
+			r.science,
+			r.english,
+			r.nepali,
+			r.social,
+			r.total,
+			r.pct,
+			r.grade,
+		].join(','),
+	)
+	return [headers.join(','), ...rows].join('\n')
+}
 
-  function downloadCSV() {
-    const csv = generateCSV();
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${selectedClassName}_${selectedExamName}_Results.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+function downloadCSV() {
+	const csv = generateCSV()
+	const blob = new Blob([csv], { type: 'text/csv' })
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = `${selectedClassName}_${selectedExamName}_Results.csv`
+	a.click()
+	URL.revokeObjectURL(url)
+}
 
-  function generatePDFContent(): string {
-    return `
+function generatePDFContent(): string {
+	return `
       <html>
       <head>
         <title>${selectedClassName} - ${selectedExamName} Results</title>
@@ -84,180 +108,189 @@
             </tr>
           </thead>
           <tbody>
-            ${results.map(r => `
+            ${results
+							.map(
+								(r) => `
               <tr>
                 <td>${r.roll}</td><td>${r.name}</td><td>${r.math}</td><td>${r.science}</td><td>${r.english}</td><td>${r.nepali}</td><td>${r.social}</td><td>${r.total}</td><td>${r.pct}%</td>
                 <td class="${r.grade.startsWith('A') ? 'grade-a' : r.grade.startsWith('B') ? 'grade-b' : 'grade-c'}">${r.grade}</td>
               </tr>
-            `).join('')}
+            `,
+							)
+							.join('')}
           </tbody>
         </table>
         <p class="footer">Generated by MeroSchool Admin | ${new Date().toLocaleDateString()}</p>
       </body>
       </html>
-    `;
-  }
+    `
+}
 
-  function downloadPDF() {
-    const content = generatePDFContent();
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(content);
-      printWindow.document.close();
-      printWindow.print();
-    }
-  }
+function downloadPDF() {
+	const content = generatePDFContent()
+	const printWindow = window.open('', '_blank')
+	if (printWindow) {
+		printWindow.document.write(content)
+		printWindow.document.close()
+		printWindow.print()
+	}
+}
 
-  // ── Convex: load hierarchy + tests; reload results when selection changes ─────
-  $effect(() => {
-    if (!isConvexConfigured()) return;
-    const schoolId = getSchool()?.id;
-    if (!schoolId) return;
+// ── Convex: load hierarchy + tests; reload results when selection changes ─────
+$effect(() => {
+	if (!isConvexConfigured()) return
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
 
-    (async () => {
-      // Load school hierarchy to get real class/section IDs
-      const hierarchy = await convexQuery(
-        api.schools.getSchoolHierarchy,
-        { schoolId },
-        null as any
-      );
+	;(async () => {
+		// Load school hierarchy to get real class/section IDs
+		const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId }, null as any)
 
-      if (hierarchy?.schoolId) convexSchoolId = hierarchy.schoolId;
+		if (hierarchy?.schoolId) convexSchoolId = hierarchy.schoolId
 
-      if (hierarchy?.classes?.length) {
-        classes = hierarchy.classes.map((cls: any) => ({
-          id: cls._id ?? cls.id,
-          name: cls.name,
-          grade: cls.grade ?? 0,
-        }));
-        // Update selected class to first real ID
-        if (classes.length > 0 && !classes.find(c => c.id === selectedClass)) {
-          selectedClass = classes[0].id;
-        }
+		if (hierarchy?.classes?.length) {
+			classes = hierarchy.classes.map((cls: any) => ({
+				id: cls._id ?? cls.id,
+				name: cls.name,
+				grade: cls.grade ?? 0,
+			}))
+			// Update selected class to first real ID
+			if (classes.length > 0 && !classes.find((c) => c.id === selectedClass)) {
+				selectedClass = classes[0].id
+			}
 
-        // Capture section ID for attendance export
-        const matchedCls = hierarchy.classes.find((c: any) => (c._id ?? c.id) === selectedClass);
-        if (matchedCls?.sections?.length) {
-          convexSectionId = matchedCls.sections[0]._id ?? matchedCls.sections[0].id ?? null;
-        }
-      }
-    })();
-  });
+			// Capture section ID for attendance export
+			const matchedCls = hierarchy.classes.find((c: any) => (c._id ?? c.id) === selectedClass)
+			if (matchedCls?.sections?.length) {
+				convexSectionId = matchedCls.sections[0]._id ?? matchedCls.sections[0].id ?? null
+			}
+		}
+	})()
+})
 
-  // Reload test attempts when selected exam or class changes
-  $effect(() => {
-    const examId = selectedExam;
-    const classId = selectedClass;
+// Reload test attempts when selected exam or class changes
+$effect(() => {
+	const examId = selectedExam
+	const classId = selectedClass
 
-    if (!isConvexConfigured() || !examId) return;
+	if (!isConvexConfigured() || !examId) return
 
-    (async () => {
-      // Try to find a real test ID from the exams list
-      const testId = convexTestId ?? examId;
+	;(async () => {
+		// Try to find a real test ID from the exams list
+		const testId = convexTestId ?? examId
 
-      const attempts = await convexQuery(
-        api.tests.listAttemptsByTest,
-        { testId },
-        [] as any[]
-      );
+		const attempts = await convexQuery(api.tests.listAttemptsByTest, { testId }, [] as any[])
 
-      if (attempts?.length) {
-        results = attempts.map((attempt: any, idx: number) => {
-          const marks = attempt.marks ?? {};
-          const subjects = Object.keys(marks);
-          const total = subjects.reduce((s: number, k: string) => s + (marks[k] ?? 0), 0);
-          const maxMarks = attempt.totalMarks ?? 500;
-          const pct = maxMarks > 0 ? Math.round((total / maxMarks) * 1000) / 10 : 0;
-          const grade =
-            pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B+' :
-            pct >= 60 ? 'B' : pct >= 50 ? 'C+' : pct >= 40 ? 'C' : 'D';
+		if (attempts?.length) {
+			results = attempts.map((attempt: any, idx: number) => {
+				const marks = attempt.marks ?? {}
+				const subjects = Object.keys(marks)
+				const total = subjects.reduce((s: number, k: string) => s + (marks[k] ?? 0), 0)
+				const maxMarks = attempt.totalMarks ?? 500
+				const pct = maxMarks > 0 ? Math.round((total / maxMarks) * 1000) / 10 : 0
+				const grade =
+					pct >= 90
+						? 'A+'
+						: pct >= 80
+							? 'A'
+							: pct >= 70
+								? 'B+'
+								: pct >= 60
+									? 'B'
+									: pct >= 50
+										? 'C+'
+										: pct >= 40
+											? 'C'
+											: 'D'
 
-          return {
-            roll: attempt.rollNumber ?? String(idx + 1).padStart(3, '0'),
-            name: attempt.studentName ?? `Student ${idx + 1}`,
-            math: marks['Mathematics'] ?? marks['math'] ?? 0,
-            science: marks['Science'] ?? marks['science'] ?? 0,
-            english: marks['English'] ?? marks['english'] ?? 0,
-            nepali: marks['Nepali'] ?? marks['nepali'] ?? 0,
-            social: marks['Social Studies'] ?? marks['social'] ?? 0,
-            total,
-            pct,
-            grade,
-          };
-        });
-      }
-    })();
-  });
+				return {
+					roll: attempt.rollNumber ?? String(idx + 1).padStart(3, '0'),
+					name: attempt.studentName ?? `Student ${idx + 1}`,
+					math: marks['Mathematics'] ?? marks['math'] ?? 0,
+					science: marks['Science'] ?? marks['science'] ?? 0,
+					english: marks['English'] ?? marks['english'] ?? 0,
+					nepali: marks['Nepali'] ?? marks['nepali'] ?? 0,
+					social: marks['Social Studies'] ?? marks['social'] ?? 0,
+					total,
+					pct,
+					grade,
+				}
+			})
+		}
+	})()
+})
 
-  async function handleExport() {
-    isExporting = true;
-    exportSuccess = false;
+async function handleExport() {
+	isExporting = true
+	exportSuccess = false
 
-    // If Convex is configured, try Convex CSV export endpoints first
-    if (isConvexConfigured()) {
-      try {
-        if (selectedFormat === 'csv') {
-          const schoolId = convexSchoolId ?? 'default';
+	// If Convex is configured, try Convex CSV export endpoints first
+	if (isConvexConfigured()) {
+		try {
+			if (selectedFormat === 'csv') {
+				const schoolId = convexSchoolId ?? 'default'
 
-          // Export students list via Convex
-          const studentsCSV = await convexQuery(
-            api.csv.exportStudents,
-            { schoolId },
-            null as any
-          );
+				// Export students list via Convex
+				const studentsCSV = await convexQuery(api.csv.exportStudents, { schoolId }, null as any)
 
-          if (studentsCSV) {
-            const blob = new Blob([studentsCSV], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${selectedClassName}_${selectedExamName}_Students.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+				if (studentsCSV) {
+					const blob = new Blob([studentsCSV], { type: 'text/csv' })
+					const url = URL.createObjectURL(blob)
+					const a = document.createElement('a')
+					a.href = url
+					a.download = `${selectedClassName}_${selectedExamName}_Students.csv`
+					a.click()
+					URL.revokeObjectURL(url)
 
-            // Also export attendance if we have a section ID
-            if (convexSectionId) {
-              const today = new Date().toISOString().slice(0, 10);
-              const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-              const attendanceCSV = await convexQuery(
-                api.csv.exportAttendance,
-                { sectionId: convexSectionId, startDate, endDate: today },
-                null as any
-              );
-              if (attendanceCSV) {
-                const blob2 = new Blob([attendanceCSV], { type: 'text/csv' });
-                const url2 = URL.createObjectURL(blob2);
-                const a2 = document.createElement('a');
-                a2.href = url2;
-                a2.download = `${selectedClassName}_Attendance.csv`;
-                a2.click();
-                URL.revokeObjectURL(url2);
-              }
-            }
+					// Also export attendance if we have a section ID
+					if (convexSectionId) {
+						const today = new Date().toISOString().slice(0, 10)
+						const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+							.toISOString()
+							.slice(0, 10)
+						const attendanceCSV = await convexQuery(
+							api.csv.exportAttendance,
+							{ sectionId: convexSectionId, startDate, endDate: today },
+							null as any,
+						)
+						if (attendanceCSV) {
+							const blob2 = new Blob([attendanceCSV], { type: 'text/csv' })
+							const url2 = URL.createObjectURL(blob2)
+							const a2 = document.createElement('a')
+							a2.href = url2
+							a2.download = `${selectedClassName}_Attendance.csv`
+							a2.click()
+							URL.revokeObjectURL(url2)
+						}
+					}
 
-            isExporting = false;
-            exportSuccess = true;
-            setTimeout(() => { exportSuccess = false; }, 3000);
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('[export] Convex export failed, falling back to local', err);
-      }
-    }
+					isExporting = false
+					exportSuccess = true
+					setTimeout(() => {
+						exportSuccess = false
+					}, 3000)
+					return
+				}
+			}
+		} catch (err) {
+			console.warn('[export] Convex export failed, falling back to local', err)
+		}
+	}
 
-    // Fallback: local generation
-    await new Promise(r => setTimeout(r, 800));
-    if (selectedFormat === 'csv') {
-      downloadCSV();
-    } else {
-      downloadPDF();
-    }
+	// Fallback: local generation
+	await new Promise((r) => setTimeout(r, 800))
+	if (selectedFormat === 'csv') {
+		downloadCSV()
+	} else {
+		downloadPDF()
+	}
 
-    isExporting = false;
-    exportSuccess = true;
-    setTimeout(() => { exportSuccess = false; }, 3000);
-  }
+	isExporting = false
+	exportSuccess = true
+	setTimeout(() => {
+		exportSuccess = false
+	}, 3000)
+}
 </script>
 
 <div class="space-y-6">

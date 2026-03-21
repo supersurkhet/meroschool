@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Badge from "$lib/components/ui/badge.svelte";
+import Badge from '$lib/components/ui/badge.svelte'
+import { t } from '$lib/i18n/index.js'
 </script>
 
 <svelte:head>

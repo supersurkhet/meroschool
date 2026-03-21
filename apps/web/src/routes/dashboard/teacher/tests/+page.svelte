@@ -1,125 +1,151 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/index.js'
-	import Card from '$lib/components/ui/card.svelte'
-	import Button from '$lib/components/ui/button.svelte'
-	import Badge from '$lib/components/ui/badge.svelte'
-	import Input from '$lib/components/ui/input.svelte'
-	import Select from '$lib/components/ui/select.svelte'
-	import Textarea from '$lib/components/ui/textarea.svelte'
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import Input from '$lib/components/ui/input.svelte'
+import Select from '$lib/components/ui/select.svelte'
+import Textarea from '$lib/components/ui/textarea.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	let { data } = $props()
+const { data } = $props()
 
-	interface Question {
-		id: number
-		text: string
-		options: string[]
-		correctIndex: number
-		marks: number
-	}
+interface Question {
+	id: number
+	text: string
+	options: string[]
+	correctIndex: number
+	marks: number
+}
 
-	interface Test {
-		id: string
-		title: string
-		subject: string
-		questionsCount: number
-		status: 'published' | 'draft'
-		date: string
-		totalMarks: number
-	}
+interface Test {
+	id: string
+	title: string
+	subject: string
+	questionsCount: number
+	status: 'published' | 'draft'
+	date: string
+	totalMarks: number
+}
 
-	// Create test form state
-	let testTitle = $state('')
-	let testSubject = $state('Mathematics')
-	let testDuration = $state(60)
+// Create test form state
+let testTitle = $state('')
+let testSubject = $state('Mathematics')
+let testDuration = $state(60)
 
-	// Question builder state
-	let questionText = $state('')
-	let options = $state(['', '', '', ''])
-	let correctAnswer = $state(0)
-	let questionMarks = $state(5)
-	let questions: Question[] = $state([])
-	let nextId = $state(1)
+// Question builder state
+let questionText = $state('')
+let options = $state(['', '', '', ''])
+let correctAnswer = $state(0)
+let questionMarks = $state(5)
+let questions: Question[] = $state([])
+let nextId = $state(1)
 
-	// Auto-compute total marks from individual question marks
-	let testTotalMarks = $derived(questions.reduce((sum, q) => sum + q.marks, 0))
-	let editingId: number | null = $state(null)
+// Auto-compute total marks from individual question marks
+const testTotalMarks = $derived(questions.reduce((sum, q) => sum + q.marks, 0))
+let editingId: number | null = $state(null)
 
-	const subjects = ['Mathematics', 'Science', 'English', 'Nepali', 'Social Studies', 'Computer']
+const subjects = ['Mathematics', 'Science', 'English', 'Nepali', 'Social Studies', 'Computer']
 
-	function addQuestion() {
-		if (!questionText.trim() || options.some((o) => !o.trim())) return
+function addQuestion() {
+	if (!questionText.trim() || options.some((o) => !o.trim())) return
 
-		if (editingId !== null) {
-			const idx = questions.findIndex((q) => q.id === editingId)
-			if (idx >= 0) {
-				questions[idx] = {
-					id: editingId,
-					text: questionText,
-					options: [...options],
-					correctIndex: correctAnswer,
-					marks: questionMarks,
-				}
+	if (editingId !== null) {
+		const idx = questions.findIndex((q) => q.id === editingId)
+		if (idx >= 0) {
+			questions[idx] = {
+				id: editingId,
+				text: questionText,
+				options: [...options],
+				correctIndex: correctAnswer,
+				marks: questionMarks,
 			}
-			editingId = null
-		} else {
-			questions = [
-				...questions,
-				{
-					id: nextId++,
-					text: questionText,
-					options: [...options],
-					correctIndex: correctAnswer,
-					marks: questionMarks,
-				},
-			]
 		}
-		resetQuestionForm()
-	}
-
-	function editQuestion(q: Question) {
-		editingId = q.id
-		questionText = q.text
-		options = [...q.options]
-		correctAnswer = q.correctIndex
-		questionMarks = q.marks
-	}
-
-	function removeQuestion(id: number) {
-		questions = questions.filter((q) => q.id !== id)
-	}
-
-	function resetQuestionForm() {
-		questionText = ''
-		options = ['', '', '', '']
-		correctAnswer = 0
-		questionMarks = 5
-	}
-
-	// Existing tests (from server, with fallback)
-	let existingTests: Test[] = $state(data.tests ?? [
-		{ id: 'test-1', title: 'Mid-term Mathematics', subject: 'Mathematics', questionsCount: 25, status: 'published', date: '2026-03-15', totalMarks: 100 },
-		{ id: 'test-2', title: 'Science Unit Test', subject: 'Science', questionsCount: 15, status: 'published', date: '2026-03-10', totalMarks: 50 },
-		{ id: 'test-3', title: 'English Grammar Quiz', subject: 'English', questionsCount: 10, status: 'draft', date: '2026-03-18', totalMarks: 30 },
-	])
-
-	function handlePublish() {
-		if (!testTitle.trim() || questions.length === 0) return
-		existingTests = [
+		editingId = null
+	} else {
+		questions = [
+			...questions,
 			{
-				id: `test-${Date.now()}`,
-				title: testTitle,
-				subject: testSubject,
-				questionsCount: questions.length,
-				status: 'published',
-				date: new Date().toISOString().split('T')[0],
-				totalMarks: testTotalMarks,
+				id: nextId++,
+				text: questionText,
+				options: [...options],
+				correctIndex: correctAnswer,
+				marks: questionMarks,
 			},
-			...existingTests,
 		]
-		testTitle = ''
-		testDuration = 60
-		questions = []
 	}
+	resetQuestionForm()
+}
+
+function editQuestion(q: Question) {
+	editingId = q.id
+	questionText = q.text
+	options = [...q.options]
+	correctAnswer = q.correctIndex
+	questionMarks = q.marks
+}
+
+function removeQuestion(id: number) {
+	questions = questions.filter((q) => q.id !== id)
+}
+
+function resetQuestionForm() {
+	questionText = ''
+	options = ['', '', '', '']
+	correctAnswer = 0
+	questionMarks = 5
+}
+
+// Existing tests (from server, with fallback)
+let existingTests: Test[] = $state(
+	data.tests ?? [
+		{
+			id: 'test-1',
+			title: 'Mid-term Mathematics',
+			subject: 'Mathematics',
+			questionsCount: 25,
+			status: 'published',
+			date: '2026-03-15',
+			totalMarks: 100,
+		},
+		{
+			id: 'test-2',
+			title: 'Science Unit Test',
+			subject: 'Science',
+			questionsCount: 15,
+			status: 'published',
+			date: '2026-03-10',
+			totalMarks: 50,
+		},
+		{
+			id: 'test-3',
+			title: 'English Grammar Quiz',
+			subject: 'English',
+			questionsCount: 10,
+			status: 'draft',
+			date: '2026-03-18',
+			totalMarks: 30,
+		},
+	],
+)
+
+function handlePublish() {
+	if (!testTitle.trim() || questions.length === 0) return
+	existingTests = [
+		{
+			id: `test-${Date.now()}`,
+			title: testTitle,
+			subject: testSubject,
+			questionsCount: questions.length,
+			status: 'published',
+			date: new Date().toISOString().split('T')[0],
+			totalMarks: testTotalMarks,
+		},
+		...existingTests,
+	]
+	testTitle = ''
+	testDuration = 60
+	questions = []
+}
 </script>
 
 <svelte:head>

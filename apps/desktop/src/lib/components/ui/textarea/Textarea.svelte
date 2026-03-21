@@ -1,29 +1,29 @@
 <script lang="ts">
-  import { cn } from "$lib/utils";
+import { cn } from '$lib/utils'
 
-  let {
-    class: className,
-    placeholder,
-    value = $bindable(),
-    disabled = false,
-    readonly = false,
-    required = false,
-    rows = 4,
-    id,
-    name,
-    ...rest
-  }: {
-    class?: string;
-    placeholder?: string;
-    value?: string;
-    disabled?: boolean;
-    readonly?: boolean;
-    required?: boolean;
-    rows?: number;
-    id?: string;
-    name?: string;
-    [key: string]: any;
-  } = $props();
+let {
+	class: className,
+	placeholder,
+	value = $bindable(),
+	disabled = false,
+	readonly = false,
+	required = false,
+	rows = 4,
+	id,
+	name,
+	...rest
+}: {
+	class?: string
+	placeholder?: string
+	value?: string
+	disabled?: boolean
+	readonly?: boolean
+	required?: boolean
+	rows?: number
+	id?: string
+	name?: string
+	[key: string]: any
+} = $props()
 </script>
 
 <textarea

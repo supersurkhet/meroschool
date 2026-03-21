@@ -1,178 +1,183 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/index.svelte'
-	import { onMount } from 'svelte'
-	import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex'
-	import { Button } from '$lib/components/ui/button'
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
-	import { Input } from '$lib/components/ui/input'
-	import { Label } from '$lib/components/ui/label'
-	import { Badge } from '$lib/components/ui/badge'
-	import {
-		Plus,
-		Pencil,
-		Trash2,
-		X,
-		School,
-		MapPin,
-		Phone,
-		Mail,
-		Search,
-		Loader2,
-	} from 'lucide-svelte'
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { Input } from '$lib/components/ui/input'
+import { Label } from '$lib/components/ui/label'
+import { api, convexMutation, convexQuery, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import {
+	Loader2,
+	Mail,
+	MapPin,
+	Pencil,
+	Phone,
+	Plus,
+	School,
+	Search,
+	Trash2,
+	X,
+} from 'lucide-svelte'
+import { onMount } from 'svelte'
 
-	// ── Types ──────────────────────────────────────────────────────────
-	interface SchoolRecord {
-		id: string
-		name: string
-		address: string
-		phone: string
-		email: string
-	}
+// ── Types ──────────────────────────────────────────────────────────
+interface SchoolRecord {
+	id: string
+	name: string
+	address: string
+	phone: string
+	email: string
+}
 
-	// ── State ──────────────────────────────────────────────────────────
-	let schools = $state<SchoolRecord[]>([])
+// ── State ──────────────────────────────────────────────────────────
+let schools = $state<SchoolRecord[]>([])
 
-	let loading = $state(true)
-	let showForm = $state(false)
-	let editingId = $state<string | null>(null)
-	let searchQuery = $state('')
+let loading = $state(true)
+let showForm = $state(false)
+let editingId = $state<string | null>(null)
+let searchQuery = $state('')
 
-	// Form fields
-	let formName = $state('')
-	let formAddress = $state('')
-	let formPhone = $state('')
-	let formEmail = $state('')
+// Form fields
+let formName = $state('')
+let formAddress = $state('')
+let formPhone = $state('')
+let formEmail = $state('')
 
-	// ── Convex loading ────────────────────────────────────────────────
-	onMount(async () => {
-		if (!isConvexConfigured()) { loading = false; return }
-
-		try {
-			const convexSchools = await convexQuery(api.schools.list, {}, [] as any[])
-			if (Array.isArray(convexSchools) && convexSchools.length > 0) {
-				schools = convexSchools.map((s: any) => ({
-					id: s._id ?? s.id,
-					name: s.name ?? '',
-					address: s.address ?? '',
-					phone: s.phone ?? '',
-					email: s.email ?? '',
-				}))
-			}
-		} catch (err) {
-			console.warn('[schools] Convex load failed:', err)
-		schools = []
-		}
+// ── Convex loading ────────────────────────────────────────────────
+onMount(async () => {
+	if (!isConvexConfigured()) {
 		loading = false
-	})
-
-	async function refreshFromConvex() {
-		if (!isConvexConfigured()) return
-		try {
-			const convexSchools = await convexQuery(api.schools.list, {}, [] as any[])
-			if (Array.isArray(convexSchools) && convexSchools.length > 0) {
-				schools = convexSchools.map((s: any) => ({
-					id: s._id ?? s.id,
-					name: s.name ?? '',
-					address: s.address ?? '',
-					phone: s.phone ?? '',
-					email: s.email ?? '',
-				}))
-			}
-		} catch { /* keep current state */ }
+		return
 	}
 
-	let filteredSchools = $derived(
-		searchQuery
-			? schools.filter(
-					(s) =>
-						s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-						s.address.toLowerCase().includes(searchQuery.toLowerCase()),
-				)
-			: schools,
-	)
-
-	// ── Helpers ────────────────────────────────────────────────────────
-	function resetForm() {
-		formName = ''
-		formAddress = ''
-		formPhone = ''
-		formEmail = ''
-		editingId = null
-		showForm = false
+	try {
+		const convexSchools = await convexQuery(api.schools.list, {}, [] as any[])
+		if (Array.isArray(convexSchools) && convexSchools.length > 0) {
+			schools = convexSchools.map((s: any) => ({
+				id: s._id ?? s.id,
+				name: s.name ?? '',
+				address: s.address ?? '',
+				phone: s.phone ?? '',
+				email: s.email ?? '',
+			}))
+		}
+	} catch (err) {
+		console.warn('[schools] Convex load failed:', err)
+		schools = []
 	}
+	loading = false
+})
 
-	function openAdd() {
-		resetForm()
-		showForm = true
+async function refreshFromConvex() {
+	if (!isConvexConfigured()) return
+	try {
+		const convexSchools = await convexQuery(api.schools.list, {}, [] as any[])
+		if (Array.isArray(convexSchools) && convexSchools.length > 0) {
+			schools = convexSchools.map((s: any) => ({
+				id: s._id ?? s.id,
+				name: s.name ?? '',
+				address: s.address ?? '',
+				phone: s.phone ?? '',
+				email: s.email ?? '',
+			}))
+		}
+	} catch {
+		/* keep current state */
 	}
+}
 
-	function openEdit(school: SchoolRecord) {
-		formName = school.name
-		formAddress = school.address
-		formPhone = school.phone
-		formEmail = school.email
-		editingId = school.id
-		showForm = true
-	}
-
-	async function handleSubmit(e: SubmitEvent) {
-		e.preventDefault()
-		if (editingId) {
-			// Optimistic local update
-			schools = schools.map((s) =>
-				s.id === editingId
-					? { ...s, name: formName, address: formAddress, phone: formPhone, email: formEmail }
-					: s,
+const filteredSchools = $derived(
+	searchQuery
+		? schools.filter(
+				(s) =>
+					s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+					s.address.toLowerCase().includes(searchQuery.toLowerCase()),
 			)
-			// Convex: persist update
-			if (isConvexConfigured()) {
-				try {
-					await convexMutation(api.schools.update, {
-						id: editingId,
-						name: formName,
-						address: formAddress,
-						...(formPhone ? { phone: formPhone } : {}),
-						...(formEmail ? { email: formEmail } : {}),
-					})
-				} catch (err) {
-					console.warn('[schools] Convex update failed, keeping local state:', err)
-				}
-			}
-		} else {
-			const optimisticId = crypto.randomUUID()
-			schools = [
-				...schools,
-				{
-					id: optimisticId,
+		: schools,
+)
+
+// ── Helpers ────────────────────────────────────────────────────────
+function resetForm() {
+	formName = ''
+	formAddress = ''
+	formPhone = ''
+	formEmail = ''
+	editingId = null
+	showForm = false
+}
+
+function openAdd() {
+	resetForm()
+	showForm = true
+}
+
+function openEdit(school: SchoolRecord) {
+	formName = school.name
+	formAddress = school.address
+	formPhone = school.phone
+	formEmail = school.email
+	editingId = school.id
+	showForm = true
+}
+
+async function handleSubmit(e: SubmitEvent) {
+	e.preventDefault()
+	if (editingId) {
+		// Optimistic local update
+		schools = schools.map((s) =>
+			s.id === editingId
+				? { ...s, name: formName, address: formAddress, phone: formPhone, email: formEmail }
+				: s,
+		)
+		// Convex: persist update
+		if (isConvexConfigured()) {
+			try {
+				await convexMutation(api.schools.update, {
+					id: editingId,
 					name: formName,
 					address: formAddress,
-					phone: formPhone,
-					email: formEmail,
-				},
-			]
-			// Convex: persist creation
-			if (isConvexConfigured()) {
-				try {
-					const realId = await convexMutation(api.schools.create, {
-						name: formName,
-						address: formAddress,
-						...(formPhone ? { phone: formPhone } : {}),
-						...(formEmail ? { email: formEmail } : {}),
-					})
-					schools = schools.map((s) => s.id === optimisticId ? { ...s, id: realId } : s)
-				} catch (err) {
-					console.warn('[schools] Convex create failed, keeping local entry:', err)
-				}
+					...(formPhone ? { phone: formPhone } : {}),
+					...(formEmail ? { email: formEmail } : {}),
+				})
+			} catch (err) {
+				console.warn('[schools] Convex update failed, keeping local state:', err)
 			}
 		}
-		resetForm()
+	} else {
+		const optimisticId = crypto.randomUUID()
+		schools = [
+			...schools,
+			{
+				id: optimisticId,
+				name: formName,
+				address: formAddress,
+				phone: formPhone,
+				email: formEmail,
+			},
+		]
+		// Convex: persist creation
+		if (isConvexConfigured()) {
+			try {
+				const realId = await convexMutation(api.schools.create, {
+					name: formName,
+					address: formAddress,
+					...(formPhone ? { phone: formPhone } : {}),
+					...(formEmail ? { email: formEmail } : {}),
+				})
+				schools = schools.map((s) => (s.id === optimisticId ? { ...s, id: realId } : s))
+			} catch (err) {
+				console.warn('[schools] Convex create failed, keeping local entry:', err)
+			}
+		}
 	}
+	resetForm()
+}
 
-	async function handleDelete(id: string) {
-		schools = schools.filter((s) => s.id !== id)
-		// Note: Convex schools.ts does not export a `remove` mutation.
-		// If one is added later, wire it here.
-	}
+async function handleDelete(id: string) {
+	schools = schools.filter((s) => s.id !== id)
+	// Note: Convex schools.ts does not export a `remove` mutation.
+	// If one is added later, wire it here.
+}
 </script>
 
 <div class="flex flex-col gap-6">

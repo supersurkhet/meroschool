@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { cn } from "$lib/utils";
+import { cn } from '$lib/utils'
 
-  let {
-    class: className,
-    orientation = "horizontal",
-    decorative = true,
-    ...rest
-  }: {
-    class?: string;
-    orientation?: "horizontal" | "vertical";
-    decorative?: boolean;
-    [key: string]: any;
-  } = $props();
+const {
+	class: className,
+	orientation = 'horizontal',
+	decorative = true,
+	...rest
+}: {
+	class?: string
+	orientation?: 'horizontal' | 'vertical'
+	decorative?: boolean
+	[key: string]: any
+} = $props()
 </script>
 
 <div

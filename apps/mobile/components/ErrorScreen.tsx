@@ -1,7 +1,7 @@
-import { View, Text, Pressable } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import { useTheme } from "@/lib/theme"
-import { useTranslation } from "react-i18next"
+import { Ionicons } from '@expo/vector-icons'
+import { useTranslation } from 'react-i18next'
+import { Pressable, Text, View } from 'react-native'
+import { useTheme } from '@/lib/theme'
 
 interface ErrorScreenProps {
 	message?: string
@@ -20,8 +20,8 @@ export function ErrorScreen({ message, onRetry }: ErrorScreenProps) {
 			style={{
 				flex: 1,
 				backgroundColor: colors.bg,
-				alignItems: "center",
-				justifyContent: "center",
+				alignItems: 'center',
+				justifyContent: 'center',
 				padding: 32,
 			}}
 		>
@@ -31,8 +31,8 @@ export function ErrorScreen({ message, onRetry }: ErrorScreenProps) {
 					height: 80,
 					borderRadius: 40,
 					backgroundColor: colors.dangerLight,
-					alignItems: "center",
-					justifyContent: "center",
+					alignItems: 'center',
+					justifyContent: 'center',
 					marginBottom: 24,
 				}}
 			>
@@ -42,25 +42,25 @@ export function ErrorScreen({ message, onRetry }: ErrorScreenProps) {
 			<Text
 				style={{
 					fontSize: 20,
-					fontWeight: "700",
+					fontWeight: '700',
 					color: colors.text,
 					marginBottom: 8,
-					textAlign: "center",
+					textAlign: 'center',
 				}}
 			>
-				{t("common.error")}
+				{t('common.error')}
 			</Text>
 
 			<Text
 				style={{
 					fontSize: 14,
 					color: colors.textSecondary,
-					textAlign: "center",
+					textAlign: 'center',
 					marginBottom: 24,
 					lineHeight: 20,
 				}}
 			>
-				{message ?? t("common.error")}
+				{message ?? t('common.error')}
 			</Text>
 
 			{onRetry && (
@@ -71,14 +71,14 @@ export function ErrorScreen({ message, onRetry }: ErrorScreenProps) {
 						paddingHorizontal: 24,
 						paddingVertical: 12,
 						borderRadius: 12,
-						flexDirection: "row",
-						alignItems: "center",
+						flexDirection: 'row',
+						alignItems: 'center',
 						gap: 8,
 					}}
 				>
 					<Ionicons name="refresh" size={18} color="#FFFFFF" />
-					<Text style={{ fontSize: 16, fontWeight: "600", color: "#FFFFFF" }}>
-						{t("common.retry")}
+					<Text style={{ fontSize: 16, fontWeight: '600', color: '#FFFFFF' }}>
+						{t('common.retry')}
 					</Text>
 				</Pressable>
 			)}

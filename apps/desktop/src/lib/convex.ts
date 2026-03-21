@@ -1,16 +1,15 @@
-import { ConvexHttpClient } from 'convex/browser';
-import { api } from '../../../../convex/_generated/api';
+import { ConvexHttpClient } from 'convex/browser'
+import { api } from '../../../../convex/_generated/api'
 
-let client: ConvexHttpClient | null = null;
+let client: ConvexHttpClient | null = null
 
 function getClient(): ConvexHttpClient {
-	if (client) return client;
-	const url = (import.meta as any).env?.VITE_CONVEX_URL
-		?? (import.meta as any).env?.PUBLIC_CONVEX_URL
-		?? '';
-	if (!url) throw new Error('VITE_CONVEX_URL is not set');
-	client = new ConvexHttpClient(url);
-	return client;
+	if (client) return client
+	const url =
+		(import.meta as any).env?.VITE_CONVEX_URL ?? (import.meta as any).env?.PUBLIC_CONVEX_URL ?? ''
+	if (!url) throw new Error('VITE_CONVEX_URL is not set')
+	client = new ConvexHttpClient(url)
+	return client
 }
 
 /** Run a Convex query. Returns fallback if Convex is not configured. */
@@ -20,11 +19,11 @@ export async function convexQuery(
 	fallback?: any,
 ): Promise<any> {
 	try {
-		const c = getClient();
-		const result = await c.query(queryFn, args);
-		return result ?? fallback;
+		const c = getClient()
+		const result = await c.query(queryFn, args)
+		return result ?? fallback
 	} catch {
-		return fallback;
+		return fallback
 	}
 }
 
@@ -33,18 +32,18 @@ export async function convexMutation<T = any>(
 	mutationFn: any,
 	args: Record<string, any>,
 ): Promise<T> {
-	const c = getClient();
-	return c.mutation(mutationFn, args);
+	const c = getClient()
+	return c.mutation(mutationFn, args)
 }
 
 /** Check if Convex is configured (env var present). */
 export function isConvexConfigured(): boolean {
 	try {
-		getClient();
-		return true;
+		getClient()
+		return true
 	} catch {
-		return false;
+		return false
 	}
 }
 
-export { api };
+export { api }

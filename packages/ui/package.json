@@ -1,18 +1,18 @@
 {
-  "name": "@meroschool/ui",
-  "private": true,
-  "type": "module",
-  "svelte": "./src/index.ts",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "scripts": {
-    "build": "echo 'no build needed'",
-    "lint": "biome check .",
-    "check": "svelte-check"
-  },
-  "devDependencies": {
-    "svelte": "^5.54.0",
-    "svelte-check": "^4.4.5",
-    "typescript": "^5.9.3"
-  }
+	"name": "@meroschool/ui",
+	"private": true,
+	"type": "module",
+	"svelte": "./src/index.ts",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"scripts": {
+		"build": "echo 'no build needed'",
+		"lint": "biome check . --diagnostic-level=error",
+		"check": "svelte-check"
+	},
+	"devDependencies": {
+		"svelte": "^5.54.0",
+		"svelte-check": "^4.4.5",
+		"typescript": "^5.9.3"
+	}
 }

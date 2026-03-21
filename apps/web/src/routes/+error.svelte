@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { page } from "$app/stores";
-	import Button from "$lib/components/ui/button.svelte";
+import { page } from '$app/stores'
+import Button from '$lib/components/ui/button.svelte'
 </script>
 
 <svelte:head>

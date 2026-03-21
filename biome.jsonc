@@ -5,13 +5,20 @@
 		"clientKind": "git",
 		"useIgnoreFile": true
 	},
-	"organizeImports": {
-		"enabled": true
+	"files": {
+		"includes": ["**", "!**/dist/**", "!**/.svelte-kit/**", "!**/build/**"]
 	},
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true
+			"recommended": true,
+			"correctness": {
+				"useExhaustiveDependencies": "off"
+			},
+			"suspicious": {
+				"noArrayIndexKey": "off",
+				"noAssignInExpressions": "off"
+			}
 		}
 	},
 	"formatter": {

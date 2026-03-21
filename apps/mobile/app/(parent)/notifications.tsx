@@ -1,16 +1,16 @@
-import { useCallback, useState } from "react"
-import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import { useTranslation } from "react-i18next"
-import { useQuery, useMutation } from "convex/react"
-import { api } from "@/lib/convex/api"
-import { useAuth } from "@/lib/auth"
-import { useTheme } from "@/lib/theme"
-import { ScreenHeader } from "@/components/shared/ScreenHeader"
-import { Card } from "@/components/ui/Card"
-import { EmptyState } from "@/components/ui/EmptyState"
+import { Ionicons } from '@expo/vector-icons'
+import { useMutation, useQuery } from 'convex/react'
+import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
+import { ScreenHeader } from '@/components/shared/ScreenHeader'
+import { Card } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { useAuth } from '@/lib/auth'
+import { api } from '@/lib/convex/api'
+import { useTheme } from '@/lib/theme'
 
-type NotificationType = "attendance_alert" | "test_result" | "assignment_graded" | "general"
+type NotificationType = 'attendance_alert' | 'test_result' | 'assignment_graded' | 'general'
 
 export default function ParentNotificationsScreen() {
 	const { t } = useTranslation()
@@ -21,12 +21,12 @@ export default function ParentNotificationsScreen() {
 	// Convex queries & mutations
 	const notifications = useQuery(
 		api.notifications.listAll,
-		user?.convexId ? { userId: user.convexId as any } : "skip",
+		user?.convexId ? { userId: user.convexId as any } : 'skip',
 	)
 
 	const unreadData = useQuery(
 		api.notifications.unreadCount,
-		user?.convexId ? { userId: user.convexId as any } : "skip",
+		user?.convexId ? { userId: user.convexId as any } : 'skip',
 	)
 
 	const markReadMutation = useMutation(api.notifications.markRead)
@@ -61,40 +61,43 @@ export default function ParentNotificationsScreen() {
 		return () => clearTimeout(timer)
 	}, [])
 
-	const typeConfig: Record<NotificationType, { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
-		attendance_alert: { icon: "alert-circle", color: colors.danger, bg: colors.dangerLight },
-		test_result: { icon: "document-text", color: colors.primary, bg: colors.primaryLight },
-		assignment_graded: { icon: "checkmark-circle", color: colors.success, bg: colors.successLight },
-		general: { icon: "information-circle", color: colors.textSecondary, bg: colors.surfaceAlt },
+	const typeConfig: Record<
+		NotificationType,
+		{ icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }
+	> = {
+		attendance_alert: { icon: 'alert-circle', color: colors.danger, bg: colors.dangerLight },
+		test_result: { icon: 'document-text', color: colors.primary, bg: colors.primaryLight },
+		assignment_graded: { icon: 'checkmark-circle', color: colors.success, bg: colors.successLight },
+		general: { icon: 'information-circle', color: colors.textSecondary, bg: colors.surfaceAlt },
 	}
 
 	const renderNotification = useCallback(
 		({ item }: { item: any }) => {
-			const rawType: string = item.type ?? "general"
+			const rawType: string = item.type ?? 'general'
 			const notifType: NotificationType =
-				rawType === "attendance_alert" ||
-				rawType === "test_result" ||
-				rawType === "assignment_graded"
+				rawType === 'attendance_alert' ||
+				rawType === 'test_result' ||
+				rawType === 'assignment_graded'
 					? (rawType as NotificationType)
-					: "general"
+					: 'general'
 			const cfg = typeConfig[notifType]
 			const isRead: boolean = item.read ?? item.isRead ?? false
 
 			// Relative time: prefer item.time string, fall back to formatting _creationTime
-			const timeDisplay: string = item.time ?? (
-				item._creationTime
+			const timeDisplay: string =
+				item.time ??
+				(item._creationTime
 					? (() => {
 							const diff = Date.now() - item._creationTime
 							const minutes = Math.floor(diff / 60000)
 							if (minutes < 60) return `${minutes} min ago`
 							const hours = Math.floor(minutes / 60)
-							if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`
+							if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`
 							const days = Math.floor(hours / 24)
-							if (days === 1) return "Yesterday"
+							if (days === 1) return 'Yesterday'
 							return `${days} days ago`
 						})()
-					: ""
-			)
+					: '')
 
 			return (
 				<Pressable
@@ -108,25 +111,31 @@ export default function ParentNotificationsScreen() {
 							borderLeftColor: cfg.color,
 						}}
 					>
-						<View style={{ flexDirection: "row", gap: 12 }}>
+						<View style={{ flexDirection: 'row', gap: 12 }}>
 							<View
 								style={{
 									width: 40,
 									height: 40,
 									borderRadius: 10,
 									backgroundColor: cfg.bg,
-									alignItems: "center",
-									justifyContent: "center",
+									alignItems: 'center',
+									justifyContent: 'center',
 								}}
 							>
 								<Ionicons name={cfg.icon} size={20} color={cfg.color} />
 							</View>
 							<View style={{ flex: 1 }}>
-								<View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+								<View
+									style={{
+										flexDirection: 'row',
+										justifyContent: 'space-between',
+										alignItems: 'center',
+									}}
+								>
 									<Text
 										style={{
 											fontSize: 14,
-											fontWeight: isRead ? "500" : "700",
+											fontWeight: isRead ? '500' : '700',
 											color: colors.text,
 											flex: 1,
 										}}
@@ -153,7 +162,7 @@ export default function ParentNotificationsScreen() {
 										lineHeight: 18,
 									}}
 								>
-									{item.body ?? item.message ?? ""}
+									{item.body ?? item.message ?? ''}
 								</Text>
 								<Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 6 }}>
 									{timeDisplay}
@@ -170,8 +179,8 @@ export default function ParentNotificationsScreen() {
 	return (
 		<View style={{ flex: 1, backgroundColor: colors.bg }}>
 			<ScreenHeader
-				title={t("parent.notifications")}
-				subtitle={unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
+				title={t('parent.notifications')}
+				subtitle={unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
 				right={
 					unreadCount > 0 ? (
 						<Pressable
@@ -183,15 +192,15 @@ export default function ParentNotificationsScreen() {
 								backgroundColor: colors.successLight,
 							}}
 						>
-							<Text style={{ fontSize: 12, fontWeight: "600", color: colors.success }}>
-								{t("parent.markRead")}
+							<Text style={{ fontSize: 12, fontWeight: '600', color: colors.success }}>
+								{t('parent.markRead')}
 							</Text>
 						</Pressable>
 					) : undefined
 				}
 			/>
 			{notifications === undefined ? (
-				<View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+				<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
 					<ActivityIndicator color={colors.primary} />
 				</View>
 			) : (

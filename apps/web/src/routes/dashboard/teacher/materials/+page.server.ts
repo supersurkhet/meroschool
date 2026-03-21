@@ -1,5 +1,5 @@
-import type { PageServerLoad } from './$types'
 import { query } from '$lib/server/convex'
+import type { PageServerLoad } from './$types'
 
 const FALLBACK_SUBJECTS = [
 	{
@@ -16,16 +16,14 @@ const FALLBACK_SUBJECTS = [
 								title: 'Introduction to Linear Equations',
 								type: 'video' as const,
 								url: 'https://example.com/video1',
-								description:
-									'Basics of linear equations in one variable',
+								description: 'Basics of linear equations in one variable',
 							},
 							{
 								id: 'm2',
 								title: 'Linear Equations Worksheet',
 								type: 'pdf' as const,
 								url: 'https://example.com/pdf1',
-								description:
-									'Practice problems for linear equations',
+								description: 'Practice problems for linear equations',
 							},
 						],
 					},
@@ -37,8 +35,7 @@ const FALLBACK_SUBJECTS = [
 								title: 'Quadratic Formula',
 								type: 'link' as const,
 								url: 'https://example.com/quadratic',
-								description:
-									'Complete guide to the quadratic formula',
+								description: 'Complete guide to the quadratic formula',
 							},
 						],
 					},
@@ -55,8 +52,7 @@ const FALLBACK_SUBJECTS = [
 								title: 'Types of Triangles',
 								type: 'document' as const,
 								url: '',
-								description:
-									'Classification and properties of triangles',
+								description: 'Classification and properties of triangles',
 							},
 						],
 					},
@@ -79,8 +75,7 @@ const FALLBACK_SUBJECTS = [
 								title: 'Newton Laws of Motion',
 								type: 'video' as const,
 								url: 'https://example.com/newton',
-								description:
-									'All three laws explained with examples',
+								description: 'All three laws explained with examples',
 							},
 						],
 					},
@@ -96,11 +91,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	// If a subjectId is provided, fetch the full hierarchy from Convex
 	if (subjectId) {
-		const hierarchy = await query(
-			'academics:getSubjectHierarchy',
-			{ subjectId },
-			null,
-		)
+		const hierarchy = await query('academics:getSubjectHierarchy', { subjectId }, null)
 		if (hierarchy) {
 			return { subjectsData: [hierarchy] }
 		}

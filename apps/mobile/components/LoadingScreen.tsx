@@ -1,6 +1,6 @@
-import { View, Text, ActivityIndicator } from "react-native"
-import { useTheme } from "@/lib/theme"
-import { useTranslation } from "react-i18next"
+import { useTranslation } from 'react-i18next'
+import { ActivityIndicator, Text, View } from 'react-native'
+import { useTheme } from '@/lib/theme'
 
 interface LoadingScreenProps {
 	message?: string
@@ -19,8 +19,8 @@ export function LoadingScreen({ message }: LoadingScreenProps) {
 			style={{
 				flex: 1,
 				backgroundColor: colors.bg,
-				alignItems: "center",
-				justifyContent: "center",
+				alignItems: 'center',
+				justifyContent: 'center',
 				padding: 32,
 			}}
 		>
@@ -32,7 +32,7 @@ export function LoadingScreen({ message }: LoadingScreenProps) {
 					marginTop: 16,
 				}}
 			>
-				{message ?? t("common.loading")}
+				{message ?? t('common.loading')}
 			</Text>
 		</View>
 	)

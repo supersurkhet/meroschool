@@ -1,330 +1,333 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Label } from '$lib/components/ui/label';
-  import { Separator } from '$lib/components/ui/separator';
-  import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent,
-    CardFooter,
-  } from '$lib/components/ui/card';
-  import { convexQuery, convexMutation, api } from '$lib/convex';
-  import { getSchool } from '$lib/stores/school.svelte';
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { Input } from '$lib/components/ui/input'
+import { Label } from '$lib/components/ui/label'
+import { Separator } from '$lib/components/ui/separator'
+import { api, convexMutation, convexQuery } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
 
-  // ── Types ────────────────────────────────────────────────────────────────────
-  type Student = {
-    id: any;
-    name: string;
-    email?: string;
-    rollNumber: string;
-    class: string;
-    section: string;
-  };
+// ── Types ────────────────────────────────────────────────────────────────────
+type Student = {
+	id: any
+	name: string
+	email?: string
+	rollNumber: string
+	class: string
+	section: string
+}
 
-  type Parent = {
-    id: any;
-    name: string;
-    email: string;
-    phone: string;
-    occupation: string;
-    address: string;
-    childIds: any[];
-    initials: string;
-    avatarColor: string;
-  };
+type Parent = {
+	id: any
+	name: string
+	email: string
+	phone: string
+	occupation: string
+	address: string
+	childIds: any[]
+	initials: string
+	avatarColor: string
+}
 
-  let STUDENTS = $state<Student[]>([]);
+let STUDENTS = $state<Student[]>([])
 
-  // Load real students from Convex school hierarchy
-  $effect(() => {
-    const schoolId = getSchool()?.id;
-    if (!schoolId) return;
-    (async () => {
-      try {
-        const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId });
-        if (hierarchy?.classes) {
-          const allStudents: typeof STUDENTS = [];
-          for (const cls of hierarchy.classes) {
-            for (const sec of cls.sections ?? []) {
-              const students = await convexQuery(api.people.listStudentsBySection, { sectionId: sec._id });
-              if (students) {
-                for (const s of students) {
-                  allStudents.push({
-                    id: s._id ?? s.id,
-                    name: s.user?.name ?? 'Unknown',
-                    email: s.user?.email ?? '',
-                    class: cls.name,
-                    section: sec.name,
-                    rollNumber: s.rollNumber ?? '',
-                  });
-                }
-              }
-            }
-          }
-          if (allStudents.length > 0) STUDENTS = allStudents;
-        }
-      } catch {}
-    })();
-  });
+// Load real students from Convex school hierarchy
+$effect(() => {
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
+	;(async () => {
+		try {
+			const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId })
+			if (hierarchy?.classes) {
+				const allStudents: typeof STUDENTS = []
+				for (const cls of hierarchy.classes) {
+					for (const sec of cls.sections ?? []) {
+						const students = await convexQuery(api.people.listStudentsBySection, {
+							sectionId: sec._id,
+						})
+						if (students) {
+							for (const s of students) {
+								allStudents.push({
+									id: s._id ?? s.id,
+									name: s.user?.name ?? 'Unknown',
+									email: s.user?.email ?? '',
+									class: cls.name,
+									section: sec.name,
+									rollNumber: s.rollNumber ?? '',
+								})
+							}
+						}
+					}
+				}
+				if (allStudents.length > 0) STUDENTS = allStudents
+			}
+		} catch {}
+	})()
+})
 
-  const AVATAR_COLORS = [
-    'bg-indigo-500', 'bg-teal-500', 'bg-orange-500',
-    'bg-pink-500', 'bg-sky-500', 'bg-lime-600',
-  ];
+const AVATAR_COLORS = [
+	'bg-indigo-500',
+	'bg-teal-500',
+	'bg-orange-500',
+	'bg-pink-500',
+	'bg-sky-500',
+	'bg-lime-600',
+]
 
-  function makeInitials(name: string) {
-    return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
-  }
+function makeInitials(name: string) {
+	return name
+		.split(' ')
+		.map((p) => p[0])
+		.join('')
+		.slice(0, 2)
+		.toUpperCase()
+}
 
-  function getStudent(id: string | number): Student | undefined {
-    return STUDENTS.find(s => s.id === id);
-  }
+function getStudent(id: string | number): Student | undefined {
+	return STUDENTS.find((s) => s.id === id)
+}
 
-  // ── Convex loading ───────────────────────────────────────────────────────────
-  $effect(() => {
-    (async () => {
-      try {
-        // Get all users with role "parent"
-        const parentUsers = await convexQuery(api.auth.getUsersByRole, { role: 'parent' }, []);
-        if (!Array.isArray(parentUsers) || parentUsers.length === 0) return;
+// ── Convex loading ───────────────────────────────────────────────────────────
+$effect(() => {
+	;(async () => {
+		try {
+			// Get all users with role "parent"
+			const parentUsers = await convexQuery(api.auth.getUsersByRole, { role: 'parent' }, [])
+			if (!Array.isArray(parentUsers) || parentUsers.length === 0) return
 
-        const loaded: Parent[] = [];
-        for (const user of parentUsers) {
-          const details = await convexQuery(
-            api.people.getParentByUser,
-            { userId: user._id },
-            null,
-          );
-          const colorIdx = loaded.length % AVATAR_COLORS.length;
-          loaded.push({
-            id: user._id,
-            name: user.name ?? user.email ?? 'Unknown',
-            email: user.email ?? '',
-            phone: user.phone ?? '',
-            occupation: details?.occupation ?? '',
-            address: details?.address ?? '',
-            childIds: details?.childIds ?? [],
-            initials: makeInitials(user.name ?? user.email ?? 'U'),
-            avatarColor: AVATAR_COLORS[colorIdx],
-          });
-        }
-        if (loaded.length > 0) parents = loaded;
-      } catch {
-        parents = [];
-      }
-    })();
-  });
+			const loaded: Parent[] = []
+			for (const user of parentUsers) {
+				const details = await convexQuery(api.people.getParentByUser, { userId: user._id }, null)
+				const colorIdx = loaded.length % AVATAR_COLORS.length
+				loaded.push({
+					id: user._id,
+					name: user.name ?? user.email ?? 'Unknown',
+					email: user.email ?? '',
+					phone: user.phone ?? '',
+					occupation: details?.occupation ?? '',
+					address: details?.address ?? '',
+					childIds: details?.childIds ?? [],
+					initials: makeInitials(user.name ?? user.email ?? 'U'),
+					avatarColor: AVATAR_COLORS[colorIdx],
+				})
+			}
+			if (loaded.length > 0) parents = loaded
+		} catch {
+			parents = []
+		}
+	})()
+})
 
-  // ── State ────────────────────────────────────────────────────────────────────
-  let parents = $state<Parent[]>([]);
+// ── State ────────────────────────────────────────────────────────────────────
+let parents = $state<Parent[]>([])
 
-  // UI state
-  let searchQuery = $state('');
-  let showAddForm = $state(false);
-  let linkingParentId = $state<string | number | null>(null);
-  let linkSearchQuery = $state('');
-  let editingId = $state<string | number | null>(null);
+// UI state
+let searchQuery = $state('')
+let showAddForm = $state(false)
+let linkingParentId = $state<string | number | null>(null)
+let linkSearchQuery = $state('')
+let editingId = $state<string | number | null>(null)
 
-  // Form fields
-  let formName = $state('');
-  let formEmail = $state('');
-  let formPhone = $state('');
-  let formOccupation = $state('');
-  let formAddress = $state('');
-  let formChildIds = $state<(string | number)[]>([]);
+// Form fields
+let formName = $state('')
+let formEmail = $state('')
+let formPhone = $state('')
+let formOccupation = $state('')
+let formAddress = $state('')
+let formChildIds = $state<(string | number)[]>([])
 
-  // ── Derived ──────────────────────────────────────────────────────────────────
-  let filteredParents = $derived(
-    parents.filter(p =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.phone.includes(searchQuery) ||
-      p.occupation.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+// ── Derived ──────────────────────────────────────────────────────────────────
+const filteredParents = $derived(
+	parents.filter(
+		(p) =>
+			p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			p.phone.includes(searchQuery) ||
+			p.occupation.toLowerCase().includes(searchQuery.toLowerCase()),
+	),
+)
 
-  let linkingParent = $derived(
-    linkingParentId !== null ? (parents.find(p => p.id === linkingParentId) ?? null) : null
-  );
+const linkingParent = $derived(
+	linkingParentId !== null ? (parents.find((p) => p.id === linkingParentId) ?? null) : null,
+)
 
-  // Non-null version for use inside the dialog (only rendered when linkingParent !== null)
-  let linkingParentSafe = $derived(linkingParent as Parent);
+// Non-null version for use inside the dialog (only rendered when linkingParent !== null)
+const linkingParentSafe = $derived(linkingParent as Parent)
 
-  let linkSearchResults = $derived(
-    linkSearchQuery.trim().length === 0
-      ? STUDENTS
-      : STUDENTS.filter(s =>
-          s.name.toLowerCase().includes(linkSearchQuery.toLowerCase()) ||
-          s.rollNumber.toLowerCase().includes(linkSearchQuery.toLowerCase())
-        )
-  );
+const linkSearchResults = $derived(
+	linkSearchQuery.trim().length === 0
+		? STUDENTS
+		: STUDENTS.filter(
+				(s) =>
+					s.name.toLowerCase().includes(linkSearchQuery.toLowerCase()) ||
+					s.rollNumber.toLowerCase().includes(linkSearchQuery.toLowerCase()),
+			),
+)
 
-  // ── Actions ──────────────────────────────────────────────────────────────────
-  function resetForm() {
-    formName = '';
-    formEmail = '';
-    formPhone = '';
-    formOccupation = '';
-    formAddress = '';
-    formChildIds = [];
-    editingId = null;
-  }
+// ── Actions ──────────────────────────────────────────────────────────────────
+function resetForm() {
+	formName = ''
+	formEmail = ''
+	formPhone = ''
+	formOccupation = ''
+	formAddress = ''
+	formChildIds = []
+	editingId = null
+}
 
-  function openAddForm() {
-    resetForm();
-    showAddForm = true;
-  }
+function openAddForm() {
+	resetForm()
+	showAddForm = true
+}
 
-  function cancelForm() {
-    showAddForm = false;
-    resetForm();
-  }
+function cancelForm() {
+	showAddForm = false
+	resetForm()
+}
 
-  function startEdit(parent: Parent) {
-    editingId = parent.id;
-    formName = parent.name;
-    formEmail = parent.email;
-    formPhone = parent.phone;
-    formOccupation = parent.occupation;
-    formAddress = parent.address;
-    formChildIds = [...parent.childIds];
-    showAddForm = true;
-  }
+function startEdit(parent: Parent) {
+	editingId = parent.id
+	formName = parent.name
+	formEmail = parent.email
+	formPhone = parent.phone
+	formOccupation = parent.occupation
+	formAddress = parent.address
+	formChildIds = [...parent.childIds]
+	showAddForm = true
+}
 
-  async function saveParent() {
-    if (!formName.trim() || !formEmail.trim()) return;
+async function saveParent() {
+	if (!formName.trim() || !formEmail.trim()) return
 
-    if (editingId !== null) {
-      const idx = parents.findIndex(p => p.id === editingId);
-      if (idx !== -1) {
-        parents[idx] = {
-          ...parents[idx],
-          name: formName,
-          email: formEmail,
-          phone: formPhone,
-          occupation: formOccupation,
-          address: formAddress,
-          childIds: [...formChildIds],
-          initials: makeInitials(formName),
-        };
-      }
-      // Convex: update the parent record
-      try {
-        const userId = editingId;
-        await convexMutation(api.auth.upsertUser, {
-          name: formName,
-          email: formEmail,
-          phone: formPhone,
-          role: 'parent',
-        });
-        await convexMutation(api.people.createParent, {
-          userId,
-          occupation: formOccupation || undefined,
-          address: formAddress || undefined,
-        });
-      } catch {
-        // Local state already updated; continue
-      }
-    } else {
-      const colorIdx = parents.length % AVATAR_COLORS.length;
-      const newId = Date.now();
-      parents = [
-        ...parents,
-        {
-          id: newId,
-          name: formName,
-          email: formEmail,
-          phone: formPhone,
-          occupation: formOccupation,
-          address: formAddress,
-          childIds: [...formChildIds],
-          initials: makeInitials(formName),
-          avatarColor: AVATAR_COLORS[colorIdx],
-        },
-      ];
-      // Convex: create user then parent record
-      try {
-        const user = await convexMutation(api.auth.upsertUser, {
-          name: formName,
-          email: formEmail,
-          phone: formPhone,
-          role: 'parent',
-        });
-        if (user?._id) {
-          await convexMutation(api.people.createParent, {
-            userId: user._id,
-            occupation: formOccupation || undefined,
-            address: formAddress || undefined,
-          });
-        }
-      } catch {
-        // Local state already updated; continue
-      }
-    }
+	if (editingId !== null) {
+		const idx = parents.findIndex((p) => p.id === editingId)
+		if (idx !== -1) {
+			parents[idx] = {
+				...parents[idx],
+				name: formName,
+				email: formEmail,
+				phone: formPhone,
+				occupation: formOccupation,
+				address: formAddress,
+				childIds: [...formChildIds],
+				initials: makeInitials(formName),
+			}
+		}
+		// Convex: update the parent record
+		try {
+			const userId = editingId
+			await convexMutation(api.auth.upsertUser, {
+				name: formName,
+				email: formEmail,
+				phone: formPhone,
+				role: 'parent',
+			})
+			await convexMutation(api.people.createParent, {
+				userId,
+				occupation: formOccupation || undefined,
+				address: formAddress || undefined,
+			})
+		} catch {
+			// Local state already updated; continue
+		}
+	} else {
+		const colorIdx = parents.length % AVATAR_COLORS.length
+		const newId = Date.now()
+		parents = [
+			...parents,
+			{
+				id: newId,
+				name: formName,
+				email: formEmail,
+				phone: formPhone,
+				occupation: formOccupation,
+				address: formAddress,
+				childIds: [...formChildIds],
+				initials: makeInitials(formName),
+				avatarColor: AVATAR_COLORS[colorIdx],
+			},
+		]
+		// Convex: create user then parent record
+		try {
+			const user = await convexMutation(api.auth.upsertUser, {
+				name: formName,
+				email: formEmail,
+				phone: formPhone,
+				role: 'parent',
+			})
+			if (user?._id) {
+				await convexMutation(api.people.createParent, {
+					userId: user._id,
+					occupation: formOccupation || undefined,
+					address: formAddress || undefined,
+				})
+			}
+		} catch {
+			// Local state already updated; continue
+		}
+	}
 
-    showAddForm = false;
-    resetForm();
-  }
+	showAddForm = false
+	resetForm()
+}
 
-  function deleteParent(id: number) {
-    parents = parents.filter(p => p.id !== id);
-  }
+function deleteParent(id: number) {
+	parents = parents.filter((p) => p.id !== id)
+}
 
-  function openLinkDialog(parentId: number) {
-    linkingParentId = parentId;
-    linkSearchQuery = '';
-  }
+function openLinkDialog(parentId: number) {
+	linkingParentId = parentId
+	linkSearchQuery = ''
+}
 
-  function closeLinkDialog() {
-    linkingParentId = null;
-    linkSearchQuery = '';
-  }
+function closeLinkDialog() {
+	linkingParentId = null
+	linkSearchQuery = ''
+}
 
-  async function linkStudent(parentId: any, studentId: any) {
-    const idx = parents.findIndex(p => p.id === parentId);
-    if (idx !== -1 && !parents[idx].childIds.includes(studentId)) {
-      const newChildIds = [...parents[idx].childIds, studentId];
-      parents[idx] = { ...parents[idx], childIds: newChildIds };
-      // Convex: update student's parentIds
-      try {
-        await convexMutation(api.people.updateStudent, {
-          id: studentId,
-          parentIds: newChildIds,
-        });
-      } catch {
-        // Local state already updated; continue
-      }
-    }
-  }
+async function linkStudent(parentId: any, studentId: any) {
+	const idx = parents.findIndex((p) => p.id === parentId)
+	if (idx !== -1 && !parents[idx].childIds.includes(studentId)) {
+		const newChildIds = [...parents[idx].childIds, studentId]
+		parents[idx] = { ...parents[idx], childIds: newChildIds }
+		// Convex: update student's parentIds
+		try {
+			await convexMutation(api.people.updateStudent, {
+				id: studentId,
+				parentIds: newChildIds,
+			})
+		} catch {
+			// Local state already updated; continue
+		}
+	}
+}
 
-  async function unlinkStudent(parentId: any, studentId: any) {
-    const idx = parents.findIndex(p => p.id === parentId);
-    if (idx !== -1) {
-      const newChildIds = parents[idx].childIds.filter(id => id !== studentId);
-      parents[idx] = { ...parents[idx], childIds: newChildIds };
-      // Convex: remove this parent's link from student
-      try {
-        await convexMutation(api.people.updateStudent, {
-          id: studentId,
-          parentIds: newChildIds,
-        });
-      } catch {
-        // Local state already updated; continue
-      }
-    }
-  }
+async function unlinkStudent(parentId: any, studentId: any) {
+	const idx = parents.findIndex((p) => p.id === parentId)
+	if (idx !== -1) {
+		const newChildIds = parents[idx].childIds.filter((id) => id !== studentId)
+		parents[idx] = { ...parents[idx], childIds: newChildIds }
+		// Convex: remove this parent's link from student
+		try {
+			await convexMutation(api.people.updateStudent, {
+				id: studentId,
+				parentIds: newChildIds,
+			})
+		} catch {
+			// Local state already updated; continue
+		}
+	}
+}
 
-  function toggleFormChild(studentId: number) {
-    if (formChildIds.includes(studentId)) {
-      formChildIds = formChildIds.filter(id => id !== studentId);
-    } else {
-      formChildIds = [...formChildIds, studentId];
-    }
-  }
+function toggleFormChild(studentId: number) {
+	if (formChildIds.includes(studentId)) {
+		formChildIds = formChildIds.filter((id) => id !== studentId)
+	} else {
+		formChildIds = [...formChildIds, studentId]
+	}
+}
 </script>
 
 <div class="min-h-screen bg-background p-6">

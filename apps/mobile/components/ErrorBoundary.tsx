@@ -1,5 +1,5 @@
-import { Component, type ErrorInfo, type ReactNode } from "react"
-import { ErrorScreen } from "./ErrorScreen"
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { ErrorScreen } from './ErrorScreen'
 
 interface Props {
 	children: ReactNode
@@ -27,8 +27,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
 	componentDidCatch(error: Error, errorInfo: ErrorInfo) {
 		// Log error info for debugging
-		console.error("[ErrorBoundary] Caught error:", error)
-		console.error("[ErrorBoundary] Component stack:", errorInfo.componentStack)
+		console.error('[ErrorBoundary] Caught error:', error)
+		console.error('[ErrorBoundary] Component stack:', errorInfo.componentStack)
 	}
 
 	handleRetry = () => {
@@ -40,12 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
 			if (this.props.fallback) {
 				return this.props.fallback
 			}
-			return (
-				<ErrorScreen
-					message={this.state.error?.message}
-					onRetry={this.handleRetry}
-				/>
-			)
+			return <ErrorScreen message={this.state.error?.message} onRetry={this.handleRetry} />
 		}
 		return this.props.children
 	}

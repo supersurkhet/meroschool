@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import { AlertCircle, RefreshCw } from 'lucide-svelte';
+import { Button } from '$lib/components/ui/button'
+import { AlertCircle, RefreshCw } from 'lucide-svelte'
 
-  let { children } = $props();
-  let error = $state<Error | null>(null);
+const { children } = $props()
+let error = $state<Error | null>(null)
 
-  function handleError(e: Error) {
-    error = e;
-  }
+function handleError(e: Error) {
+	error = e
+}
 
-  function retry() {
-    error = null;
-  }
+function retry() {
+	error = null
+}
 </script>
 
 {#if error}

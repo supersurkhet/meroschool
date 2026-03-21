@@ -1,6 +1,6 @@
-import { createContext, useContext } from "react"
+import { createContext, useContext } from 'react'
 
-export type UserRole = "student" | "teacher" | "parent" | "admin"
+export type UserRole = 'student' | 'teacher' | 'parent' | 'admin'
 
 export interface User {
 	id: string

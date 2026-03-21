@@ -9,7 +9,12 @@ const FALLBACK_CLASSES = [
 export const load = async ({ parent }: { parent: () => Promise<any> }) => {
 	const { user, sessionToken } = await parent()
 	const classes = user?.id
-		? await query('academics:listSubjectsByTeacher', { teacherId: user.id }, FALLBACK_CLASSES, sessionToken)
+		? await query(
+				'academics:listSubjectsByTeacher',
+				{ teacherId: user.id },
+				FALLBACK_CLASSES,
+				sessionToken,
+			)
 		: FALLBACK_CLASSES
 	return { classes }
 }

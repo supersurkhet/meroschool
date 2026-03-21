@@ -1,44 +1,45 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/index.js'
-	import Card from '$lib/components/ui/card.svelte'
-	import Button from '$lib/components/ui/button.svelte'
-	import Badge from '$lib/components/ui/badge.svelte'
-	import Input from '$lib/components/ui/input.svelte'
-	import Select from '$lib/components/ui/select.svelte'
-	import Textarea from '$lib/components/ui/textarea.svelte'
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import Input from '$lib/components/ui/input.svelte'
+import Select from '$lib/components/ui/select.svelte'
+import Textarea from '$lib/components/ui/textarea.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	let { data } = $props()
+const { data } = $props()
 
-	interface Submission {
-		studentName: string
-		submittedDate: string
-		grade: number | null
-		feedback: string
-	}
+interface Submission {
+	studentName: string
+	submittedDate: string
+	grade: number | null
+	feedback: string
+}
 
-	interface Assignment {
-		id: string
-		title: string
-		description: string
-		subject: string
-		section: string
-		dueDate: string
-		totalMarks: number
-		status: 'active' | 'closed'
-		submissions: Submission[]
-	}
+interface Assignment {
+	id: string
+	title: string
+	description: string
+	subject: string
+	section: string
+	dueDate: string
+	totalMarks: number
+	status: 'active' | 'closed'
+	submissions: Submission[]
+}
 
-	let assignTitle = $state('')
-	let assignDescription = $state('')
-	let assignSubject = $state('Mathematics')
-	let assignSection = $state('10-A')
-	let assignDueDate = $state('')
-	let assignTotalMarks = $state(50)
+let assignTitle = $state('')
+let assignDescription = $state('')
+let assignSubject = $state('Mathematics')
+let assignSection = $state('10-A')
+let assignDueDate = $state('')
+let assignTotalMarks = $state(50)
 
-	const subjects = ['Mathematics', 'Science', 'English', 'Nepali', 'Social Studies', 'Computer']
-	const sections = ['10-A', '10-B', '9-A', '9-B', '8-A', '8-B']
+const subjects = ['Mathematics', 'Science', 'English', 'Nepali', 'Social Studies', 'Computer']
+const sections = ['10-A', '10-B', '9-A', '9-B', '8-A', '8-B']
 
-	let assignments: Assignment[] = $state(data.assignments ?? [
+let assignments: Assignment[] = $state(
+	data.assignments ?? [
 		{
 			id: 'a1',
 			title: 'Algebra Homework Ch. 5',
@@ -50,7 +51,12 @@
 			status: 'active',
 			submissions: [
 				{ studentName: 'Aarav Sharma', submittedDate: '2026-03-20', grade: null, feedback: '' },
-				{ studentName: 'Bipana Thapa', submittedDate: '2026-03-19', grade: 42, feedback: 'Good work' },
+				{
+					studentName: 'Bipana Thapa',
+					submittedDate: '2026-03-19',
+					grade: 42,
+					feedback: 'Good work',
+				},
 				{ studentName: 'Deepa Gurung', submittedDate: '2026-03-21', grade: null, feedback: '' },
 			],
 		},
@@ -64,47 +70,63 @@
 			totalMarks: 30,
 			status: 'closed',
 			submissions: [
-				{ studentName: 'Eshan Karki', submittedDate: '2026-03-20', grade: 25, feedback: 'Well structured report' },
-				{ studentName: 'Fatima Khatun', submittedDate: '2026-03-21', grade: 28, feedback: 'Excellent observations' },
+				{
+					studentName: 'Eshan Karki',
+					submittedDate: '2026-03-20',
+					grade: 25,
+					feedback: 'Well structured report',
+				},
+				{
+					studentName: 'Fatima Khatun',
+					submittedDate: '2026-03-21',
+					grade: 28,
+					feedback: 'Excellent observations',
+				},
 			],
 		},
-	])
+	],
+)
 
-	let expandedId: string | null = $state(null)
+let expandedId: string | null = $state(null)
 
-	function toggleExpand(id: string) {
-		expandedId = expandedId === id ? null : id
+function toggleExpand(id: string) {
+	expandedId = expandedId === id ? null : id
+}
+
+function createAssignment() {
+	if (!assignTitle.trim() || !assignDueDate) return
+	assignments = [
+		{
+			id: `a-${Date.now()}`,
+			title: assignTitle,
+			description: assignDescription,
+			subject: assignSubject,
+			section: assignSection,
+			dueDate: assignDueDate,
+			totalMarks: assignTotalMarks,
+			status: 'active',
+			submissions: [],
+		},
+		...assignments,
+	]
+	assignTitle = ''
+	assignDescription = ''
+	assignDueDate = ''
+	assignTotalMarks = 50
+}
+
+function saveGrade(
+	assignmentId: string,
+	submissionIdx: number,
+	grade: number | null,
+	feedback: string,
+) {
+	const aIdx = assignments.findIndex((a) => a.id === assignmentId)
+	if (aIdx >= 0) {
+		assignments[aIdx].submissions[submissionIdx].grade = grade
+		assignments[aIdx].submissions[submissionIdx].feedback = feedback
 	}
-
-	function createAssignment() {
-		if (!assignTitle.trim() || !assignDueDate) return
-		assignments = [
-			{
-				id: `a-${Date.now()}`,
-				title: assignTitle,
-				description: assignDescription,
-				subject: assignSubject,
-				section: assignSection,
-				dueDate: assignDueDate,
-				totalMarks: assignTotalMarks,
-				status: 'active',
-				submissions: [],
-			},
-			...assignments,
-		]
-		assignTitle = ''
-		assignDescription = ''
-		assignDueDate = ''
-		assignTotalMarks = 50
-	}
-
-	function saveGrade(assignmentId: string, submissionIdx: number, grade: number | null, feedback: string) {
-		const aIdx = assignments.findIndex((a) => a.id === assignmentId)
-		if (aIdx >= 0) {
-			assignments[aIdx].submissions[submissionIdx].grade = grade
-			assignments[aIdx].submissions[submissionIdx].feedback = feedback
-		}
-	}
+}
 </script>
 
 <svelte:head>

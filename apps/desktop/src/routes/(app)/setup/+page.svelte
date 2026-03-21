@@ -1,255 +1,275 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { t } from '$lib/i18n/index.svelte';
-  import { setSchool } from '$lib/stores/school.svelte';
-  import { convexMutation, isConvexConfigured, api } from '$lib/convex';
-  import Button from '$lib/components/ui/button/Button.svelte';
-  import Input from '$lib/components/ui/input/Input.svelte';
-  import Card from '$lib/components/ui/card/Card.svelte';
-  import CardHeader from '$lib/components/ui/card/CardHeader.svelte';
-  import CardTitle from '$lib/components/ui/card/CardTitle.svelte';
-  import CardContent from '$lib/components/ui/card/CardContent.svelte';
-  import CardFooter from '$lib/components/ui/card/CardFooter.svelte';
-  import Badge from '$lib/components/ui/badge/Badge.svelte';
-  import Label from '$lib/components/ui/label/Label.svelte';
-  import Separator from '$lib/components/ui/separator/Separator.svelte';
+import { goto } from '$app/navigation'
+import Badge from '$lib/components/ui/badge/Badge.svelte'
+import Button from '$lib/components/ui/button/Button.svelte'
+import Card from '$lib/components/ui/card/Card.svelte'
+import CardContent from '$lib/components/ui/card/CardContent.svelte'
+import CardFooter from '$lib/components/ui/card/CardFooter.svelte'
+import CardHeader from '$lib/components/ui/card/CardHeader.svelte'
+import CardTitle from '$lib/components/ui/card/CardTitle.svelte'
+import Input from '$lib/components/ui/input/Input.svelte'
+import Label from '$lib/components/ui/label/Label.svelte'
+import Separator from '$lib/components/ui/separator/Separator.svelte'
+import { api, convexMutation, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { setSchool } from '$lib/stores/school.svelte'
 
-  // ─── Step state ───────────────────────────────────────────────────────────
-  let currentStep = $state(1);
-  const TOTAL_STEPS = 4;
+// ─── Step state ───────────────────────────────────────────────────────────
+let currentStep = $state(1)
+const TOTAL_STEPS = 4
 
-  // ─── Convex IDs (populated as wizard progresses) ──────────────────────────
-  let convexSchoolId = $state<string | null>(null);
-  // Map local class id → Convex class id
-  let convexClassIds = $state<Record<string, string>>({});
+// ─── Convex IDs (populated as wizard progresses) ──────────────────────────
+let convexSchoolId = $state<string | null>(null)
+// Map local class id → Convex class id
+let convexClassIds = $state<Record<string, string>>({})
 
-  // ─── Step 1: School Info ──────────────────────────────────────────────────
-  let schoolName = $state('');
-  let schoolAddress = $state('');
-  let schoolPhone = $state('');
-  let schoolEmail = $state('');
-  let establishedYear = $state('');
-  let logoPreview = $state<string | null>(null);
-  let step1Errors = $state<Record<string, string>>({});
-  let isDraggingLogo = $state(false);
+// ─── Step 1: School Info ──────────────────────────────────────────────────
+let schoolName = $state('')
+let schoolAddress = $state('')
+let schoolPhone = $state('')
+let schoolEmail = $state('')
+let establishedYear = $state('')
+let logoPreview = $state<string | null>(null)
+let step1Errors = $state<Record<string, string>>({})
+let isDraggingLogo = $state(false)
 
-  function validateStep1(): boolean {
-    const errors: Record<string, string> = {};
-    if (!schoolName.trim()) errors.schoolName = 'School name is required';
-    if (schoolEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(schoolEmail)) errors.schoolEmail = 'Invalid email address';
-    step1Errors = errors;
-    return Object.keys(errors).length === 0;
-  }
+function validateStep1(): boolean {
+	const errors: Record<string, string> = {}
+	if (!schoolName.trim()) errors.schoolName = 'School name is required'
+	if (schoolEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(schoolEmail))
+		errors.schoolEmail = 'Invalid email address'
+	step1Errors = errors
+	return Object.keys(errors).length === 0
+}
 
-  function handleLogoDrop(e: DragEvent) {
-    e.preventDefault();
-    isDraggingLogo = false;
-    const file = e.dataTransfer?.files[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (ev) => { logoPreview = ev.target?.result as string; };
-      reader.readAsDataURL(file);
-    }
-  }
+function handleLogoDrop(e: DragEvent) {
+	e.preventDefault()
+	isDraggingLogo = false
+	const file = e.dataTransfer?.files[0]
+	if (file && file.type.startsWith('image/')) {
+		const reader = new FileReader()
+		reader.onload = (ev) => {
+			logoPreview = ev.target?.result as string
+		}
+		reader.readAsDataURL(file)
+	}
+}
 
-  function handleLogoInput(e: Event) {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => { logoPreview = ev.target?.result as string; };
-      reader.readAsDataURL(file);
-    }
-  }
+function handleLogoInput(e: Event) {
+	const file = (e.target as HTMLInputElement).files?.[0]
+	if (file) {
+		const reader = new FileReader()
+		reader.onload = (ev) => {
+			logoPreview = ev.target?.result as string
+		}
+		reader.readAsDataURL(file)
+	}
+}
 
-  // ─── Step 2: Academic Year & Classes ─────────────────────────────────────
-  type ClassEntry = { id: string; name: string; grade: number };
+// ─── Step 2: Academic Year & Classes ─────────────────────────────────────
+type ClassEntry = { id: string; name: string; grade: number }
 
-  const ACADEMIC_YEARS = [
-    '2081/82', '2082/83', '2083/84', '2080/81', '2079/80'
-  ];
-  let selectedYear = $state('2081/82');
-  let newClassName = $state('');
-  let newClassGrade = $state<number | ''>('');
-  let classes = $state<ClassEntry[]>([]);
-  let classError = $state('');
+const ACADEMIC_YEARS = ['2081/82', '2082/83', '2083/84', '2080/81', '2079/80']
+let selectedYear = $state('2081/82')
+let newClassName = $state('')
+let newClassGrade = $state<number | ''>('')
+let classes = $state<ClassEntry[]>([])
+let classError = $state('')
 
-  function addClass() {
-    if (!newClassName.trim()) { classError = 'Class name is required'; return; }
-    if (newClassGrade === '' || Number(newClassGrade) < 1 || Number(newClassGrade) > 12) {
-      classError = 'Grade must be between 1 and 12';
-      return;
-    }
-    classError = '';
-    const localId = crypto.randomUUID();
-    const name = newClassName.trim();
-    const grade = Number(newClassGrade);
-    classes = [...classes, { id: localId, name, grade }];
-    newClassName = '';
-    newClassGrade = '';
+function addClass() {
+	if (!newClassName.trim()) {
+		classError = 'Class name is required'
+		return
+	}
+	if (newClassGrade === '' || Number(newClassGrade) < 1 || Number(newClassGrade) > 12) {
+		classError = 'Grade must be between 1 and 12'
+		return
+	}
+	classError = ''
+	const localId = crypto.randomUUID()
+	const name = newClassName.trim()
+	const grade = Number(newClassGrade)
+	classes = [...classes, { id: localId, name, grade }]
+	newClassName = ''
+	newClassGrade = ''
 
-    // Convex: create class if school was persisted
-    if (isConvexConfigured() && convexSchoolId) {
-      convexMutation(api.schools.createClass, { schoolId: convexSchoolId, name, grade })
-        .then((convexId: string) => {
-          convexClassIds = { ...convexClassIds, [localId]: convexId };
-        })
-        .catch(() => { /* silently ignore — local state is source of truth */ });
-    }
-  }
+	// Convex: create class if school was persisted
+	if (isConvexConfigured() && convexSchoolId) {
+		convexMutation(api.schools.createClass, { schoolId: convexSchoolId, name, grade })
+			.then((convexId: string) => {
+				convexClassIds = { ...convexClassIds, [localId]: convexId }
+			})
+			.catch(() => {
+				/* silently ignore — local state is source of truth */
+			})
+	}
+}
 
-  function deleteClass(id: string) {
-    classes = classes.filter(c => c.id !== id);
-    sections = sections.filter(s => s.classId !== id);
-    subjects = subjects.filter(s => s.classId !== id);
-  }
+function deleteClass(id: string) {
+	classes = classes.filter((c) => c.id !== id)
+	sections = sections.filter((s) => s.classId !== id)
+	subjects = subjects.filter((s) => s.classId !== id)
+}
 
-  // ─── Step 3: Sections ─────────────────────────────────────────────────────
-  type SectionEntry = { id: string; classId: string; name: string };
+// ─── Step 3: Sections ─────────────────────────────────────────────────────
+type SectionEntry = { id: string; classId: string; name: string }
 
-  let sections = $state<SectionEntry[]>([]);
-  let expandedClasses = $state<Set<string>>(new Set());
-  let newSectionNames = $state<Record<string, string>>({});
+let sections = $state<SectionEntry[]>([])
+let expandedClasses = $state<Set<string>>(new Set())
+let newSectionNames = $state<Record<string, string>>({})
 
-  function toggleExpand(classId: string) {
-    const next = new Set(expandedClasses);
-    if (next.has(classId)) next.delete(classId);
-    else next.add(classId);
-    expandedClasses = next;
-  }
+function toggleExpand(classId: string) {
+	const next = new Set(expandedClasses)
+	if (next.has(classId)) next.delete(classId)
+	else next.add(classId)
+	expandedClasses = next
+}
 
-  function addSection(classId: string, name?: string) {
-    const sectionName = name ?? newSectionNames[classId];
-    if (!sectionName?.trim()) return;
-    const trimmed = sectionName.trim().toUpperCase();
-    const alreadyExists = sections.some(s => s.classId === classId && s.name === trimmed);
-    if (alreadyExists) return;
-    sections = [...sections, { id: crypto.randomUUID(), classId, name: trimmed }];
-    newSectionNames = { ...newSectionNames, [classId]: '' };
+function addSection(classId: string, name?: string) {
+	const sectionName = name ?? newSectionNames[classId]
+	if (!sectionName?.trim()) return
+	const trimmed = sectionName.trim().toUpperCase()
+	const alreadyExists = sections.some((s) => s.classId === classId && s.name === trimmed)
+	if (alreadyExists) return
+	sections = [...sections, { id: crypto.randomUUID(), classId, name: trimmed }]
+	newSectionNames = { ...newSectionNames, [classId]: '' }
 
-    // Convex: create section using resolved Convex class id
-    const convexClassId = convexClassIds[classId];
-    if (isConvexConfigured() && convexClassId) {
-      convexMutation(api.schools.createSection, { classId: convexClassId, name: trimmed })
-        .catch(() => { /* silently ignore */ });
-    }
-  }
+	// Convex: create section using resolved Convex class id
+	const convexClassId = convexClassIds[classId]
+	if (isConvexConfigured() && convexClassId) {
+		convexMutation(api.schools.createSection, { classId: convexClassId, name: trimmed }).catch(
+			() => {
+				/* silently ignore */
+			},
+		)
+	}
+}
 
-  function deleteSection(id: string) {
-    sections = sections.filter(s => s.id !== id);
-  }
+function deleteSection(id: string) {
+	sections = sections.filter((s) => s.id !== id)
+}
 
-  function sectionsForClass(classId: string): SectionEntry[] {
-    return sections.filter(s => s.classId === classId);
-  }
+function sectionsForClass(classId: string): SectionEntry[] {
+	return sections.filter((s) => s.classId === classId)
+}
 
-  // ─── Step 4: Subjects ─────────────────────────────────────────────────────
-  type SubjectEntry = { id: string; classId: string; name: string; code: string };
+// ─── Step 4: Subjects ─────────────────────────────────────────────────────
+type SubjectEntry = { id: string; classId: string; name: string; code: string }
 
-  const COMMON_SUBJECTS = [
-    { name: 'Mathematics', code: 'MATH' },
-    { name: 'Science', code: 'SCI' },
-    { name: 'English', code: 'ENG' },
-    { name: 'Nepali', code: 'NEP' },
-    { name: 'Social Studies', code: 'SOC' },
-    { name: 'Computer Science', code: 'CS' },
-    { name: 'Health & PE', code: 'HPE' },
-  ];
+const COMMON_SUBJECTS = [
+	{ name: 'Mathematics', code: 'MATH' },
+	{ name: 'Science', code: 'SCI' },
+	{ name: 'English', code: 'ENG' },
+	{ name: 'Nepali', code: 'NEP' },
+	{ name: 'Social Studies', code: 'SOC' },
+	{ name: 'Computer Science', code: 'CS' },
+	{ name: 'Health & PE', code: 'HPE' },
+]
 
-  let subjects = $state<SubjectEntry[]>([]);
-  let newSubjectNames = $state<Record<string, string>>({});
-  let newSubjectCodes = $state<Record<string, string>>({});
-  let expandedSubjectClasses = $state<Set<string>>(new Set());
+let subjects = $state<SubjectEntry[]>([])
+let newSubjectNames = $state<Record<string, string>>({})
+let newSubjectCodes = $state<Record<string, string>>({})
+let expandedSubjectClasses = $state<Set<string>>(new Set())
 
-  function toggleSubjectExpand(classId: string) {
-    const next = new Set(expandedSubjectClasses);
-    if (next.has(classId)) next.delete(classId);
-    else next.add(classId);
-    expandedSubjectClasses = next;
-  }
+function toggleSubjectExpand(classId: string) {
+	const next = new Set(expandedSubjectClasses)
+	if (next.has(classId)) next.delete(classId)
+	else next.add(classId)
+	expandedSubjectClasses = next
+}
 
-  function autoGenerateCode(name: string): string {
-    return name.trim().slice(0, 3).toUpperCase();
-  }
+function autoGenerateCode(name: string): string {
+	return name.trim().slice(0, 3).toUpperCase()
+}
 
-  function addSubject(classId: string, name?: string, code?: string) {
-    const subjectName = name ?? newSubjectNames[classId];
-    const subjectCode = code ?? newSubjectCodes[classId];
-    if (!subjectName?.trim()) return;
-    const trimmedName = subjectName.trim();
-    const trimmedCode = (subjectCode ?? '').trim().toUpperCase() || autoGenerateCode(trimmedName);
-    subjects = [
-      ...subjects,
-      { id: crypto.randomUUID(), classId, name: trimmedName, code: trimmedCode }
-    ];
-    newSubjectNames = { ...newSubjectNames, [classId]: '' };
-    newSubjectCodes = { ...newSubjectCodes, [classId]: '' };
+function addSubject(classId: string, name?: string, code?: string) {
+	const subjectName = name ?? newSubjectNames[classId]
+	const subjectCode = code ?? newSubjectCodes[classId]
+	if (!subjectName?.trim()) return
+	const trimmedName = subjectName.trim()
+	const trimmedCode = (subjectCode ?? '').trim().toUpperCase() || autoGenerateCode(trimmedName)
+	subjects = [
+		...subjects,
+		{ id: crypto.randomUUID(), classId, name: trimmedName, code: trimmedCode },
+	]
+	newSubjectNames = { ...newSubjectNames, [classId]: '' }
+	newSubjectCodes = { ...newSubjectCodes, [classId]: '' }
 
-    // Convex: create subject using resolved Convex class id
-    const convexClassId = convexClassIds[classId];
-    if (isConvexConfigured() && convexClassId) {
-      convexMutation(api.academics.createSubject, { classId: convexClassId, name: trimmedName, code: trimmedCode })
-        .catch(() => { /* silently ignore */ });
-    }
-  }
+	// Convex: create subject using resolved Convex class id
+	const convexClassId = convexClassIds[classId]
+	if (isConvexConfigured() && convexClassId) {
+		convexMutation(api.academics.createSubject, {
+			classId: convexClassId,
+			name: trimmedName,
+			code: trimmedCode,
+		}).catch(() => {
+			/* silently ignore */
+		})
+	}
+}
 
-  function deleteSubject(id: string) {
-    subjects = subjects.filter(s => s.id !== id);
-  }
+function deleteSubject(id: string) {
+	subjects = subjects.filter((s) => s.id !== id)
+}
 
-  function subjectsForClass(classId: string): SubjectEntry[] {
-    return subjects.filter(s => s.classId === classId);
-  }
+function subjectsForClass(classId: string): SubjectEntry[] {
+	return subjects.filter((s) => s.classId === classId)
+}
 
-  function subjectAlreadyAdded(classId: string, subjectName: string): boolean {
-    return subjects.some(s => s.classId === classId && s.name === subjectName);
-  }
+function subjectAlreadyAdded(classId: string, subjectName: string): boolean {
+	return subjects.some((s) => s.classId === classId && s.name === subjectName)
+}
 
-  // ─── Navigation ───────────────────────────────────────────────────────────
-  function goNext() {
-    if (currentStep === 1) {
-      if (!validateStep1()) return;
-      // Expand all classes by default in step 3
-      expandedClasses = new Set(classes.map(c => c.id));
-      expandedSubjectClasses = new Set(classes.map(c => c.id));
+// ─── Navigation ───────────────────────────────────────────────────────────
+function goNext() {
+	if (currentStep === 1) {
+		if (!validateStep1()) return
+		// Expand all classes by default in step 3
+		expandedClasses = new Set(classes.map((c) => c.id))
+		expandedSubjectClasses = new Set(classes.map((c) => c.id))
 
-      // Convex: persist the school and capture the returned id
-      if (isConvexConfigured()) {
-        convexMutation(api.schools.create, {
-          name: schoolName.trim(),
-          address: schoolAddress.trim(),
-          phone: schoolPhone.trim(),
-          email: schoolEmail.trim(),
-          establishedYear: establishedYear.trim(),
-          academicYear: selectedYear,
-        })
-          .then((id: string) => { convexSchoolId = id; })
-          .catch(() => { /* silently ignore — wizard continues with local state */ });
-      }
-    }
-    if (currentStep === 2 && classes.length === 0) {
-      classError = 'Please add at least one class before proceeding';
-      return;
-    }
-    classError = '';
-    if (currentStep < TOTAL_STEPS) currentStep++;
-  }
+		// Convex: persist the school and capture the returned id
+		if (isConvexConfigured()) {
+			convexMutation(api.schools.create, {
+				name: schoolName.trim(),
+				address: schoolAddress.trim(),
+				phone: schoolPhone.trim(),
+				email: schoolEmail.trim(),
+				establishedYear: establishedYear.trim(),
+				academicYear: selectedYear,
+			})
+				.then((id: string) => {
+					convexSchoolId = id
+				})
+				.catch(() => {
+					/* silently ignore — wizard continues with local state */
+				})
+		}
+	}
+	if (currentStep === 2 && classes.length === 0) {
+		classError = 'Please add at least one class before proceeding'
+		return
+	}
+	classError = ''
+	if (currentStep < TOTAL_STEPS) currentStep++
+}
 
-  function goBack() {
-    if (currentStep > 1) currentStep--;
-  }
+function goBack() {
+	if (currentStep > 1) currentStep--
+}
 
-  function finish() {
-    setSchool({
-      id: convexSchoolId ?? crypto.randomUUID(),
-      name: schoolName,
-      academicYear: selectedYear,
-      address: schoolAddress,
-      setupCompletedAt: new Date().toISOString(),
-    });
-    goto('/dashboard');
-  }
+function finish() {
+	setSchool({
+		id: convexSchoolId ?? crypto.randomUUID(),
+		name: schoolName,
+		academicYear: selectedYear,
+		address: schoolAddress,
+		setupCompletedAt: new Date().toISOString(),
+	})
+	goto('/dashboard')
+}
 
-  const stepLabels = ['School Info', 'Academic Year & Classes', 'Sections', 'Subjects'];
+const stepLabels = ['School Info', 'Academic Year & Classes', 'Sections', 'Subjects']
 </script>
 
 <div class="min-h-screen bg-background p-6">

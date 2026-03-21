@@ -1,10 +1,15 @@
 <script lang="ts">
-  let { value = $bindable(), class: className = '', children, ...rest }: {
-    value?: string;
-    class?: string;
-    children?: import('svelte').Snippet;
-    [key: string]: any;
-  } = $props();
+let {
+	value = $bindable(),
+	class: className = '',
+	children,
+	...rest
+}: {
+	value?: string
+	class?: string
+	children?: import('svelte').Snippet
+	[key: string]: any
+} = $props()
 </script>
 
 <select

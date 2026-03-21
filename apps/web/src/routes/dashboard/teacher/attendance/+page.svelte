@@ -1,28 +1,29 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/index.js'
-	import Card from '$lib/components/ui/card.svelte'
-	import Button from '$lib/components/ui/button.svelte'
-	import Badge from '$lib/components/ui/badge.svelte'
-	import Select from '$lib/components/ui/select.svelte'
-	import Input from '$lib/components/ui/input.svelte'
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import Input from '$lib/components/ui/input.svelte'
+import Select from '$lib/components/ui/select.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	type AttendanceStatus = 'present' | 'absent' | 'late'
+type AttendanceStatus = 'present' | 'absent' | 'late'
 
-	interface Student {
-		id: string
-		roll: number
-		name: string
-		status: AttendanceStatus
-	}
+interface Student {
+	id: string
+	roll: number
+	name: string
+	status: AttendanceStatus
+}
 
-	let { data } = $props()
+const { data } = $props()
 
-	let selectedSection = $state('10-A')
-	let selectedDate = $state(new Date().toISOString().split('T')[0])
+let selectedSection = $state('10-A')
+let selectedDate = $state(new Date().toISOString().split('T')[0])
 
-	const sections = data.sections ?? ['10-A', '10-B', '9-A', '9-B', '8-A', '8-B']
+const sections = data.sections ?? ['10-A', '10-B', '9-A', '9-B', '8-A', '8-B']
 
-	let students: Student[] = $state(data.students ?? [
+let students: Student[] = $state(
+	data.students ?? [
 		{ id: '1', roll: 1, name: 'Aarav Sharma', status: 'present' },
 		{ id: '2', roll: 2, name: 'Bipana Thapa', status: 'present' },
 		{ id: '3', roll: 3, name: 'Chandan Adhikari', status: 'present' },
@@ -35,32 +36,33 @@
 		{ id: '10', roll: 10, name: 'Janaki Rai', status: 'present' },
 		{ id: '11', roll: 11, name: 'Krishna Magar', status: 'present' },
 		{ id: '12', roll: 12, name: 'Laxmi Shrestha', status: 'present' },
-	])
+	],
+)
 
-	let presentCount = $derived(students.filter((s) => s.status === 'present').length)
-	let absentCount = $derived(students.filter((s) => s.status === 'absent').length)
-	let lateCount = $derived(students.filter((s) => s.status === 'late').length)
+const presentCount = $derived(students.filter((s) => s.status === 'present').length)
+const absentCount = $derived(students.filter((s) => s.status === 'absent').length)
+const lateCount = $derived(students.filter((s) => s.status === 'late').length)
 
-	function setStatus(id: string, status: AttendanceStatus) {
-		const idx = students.findIndex((s) => s.id === id)
-		if (idx >= 0) students[idx].status = status
-	}
+function setStatus(id: string, status: AttendanceStatus) {
+	const idx = students.findIndex((s) => s.id === id)
+	if (idx >= 0) students[idx].status = status
+}
 
-	function markAllPresent() {
-		students = students.map((s) => ({ ...s, status: 'present' as AttendanceStatus }))
-	}
+function markAllPresent() {
+	students = students.map((s) => ({ ...s, status: 'present' as AttendanceStatus }))
+}
 
-	let submitting = $state(false)
-	let submitted = $state(false)
+let submitting = $state(false)
+let submitted = $state(false)
 
-	function handleSubmit() {
-		submitting = true
-		setTimeout(() => {
-			submitting = false
-			submitted = true
-			setTimeout(() => (submitted = false), 3000)
-		}, 800)
-	}
+function handleSubmit() {
+	submitting = true
+	setTimeout(() => {
+		submitting = false
+		submitted = true
+		setTimeout(() => (submitted = false), 3000)
+	}, 800)
+}
 </script>
 
 <svelte:head>

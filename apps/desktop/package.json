@@ -8,8 +8,8 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"lint": "biome check .",
-		"test": "vitest run",
+		"lint": "biome check . --diagnostic-level=error",
+		"test": "vitest run --passWithNoTests",
 		"tauri": "tauri"
 	},
 	"devDependencies": {

@@ -65,7 +65,8 @@ const en = {
 		signInButton: 'Sign In',
 		redirecting: 'Signing in...',
 		notConfigured: 'Authentication not configured',
-		securityNote: 'Your credentials are never stored locally — only a session token is kept after successful sign-in.',
+		securityNote:
+			'Your credentials are never stored locally — only a session token is kept after successful sign-in.',
 	},
 	setup: {
 		schoolSetup: 'School Setup',
@@ -238,7 +239,8 @@ const en = {
 		classQr: 'Class QR Code',
 		scanToJoin: 'Scan to Join',
 		allClasses: 'All Classes',
-		shareQr: 'Share this QR code with students to allow them to join the class digitally. Each class section has a unique QR code.',
+		shareQr:
+			'Share this QR code with students to allow them to join the class digitally. Each class section has a unique QR code.',
 	},
 	schools: {
 		manageSchools: 'Manage schools in the system',

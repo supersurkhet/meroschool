@@ -1,11 +1,20 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Button from "$lib/components/ui/button.svelte";
-	import Card from "$lib/components/ui/card.svelte";
-	import Badge from "$lib/components/ui/badge.svelte";
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	const freeFeatures = ["freeF1", "freeF2", "freeF3", "freeF4", "freeF5", "freeF6"];
-	const premiumFeatures = ["premiumF1", "premiumF2", "premiumF3", "premiumF4", "premiumF5", "premiumF6", "premiumF7", "premiumF8"];
+const freeFeatures = ['freeF1', 'freeF2', 'freeF3', 'freeF4', 'freeF5', 'freeF6']
+const premiumFeatures = [
+	'premiumF1',
+	'premiumF2',
+	'premiumF3',
+	'premiumF4',
+	'premiumF5',
+	'premiumF6',
+	'premiumF7',
+	'premiumF8',
+]
 </script>
 
 <svelte:head>

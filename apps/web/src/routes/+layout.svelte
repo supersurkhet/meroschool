@@ -1,17 +1,17 @@
 <script lang="ts">
-	import "../app.css";
-	import Navbar from "$lib/components/navbar.svelte";
-	import Footer from "$lib/components/footer.svelte";
-	import { theme, applyTheme } from "$lib/theme.js";
-	import { onMount } from "svelte";
+import '../app.css'
+import Footer from '$lib/components/footer.svelte'
+import Navbar from '$lib/components/navbar.svelte'
+import { applyTheme, theme } from '$lib/theme.js'
+import { onMount } from 'svelte'
 
-	let { children } = $props();
+const { children } = $props()
 
-	onMount(() => {
-		applyTheme($theme);
-		const unsub = theme.subscribe((t) => applyTheme(t));
-		return unsub;
-	});
+onMount(() => {
+	applyTheme($theme)
+	const unsub = theme.subscribe((t) => applyTheme(t))
+	return unsub
+})
 </script>
 
 <svelte:head>

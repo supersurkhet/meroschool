@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { cn } from "$lib/utils";
+import { cn } from '$lib/utils'
 
-  let {
-    class: className,
-    value = 0,
-    max = 100,
-    ...rest
-  }: {
-    class?: string;
-    value?: number;
-    max?: number;
-    [key: string]: any;
-  } = $props();
+const {
+	class: className,
+	value = 0,
+	max = 100,
+	...rest
+}: {
+	class?: string
+	value?: number
+	max?: number
+	[key: string]: any
+} = $props()
 
-  const percentage = $derived(Math.min(100, Math.max(0, (value / max) * 100)));
+const percentage = $derived(Math.min(100, Math.max(0, (value / max) * 100)))
 </script>
 
 <div

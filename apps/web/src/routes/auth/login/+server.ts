@@ -1,7 +1,7 @@
-import { redirect, error } from '@sveltejs/kit'
-import type { RequestHandler } from './$types'
-import { WorkOS } from '@workos-inc/node'
 import { env } from '$env/dynamic/private'
+import { error, redirect } from '@sveltejs/kit'
+import { WorkOS } from '@workos-inc/node'
+import type { RequestHandler } from './$types'
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	const apiKey = env.WORKOS_API_KEY

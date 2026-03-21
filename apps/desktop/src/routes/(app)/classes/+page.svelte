@@ -1,255 +1,251 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/index.svelte'
-	import { onMount } from 'svelte'
-	import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex'
-	import { getSchool } from '$lib/stores/school.svelte'
-	import { Button } from '$lib/components/ui/button'
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
-	import { Input } from '$lib/components/ui/input'
-	import { Label } from '$lib/components/ui/label'
-	import { Badge } from '$lib/components/ui/badge'
-	import {
-		Plus,
-		Pencil,
-		Trash2,
-		X,
-		Layers,
-		ChevronDown,
-		ChevronRight,
-		Users,
-		Loader2,
-	} from 'lucide-svelte'
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { Input } from '$lib/components/ui/input'
+import { Label } from '$lib/components/ui/label'
+import { api, convexMutation, convexQuery, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
+import {
+	ChevronDown,
+	ChevronRight,
+	Layers,
+	Loader2,
+	Pencil,
+	Plus,
+	Trash2,
+	Users,
+	X,
+} from 'lucide-svelte'
+import { onMount } from 'svelte'
 
-	// ── Types ──────────────────────────────────────────────────────────
-	interface Section {
-		id: string
-		name: string
-		capacity: number
-		studentCount: number
-	}
+// ── Types ──────────────────────────────────────────────────────────
+interface Section {
+	id: string
+	name: string
+	capacity: number
+	studentCount: number
+}
 
-	interface ClassRecord {
-		id: string
-		name: string
-		school: string
-		grade: number
-		sections: Section[]
-	}
+interface ClassRecord {
+	id: string
+	name: string
+	school: string
+	grade: number
+	sections: Section[]
+}
 
-	// ── State ──────────────────────────────────────────────────────────
-	let classes = $state<ClassRecord[]>([])
+// ── State ──────────────────────────────────────────────────────────
+let classes = $state<ClassRecord[]>([])
 
-	let loading = $state(true)
-	let expandedIds = $state<Set<string>>(new Set())
-	let showClassForm = $state(false)
-	let addingSectionForClassId = $state<string | null>(null)
-	let editingClassId = $state<string | null>(null)
+let loading = $state(true)
+let expandedIds = $state<Set<string>>(new Set())
+let showClassForm = $state(false)
+let addingSectionForClassId = $state<string | null>(null)
+let editingClassId = $state<string | null>(null)
 
-	// Class form fields
-	let className = $state('')
-	let classSchool = $state('')
+// Class form fields
+let className = $state('')
+let classSchool = $state('')
 
-	// Section form fields
-	let sectionName = $state('')
-	let sectionCapacity = $state(40)
+// Section form fields
+let sectionName = $state('')
+let sectionCapacity = $state(40)
 
-	// ── Convex loading ────────────────────────────────────────────────
-	onMount(async () => {
-		if (!isConvexConfigured()) { loading = false; return }
-		const schoolId = getSchool()?.id
-		if (!schoolId) { loading = false; return }
-
-		try {
-			const hierarchy = await convexQuery(
-				api.schools.getSchoolHierarchy,
-				{ schoolId },
-				null,
-			)
-			if (!hierarchy) { loading = false; return }
-
-			const school = await convexQuery(api.schools.get, { id: schoolId }, null)
-			const schoolName = school?.name ?? 'School'
-
-			const loadedClasses: ClassRecord[] = []
-			for (const cls of hierarchy.classes ?? []) {
-				const sections: Section[] = (cls.sections ?? []).map((sec: any) => ({
-					id: sec._id ?? sec.id,
-					name: sec.name,
-					capacity: 40,
-					studentCount: sec.students?.length ?? 0,
-				}))
-				loadedClasses.push({
-					id: cls._id ?? cls.id,
-					name: cls.name,
-					school: schoolName,
-					grade: cls.grade ?? 0,
-					sections,
-				})
-			}
-
-			if (loadedClasses.length > 0) {
-				classes = loadedClasses
-				expandedIds = new Set(loadedClasses.slice(0, 2).map(c => c.id))
-			}
-		} catch (err) {
-			console.warn('[classes] Convex load failed:', err)
-		classes = []
-		}
+// ── Convex loading ────────────────────────────────────────────────
+onMount(async () => {
+	if (!isConvexConfigured()) {
 		loading = false
-	})
+		return
+	}
+	const schoolId = getSchool()?.id
+	if (!schoolId) {
+		loading = false
+		return
+	}
 
-	// ── Computed ───────────────────────────────────────────────────────
-	let totalStudents = $derived(
-		classes.reduce(
-			(sum, c) => sum + c.sections.reduce((s, sec) => s + sec.studentCount, 0),
-			0,
-		),
-	)
-
-	let totalSections = $derived(
-		classes.reduce((sum, c) => sum + c.sections.length, 0),
-	)
-
-	// ── Class helpers ─────────────────────────────────────────────────
-	function toggleExpand(id: string) {
-		const next = new Set(expandedIds)
-		if (next.has(id)) {
-			next.delete(id)
-		} else {
-			next.add(id)
+	try {
+		const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId }, null)
+		if (!hierarchy) {
+			loading = false
+			return
 		}
-		expandedIds = next
-	}
 
-	function resetClassForm() {
-		className = ''
-		classSchool = ''
-		editingClassId = null
-		showClassForm = false
-	}
+		const school = await convexQuery(api.schools.get, { id: schoolId }, null)
+		const schoolName = school?.name ?? 'School'
 
-	function openAddClass() {
-		resetClassForm()
-		showClassForm = true
-	}
+		const loadedClasses: ClassRecord[] = []
+		for (const cls of hierarchy.classes ?? []) {
+			const sections: Section[] = (cls.sections ?? []).map((sec: any) => ({
+				id: sec._id ?? sec.id,
+				name: sec.name,
+				capacity: 40,
+				studentCount: sec.students?.length ?? 0,
+			}))
+			loadedClasses.push({
+				id: cls._id ?? cls.id,
+				name: cls.name,
+				school: schoolName,
+				grade: cls.grade ?? 0,
+				sections,
+			})
+		}
 
-	function openEditClass(cls: ClassRecord) {
-		className = cls.name
-		classSchool = cls.school
-		editingClassId = cls.id
-		showClassForm = true
+		if (loadedClasses.length > 0) {
+			classes = loadedClasses
+			expandedIds = new Set(loadedClasses.slice(0, 2).map((c) => c.id))
+		}
+	} catch (err) {
+		console.warn('[classes] Convex load failed:', err)
+		classes = []
 	}
+	loading = false
+})
 
-	async function handleClassSubmit(e: SubmitEvent) {
-		e.preventDefault()
-		if (editingClassId) {
-			classes = classes.map((c) =>
-				c.id === editingClassId
-					? { ...c, name: className, school: classSchool }
-					: c,
-			)
-		} else {
-			const optimisticId = crypto.randomUUID()
-			const gradeMatch = className.match(/\d+/)
-			const grade = gradeMatch ? Number(gradeMatch[0]) : 0
-			classes = [
-				...classes,
+// ── Computed ───────────────────────────────────────────────────────
+const totalStudents = $derived(
+	classes.reduce((sum, c) => sum + c.sections.reduce((s, sec) => s + sec.studentCount, 0), 0),
+)
+
+const totalSections = $derived(classes.reduce((sum, c) => sum + c.sections.length, 0))
+
+// ── Class helpers ─────────────────────────────────────────────────
+function toggleExpand(id: string) {
+	const next = new Set(expandedIds)
+	if (next.has(id)) {
+		next.delete(id)
+	} else {
+		next.add(id)
+	}
+	expandedIds = next
+}
+
+function resetClassForm() {
+	className = ''
+	classSchool = ''
+	editingClassId = null
+	showClassForm = false
+}
+
+function openAddClass() {
+	resetClassForm()
+	showClassForm = true
+}
+
+function openEditClass(cls: ClassRecord) {
+	className = cls.name
+	classSchool = cls.school
+	editingClassId = cls.id
+	showClassForm = true
+}
+
+async function handleClassSubmit(e: SubmitEvent) {
+	e.preventDefault()
+	if (editingClassId) {
+		classes = classes.map((c) =>
+			c.id === editingClassId ? { ...c, name: className, school: classSchool } : c,
+		)
+	} else {
+		const optimisticId = crypto.randomUUID()
+		const gradeMatch = className.match(/\d+/)
+		const grade = gradeMatch ? Number(gradeMatch[0]) : 0
+		classes = [
+			...classes,
+			{
+				id: optimisticId,
+				name: className,
+				school: classSchool,
+				grade,
+				sections: [],
+			},
+		]
+		// Convex: persist class creation
+		const schoolId = getSchool()?.id
+		if (isConvexConfigured() && schoolId) {
+			try {
+				const realId = await convexMutation(api.schools.createClass, {
+					schoolId,
+					name: className,
+					grade,
+				})
+				classes = classes.map((c) => (c.id === optimisticId ? { ...c, id: realId } : c))
+			} catch (err) {
+				console.warn('[classes] Convex createClass failed, keeping local entry:', err)
+			}
+		}
+	}
+	resetClassForm()
+}
+
+function deleteClass(id: string) {
+	classes = classes.filter((c) => c.id !== id)
+}
+
+// ── Section helpers ───────────────────────────────────────────────
+function openAddSection(classId: string) {
+	sectionName = ''
+	sectionCapacity = 40
+	addingSectionForClassId = classId
+	// Make sure class is expanded
+	const next = new Set(expandedIds)
+	next.add(classId)
+	expandedIds = next
+}
+
+function cancelAddSection() {
+	addingSectionForClassId = null
+	sectionName = ''
+	sectionCapacity = 40
+}
+
+async function handleSectionSubmit(e: SubmitEvent, classId: string) {
+	e.preventDefault()
+	const optimisticId = crypto.randomUUID()
+	classes = classes.map((c) => {
+		if (c.id !== classId) return c
+		return {
+			...c,
+			sections: [
+				...c.sections,
 				{
 					id: optimisticId,
-					name: className,
-					school: classSchool,
-					grade,
-					sections: [],
-				},
-			]
-			// Convex: persist class creation
-			const schoolId = getSchool()?.id
-			if (isConvexConfigured() && schoolId) {
-				try {
-					const realId = await convexMutation(api.schools.createClass, {
-						schoolId,
-						name: className,
-						grade,
-					})
-					classes = classes.map((c) => c.id === optimisticId ? { ...c, id: realId } : c)
-				} catch (err) {
-					console.warn('[classes] Convex createClass failed, keeping local entry:', err)
-				}
-			}
-		}
-		resetClassForm()
-	}
-
-	function deleteClass(id: string) {
-		classes = classes.filter((c) => c.id !== id)
-	}
-
-	// ── Section helpers ───────────────────────────────────────────────
-	function openAddSection(classId: string) {
-		sectionName = ''
-		sectionCapacity = 40
-		addingSectionForClassId = classId
-		// Make sure class is expanded
-		const next = new Set(expandedIds)
-		next.add(classId)
-		expandedIds = next
-	}
-
-	function cancelAddSection() {
-		addingSectionForClassId = null
-		sectionName = ''
-		sectionCapacity = 40
-	}
-
-	async function handleSectionSubmit(e: SubmitEvent, classId: string) {
-		e.preventDefault()
-		const optimisticId = crypto.randomUUID()
-		classes = classes.map((c) => {
-			if (c.id !== classId) return c
-			return {
-				...c,
-				sections: [
-					...c.sections,
-					{
-						id: optimisticId,
-						name: sectionName,
-						capacity: sectionCapacity,
-						studentCount: 0,
-					},
-				],
-			}
-		})
-
-		// Convex: persist section creation
-		if (isConvexConfigured()) {
-			try {
-				const realId = await convexMutation(api.schools.createSection, {
-					classId,
 					name: sectionName,
-				})
-				classes = classes.map((c) => ({
-					...c,
-					sections: c.sections.map((s) =>
-						s.id === optimisticId ? { ...s, id: realId } : s
-					),
-				}))
-			} catch (err) {
-				console.warn('[classes] Convex createSection failed, keeping local entry:', err)
-			}
+					capacity: sectionCapacity,
+					studentCount: 0,
+				},
+			],
 		}
+	})
 
-		cancelAddSection()
-	}
-
-	function deleteSection(classId: string, sectionId: string) {
-		classes = classes.map((c) => {
-			if (c.id !== classId) return c
-			return {
+	// Convex: persist section creation
+	if (isConvexConfigured()) {
+		try {
+			const realId = await convexMutation(api.schools.createSection, {
+				classId,
+				name: sectionName,
+			})
+			classes = classes.map((c) => ({
 				...c,
-				sections: c.sections.filter((s) => s.id !== sectionId),
-			}
-		})
+				sections: c.sections.map((s) => (s.id === optimisticId ? { ...s, id: realId } : s)),
+			}))
+		} catch (err) {
+			console.warn('[classes] Convex createSection failed, keeping local entry:', err)
+		}
 	}
+
+	cancelAddSection()
+}
+
+function deleteSection(classId: string, sectionId: string) {
+	classes = classes.map((c) => {
+		if (c.id !== classId) return c
+		return {
+			...c,
+			sections: c.sections.filter((s) => s.id !== sectionId),
+		}
+	})
+}
 </script>
 
 <div class="flex flex-col gap-6">

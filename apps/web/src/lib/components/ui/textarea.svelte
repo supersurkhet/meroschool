@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
-	import type { HTMLTextareaAttributes } from "svelte/elements";
+import { cn } from '$lib/utils.js'
+import type { HTMLTextareaAttributes } from 'svelte/elements'
 
-	interface Props extends HTMLTextareaAttributes {
-		class?: string;
-		value?: string;
-	}
+interface Props extends HTMLTextareaAttributes {
+	class?: string
+	value?: string
+}
 
-	let { class: className, value = $bindable(""), ...rest }: Props = $props();
+let { class: className, value = $bindable(''), ...rest }: Props = $props()
 </script>
 
 <textarea

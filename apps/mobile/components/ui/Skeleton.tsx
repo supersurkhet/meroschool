@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react"
-import { Animated, View, type ViewStyle } from "react-native"
-import { useTheme } from "@/lib/theme"
+import { useEffect, useRef } from 'react'
+import { Animated, View, type ViewStyle } from 'react-native'
+import { useTheme } from '@/lib/theme'
 
 interface SkeletonProps {
 	width?: number | string
@@ -13,7 +13,7 @@ interface SkeletonProps {
  * Animated shimmer placeholder using the Animated API.
  * Pulses between surface and surfaceAlt colors to indicate loading.
  */
-export function Skeleton({ width = "100%", height = 20, borderRadius = 8, style }: SkeletonProps) {
+export function Skeleton({ width = '100%', height = 20, borderRadius = 8, style }: SkeletonProps) {
 	const { colors } = useTheme()
 	const opacity = useRef(new Animated.Value(0.3)).current
 
@@ -68,7 +68,7 @@ export function SkeletonCard() {
 				gap: 12,
 			}}
 		>
-			<View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+			<View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
 				<Skeleton width={48} height={48} borderRadius={24} />
 				<View style={{ flex: 1, gap: 8 }}>
 					<Skeleton width="70%" height={16} />

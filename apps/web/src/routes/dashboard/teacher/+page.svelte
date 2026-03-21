@@ -1,46 +1,46 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/index.js'
-	import Card from '$lib/components/ui/card.svelte'
-	import Badge from '$lib/components/ui/badge.svelte'
-	import Button from '$lib/components/ui/button.svelte'
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import { t } from '$lib/i18n/index.js'
 
-	let { data } = $props()
+const { data } = $props()
 
-	const today = new Date().toLocaleDateString('en-US', {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	})
+const today = new Date().toLocaleDateString('en-US', {
+	weekday: 'long',
+	year: 'numeric',
+	month: 'long',
+	day: 'numeric',
+})
 
-	const quickActions = [
-		{
-			key: 'teacher.action.attendance',
-			href: '/dashboard/teacher/attendance',
-			icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
-			color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-		},
-		{
-			key: 'teacher.action.test',
-			href: '/dashboard/teacher/tests',
-			icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z',
-			color: 'bg-green-500/10 text-green-600 dark:text-green-400',
-		},
-		{
-			key: 'teacher.action.material',
-			href: '/dashboard/teacher/materials',
-			icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12',
-			color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-		},
-		{
-			key: 'teacher.action.assignment',
-			href: '/dashboard/teacher/assignments',
-			icon: 'M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-			color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-		},
-	]
+const quickActions = [
+	{
+		key: 'teacher.action.attendance',
+		href: '/dashboard/teacher/attendance',
+		icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
+		color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+	},
+	{
+		key: 'teacher.action.test',
+		href: '/dashboard/teacher/tests',
+		icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z',
+		color: 'bg-green-500/10 text-green-600 dark:text-green-400',
+	},
+	{
+		key: 'teacher.action.material',
+		href: '/dashboard/teacher/materials',
+		icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12',
+		color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+	},
+	{
+		key: 'teacher.action.assignment',
+		href: '/dashboard/teacher/assignments',
+		icon: 'M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+		color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+	},
+]
 
-	const classes = data.classes ?? []
+const classes = data.classes ?? []
 </script>
 
 <div class="space-y-8">

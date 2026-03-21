@@ -1,29 +1,29 @@
 <script lang="ts">
-  import { cn } from "$lib/utils";
+import { cn } from '$lib/utils'
 
-  let {
-    class: className,
-    type = "text",
-    placeholder,
-    value = $bindable(),
-    disabled = false,
-    readonly = false,
-    required = false,
-    id,
-    name,
-    ...rest
-  }: {
-    class?: string;
-    type?: string;
-    placeholder?: string;
-    value?: string | number;
-    disabled?: boolean;
-    readonly?: boolean;
-    required?: boolean;
-    id?: string;
-    name?: string;
-    [key: string]: any;
-  } = $props();
+let {
+	class: className,
+	type = 'text',
+	placeholder,
+	value = $bindable(),
+	disabled = false,
+	readonly = false,
+	required = false,
+	id,
+	name,
+	...rest
+}: {
+	class?: string
+	type?: string
+	placeholder?: string
+	value?: string | number
+	disabled?: boolean
+	readonly?: boolean
+	required?: boolean
+	id?: string
+	name?: string
+	[key: string]: any
+} = $props()
 </script>
 
 <input

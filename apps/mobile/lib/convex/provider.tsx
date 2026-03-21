@@ -1,6 +1,6 @@
-import { type ReactNode } from "react"
-import { ConvexProvider as ConvexReactProvider } from "convex/react"
-import { convex } from "../convex"
+import { ConvexProvider as ConvexReactProvider } from 'convex/react'
+import type { ReactNode } from 'react'
+import { convex } from '../convex'
 
 interface ConvexProviderProps {
 	children: ReactNode
@@ -13,9 +13,5 @@ interface ConvexProviderProps {
  * Auth token is set via convex.setAuth() in AuthProvider.
  */
 export function ConvexProviderWrapper({ children }: ConvexProviderProps) {
-	return (
-		<ConvexReactProvider client={convex}>
-			{children}
-		</ConvexReactProvider>
-	)
+	return <ConvexReactProvider client={convex}>{children}</ConvexReactProvider>
 }

@@ -1,295 +1,374 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import { Select } from '$lib/components/ui/select';
-  import { Input } from '$lib/components/ui/input';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Label } from '$lib/components/ui/label';
-  import { Separator } from '$lib/components/ui/separator';
-  import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-    CardContent,
-    CardFooter,
-  } from '$lib/components/ui/card';
-  import { convexQuery, convexMutation, isConvexConfigured, api } from '$lib/convex';
-  import { getSchool } from '$lib/stores/school.svelte';
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from '$lib/components/ui/card'
+import { Input } from '$lib/components/ui/input'
+import { Label } from '$lib/components/ui/label'
+import { Select } from '$lib/components/ui/select'
+import { Separator } from '$lib/components/ui/separator'
+import { api, convexMutation, convexQuery, isConvexConfigured } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
 
-  // ── Types ────────────────────────────────────────────────────────────────────
-  type ExamEntry = {
-    id: number;
-    examType: string;
-    className: string;
-    subject: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-    totalMarks: number;
-    subjectColor: string;
-  };
+// ── Types ────────────────────────────────────────────────────────────────────
+type ExamEntry = {
+	id: number
+	examType: string
+	className: string
+	subject: string
+	date: string
+	startTime: string
+	endTime: string
+	totalMarks: number
+	subjectColor: string
+}
 
-  type NewEntryDraft = {
-    subject: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-    totalMarks: string;
-  };
+type NewEntryDraft = {
+	subject: string
+	date: string
+	startTime: string
+	endTime: string
+	totalMarks: string
+}
 
-  // ── Constants ────────────────────────────────────────────────────────────────
-  const EXAM_TYPES = ['First Term', 'Mid Term', 'Final'];
+// ── Constants ────────────────────────────────────────────────────────────────
+const EXAM_TYPES = ['First Term', 'Mid Term', 'Final']
 
-  const CLASSES = [
-    'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-    'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-  ];
+const CLASSES = [
+	'Class 1',
+	'Class 2',
+	'Class 3',
+	'Class 4',
+	'Class 5',
+	'Class 6',
+	'Class 7',
+	'Class 8',
+	'Class 9',
+	'Class 10',
+]
 
-  const CLASS_SUBJECTS: Record<string, string[]> = {
-    'Class 1': ['English', 'Nepali', 'Mathematics', 'Environmental Science'],
-    'Class 2': ['English', 'Nepali', 'Mathematics', 'Environmental Science'],
-    'Class 3': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies'],
-    'Class 4': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies'],
-    'Class 5': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies'],
-    'Class 6': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies', 'Computer Science'],
-    'Class 7': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies', 'Computer Science'],
-    'Class 8': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies', 'Computer Science'],
-    'Class 9': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies', 'Computer Science', 'Optional Mathematics'],
-    'Class 10': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies', 'Computer Science', 'Optional Mathematics'],
-  };
+const CLASS_SUBJECTS: Record<string, string[]> = {
+	'Class 1': ['English', 'Nepali', 'Mathematics', 'Environmental Science'],
+	'Class 2': ['English', 'Nepali', 'Mathematics', 'Environmental Science'],
+	'Class 3': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies'],
+	'Class 4': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies'],
+	'Class 5': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies'],
+	'Class 6': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies', 'Computer Science'],
+	'Class 7': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies', 'Computer Science'],
+	'Class 8': ['English', 'Nepali', 'Mathematics', 'Science', 'Social Studies', 'Computer Science'],
+	'Class 9': [
+		'English',
+		'Nepali',
+		'Mathematics',
+		'Science',
+		'Social Studies',
+		'Computer Science',
+		'Optional Mathematics',
+	],
+	'Class 10': [
+		'English',
+		'Nepali',
+		'Mathematics',
+		'Science',
+		'Social Studies',
+		'Computer Science',
+		'Optional Mathematics',
+	],
+}
 
-  const SUBJECT_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-    'English':               { bg: 'bg-blue-50 dark:bg-blue-900/20',    text: 'text-blue-700 dark:text-blue-300',    border: 'border-blue-200 dark:border-blue-700',   dot: 'bg-blue-500' },
-    'Nepali':                { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-700', dot: 'bg-emerald-500' },
-    'Mathematics':           { bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-700 dark:text-violet-300', border: 'border-violet-200 dark:border-violet-700', dot: 'bg-violet-500' },
-    'Science':               { bg: 'bg-cyan-50 dark:bg-cyan-900/20',     text: 'text-cyan-700 dark:text-cyan-300',    border: 'border-cyan-200 dark:border-cyan-700',   dot: 'bg-cyan-500' },
-    'Social Studies':        { bg: 'bg-amber-50 dark:bg-amber-900/20',   text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-200 dark:border-amber-700', dot: 'bg-amber-500' },
-    'Computer Science':      { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-300', border: 'border-indigo-200 dark:border-indigo-700', dot: 'bg-indigo-500' },
-    'Optional Mathematics':  { bg: 'bg-rose-50 dark:bg-rose-900/20',     text: 'text-rose-700 dark:text-rose-300',    border: 'border-rose-200 dark:border-rose-700',   dot: 'bg-rose-500' },
-    'Environmental Science': { bg: 'bg-green-50 dark:bg-green-900/20',   text: 'text-green-700 dark:text-green-300',  border: 'border-green-200 dark:border-green-700', dot: 'bg-green-500' },
-  };
+const SUBJECT_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+	English: {
+		bg: 'bg-blue-50 dark:bg-blue-900/20',
+		text: 'text-blue-700 dark:text-blue-300',
+		border: 'border-blue-200 dark:border-blue-700',
+		dot: 'bg-blue-500',
+	},
+	Nepali: {
+		bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+		text: 'text-emerald-700 dark:text-emerald-300',
+		border: 'border-emerald-200 dark:border-emerald-700',
+		dot: 'bg-emerald-500',
+	},
+	Mathematics: {
+		bg: 'bg-violet-50 dark:bg-violet-900/20',
+		text: 'text-violet-700 dark:text-violet-300',
+		border: 'border-violet-200 dark:border-violet-700',
+		dot: 'bg-violet-500',
+	},
+	Science: {
+		bg: 'bg-cyan-50 dark:bg-cyan-900/20',
+		text: 'text-cyan-700 dark:text-cyan-300',
+		border: 'border-cyan-200 dark:border-cyan-700',
+		dot: 'bg-cyan-500',
+	},
+	'Social Studies': {
+		bg: 'bg-amber-50 dark:bg-amber-900/20',
+		text: 'text-amber-700 dark:text-amber-300',
+		border: 'border-amber-200 dark:border-amber-700',
+		dot: 'bg-amber-500',
+	},
+	'Computer Science': {
+		bg: 'bg-indigo-50 dark:bg-indigo-900/20',
+		text: 'text-indigo-700 dark:text-indigo-300',
+		border: 'border-indigo-200 dark:border-indigo-700',
+		dot: 'bg-indigo-500',
+	},
+	'Optional Mathematics': {
+		bg: 'bg-rose-50 dark:bg-rose-900/20',
+		text: 'text-rose-700 dark:text-rose-300',
+		border: 'border-rose-200 dark:border-rose-700',
+		dot: 'bg-rose-500',
+	},
+	'Environmental Science': {
+		bg: 'bg-green-50 dark:bg-green-900/20',
+		text: 'text-green-700 dark:text-green-300',
+		border: 'border-green-200 dark:border-green-700',
+		dot: 'bg-green-500',
+	},
+}
 
-  const DEFAULT_COLOR = { bg: 'bg-secondary', text: 'text-secondary-foreground', border: 'border-border', dot: 'bg-muted-foreground' };
+const DEFAULT_COLOR = {
+	bg: 'bg-secondary',
+	text: 'text-secondary-foreground',
+	border: 'border-border',
+	dot: 'bg-muted-foreground',
+}
 
-  function subjectColor(subject: string) {
-    return SUBJECT_COLORS[subject] ?? DEFAULT_COLOR;
-  }
+function subjectColor(subject: string) {
+	return SUBJECT_COLORS[subject] ?? DEFAULT_COLOR
+}
 
-  // ── Convex state ─────────────────────────────────────────────────────────────
-  // Convex IDs for the currently selected class; populated after hierarchy loads
-  let convexClassId = $state<string | null>(null);
-  let convexSubjectIds = $state<Record<string, string>>({}); // subject name → convex id
-  let convexSchoolId = $state<string | null>(null);
+// ── Convex state ─────────────────────────────────────────────────────────────
+// Convex IDs for the currently selected class; populated after hierarchy loads
+let convexClassId = $state<string | null>(null)
+let convexSubjectIds = $state<Record<string, string>>({}) // subject name → convex id
+let convexSchoolId = $state<string | null>(null)
 
-  let exams = $state<ExamEntry[]>([]);
+let exams = $state<ExamEntry[]>([])
 
-  // ── UI State ─────────────────────────────────────────────────────────────────
-  let activeExamType = $state<string>('First Term');
-  let selectedClass = $state<string>('Class 10');
-  let showCreateForm = $state(false);
+// ── UI State ─────────────────────────────────────────────────────────────────
+let activeExamType = $state<string>('First Term')
+let selectedClass = $state<string>('Class 10')
+let showCreateForm = $state(false)
 
-  // Form
-  let formExamType = $state('First Term');
-  let formClass = $state('Class 10');
-  let formEntries = $state<NewEntryDraft[]>([]);
+// Form
+let formExamType = $state('First Term')
+let formClass = $state('Class 10')
+let formEntries = $state<NewEntryDraft[]>([])
 
-  // ── Derived ──────────────────────────────────────────────────────────────────
-  let filteredExams = $derived(
-    exams
-      .filter(e => e.examType === activeExamType && e.className === selectedClass)
-      .sort((a, b) => a.date.localeCompare(b.date))
-  );
+// ── Derived ──────────────────────────────────────────────────────────────────
+const filteredExams = $derived(
+	exams
+		.filter((e) => e.examType === activeExamType && e.className === selectedClass)
+		.sort((a, b) => a.date.localeCompare(b.date)),
+)
 
-  let availableClasses = $derived(
-    [...new Set(exams.filter(e => e.examType === activeExamType).map(e => e.className))]
-  );
+const availableClasses = $derived([
+	...new Set(exams.filter((e) => e.examType === activeExamType).map((e) => e.className)),
+])
 
-  let formSubjects = $derived(CLASS_SUBJECTS[formClass] ?? []);
+const formSubjects = $derived(CLASS_SUBJECTS[formClass] ?? [])
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
-  function calcDuration(start: string, end: string): string {
-    if (!start || !end) return '—';
-    const [sh, sm] = start.split(':').map(Number);
-    const [eh, em] = end.split(':').map(Number);
-    const totalMin = (eh * 60 + em) - (sh * 60 + sm);
-    if (totalMin <= 0) return '—';
-    const h = Math.floor(totalMin / 60);
-    const m = totalMin % 60;
-    return h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
-  }
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function calcDuration(start: string, end: string): string {
+	if (!start || !end) return '—'
+	const [sh, sm] = start.split(':').map(Number)
+	const [eh, em] = end.split(':').map(Number)
+	const totalMin = eh * 60 + em - (sh * 60 + sm)
+	if (totalMin <= 0) return '—'
+	const h = Math.floor(totalMin / 60)
+	const m = totalMin % 60
+	return h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}m`
+}
 
-  function formatDate(dateStr: string): string {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
-    });
-  }
+function formatDate(dateStr: string): string {
+	if (!dateStr) return '—'
+	return new Date(dateStr).toLocaleDateString('en-US', {
+		weekday: 'short',
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+	})
+}
 
-  function formatTime(t: string): string {
-    if (!t) return '—';
-    const [h, m] = t.split(':').map(Number);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const h12 = h % 12 === 0 ? 12 : h % 12;
-    return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
-  }
+function formatTime(t: string): string {
+	if (!t) return '—'
+	const [h, m] = t.split(':').map(Number)
+	const ampm = h >= 12 ? 'PM' : 'AM'
+	const h12 = h % 12 === 0 ? 12 : h % 12
+	return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`
+}
 
-  function openCreateForm() {
-    formExamType = activeExamType;
-    formClass = selectedClass;
-    initFormEntries();
-    showCreateForm = true;
-  }
+function openCreateForm() {
+	formExamType = activeExamType
+	formClass = selectedClass
+	initFormEntries()
+	showCreateForm = true
+}
 
-  function initFormEntries() {
-    const subjects = CLASS_SUBJECTS[formClass] ?? [];
-    formEntries = subjects.map(subject => ({
-      subject,
-      date: '',
-      startTime: '10:00',
-      endTime: '13:00',
-      totalMarks: '100',
-    }));
-  }
+function initFormEntries() {
+	const subjects = CLASS_SUBJECTS[formClass] ?? []
+	formEntries = subjects.map((subject) => ({
+		subject,
+		date: '',
+		startTime: '10:00',
+		endTime: '13:00',
+		totalMarks: '100',
+	}))
+}
 
-  function cancelCreate() {
-    showCreateForm = false;
-    formEntries = [];
-  }
+function cancelCreate() {
+	showCreateForm = false
+	formEntries = []
+}
 
-  async function saveExamSchedule() {
-    const validEntries = formEntries.filter(e => e.date);
-    if (validEntries.length === 0) return;
+async function saveExamSchedule() {
+	const validEntries = formEntries.filter((e) => e.date)
+	if (validEntries.length === 0) return
 
-    const newEntries: ExamEntry[] = validEntries.map((e, i) => ({
-      id: Date.now() + i,
-      examType: formExamType,
-      className: formClass,
-      subject: e.subject,
-      date: e.date,
-      startTime: e.startTime,
-      endTime: e.endTime,
-      totalMarks: parseInt(e.totalMarks) || 100,
-      subjectColor: '',
-    }));
+	const newEntries: ExamEntry[] = validEntries.map((e, i) => ({
+		id: Date.now() + i,
+		examType: formExamType,
+		className: formClass,
+		subject: e.subject,
+		date: e.date,
+		startTime: e.startTime,
+		endTime: e.endTime,
+		totalMarks: parseInt(e.totalMarks) || 100,
+		subjectColor: '',
+	}))
 
-    // Remove old entries for same examType + class, then add new (local fallback)
-    exams = [
-      ...exams.filter(e => !(e.examType === formExamType && e.className === formClass)),
-      ...newEntries,
-    ];
+	// Remove old entries for same examType + class, then add new (local fallback)
+	exams = [
+		...exams.filter((e) => !(e.examType === formExamType && e.className === formClass)),
+		...newEntries,
+	]
 
-    // Persist to Convex if configured
-    if (isConvexConfigured()) {
-      for (const entry of validEntries) {
-        const subjectId = convexSubjectIds[entry.subject];
-        if (!subjectId) continue;
-        const durationMinutes =
-          (() => {
-            const [sh, sm] = entry.startTime.split(':').map(Number);
-            const [eh, em] = entry.endTime.split(':').map(Number);
-            return Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
-          })();
-        try {
-          await convexMutation(api.tests.createTest, {
-            subjectId,
-            title: `${formExamType} — ${entry.subject}`,
-            durationMinutes,
-            totalMarks: parseInt(entry.totalMarks) || 100,
-            createdBy: 'admin',
-            description: `${formClass} ${formExamType} scheduled on ${entry.date}`,
-          });
-        } catch (err) {
-          console.warn('[exams] createTest failed for', entry.subject, err);
-        }
-      }
-    }
+	// Persist to Convex if configured
+	if (isConvexConfigured()) {
+		for (const entry of validEntries) {
+			const subjectId = convexSubjectIds[entry.subject]
+			if (!subjectId) continue
+			const durationMinutes = (() => {
+				const [sh, sm] = entry.startTime.split(':').map(Number)
+				const [eh, em] = entry.endTime.split(':').map(Number)
+				return Math.max(0, eh * 60 + em - (sh * 60 + sm))
+			})()
+			try {
+				await convexMutation(api.tests.createTest, {
+					subjectId,
+					title: `${formExamType} — ${entry.subject}`,
+					durationMinutes,
+					totalMarks: parseInt(entry.totalMarks) || 100,
+					createdBy: 'admin',
+					description: `${formClass} ${formExamType} scheduled on ${entry.date}`,
+				})
+			} catch (err) {
+				console.warn('[exams] createTest failed for', entry.subject, err)
+			}
+		}
+	}
 
-    activeExamType = formExamType;
-    selectedClass = formClass;
-    showCreateForm = false;
-    formEntries = [];
-  }
+	activeExamType = formExamType
+	selectedClass = formClass
+	showCreateForm = false
+	formEntries = []
+}
 
-  function deleteEntry(id: number) {
-    exams = exams.filter(e => e.id !== id);
-  }
+function deleteEntry(id: number) {
+	exams = exams.filter((e) => e.id !== id)
+}
 
-  // When formClass changes in the form, re-init entries
-  $effect(() => {
-    if (showCreateForm) {
-      initFormEntries();
-    }
-  });
+// When formClass changes in the form, re-init entries
+$effect(() => {
+	if (showCreateForm) {
+		initFormEntries()
+	}
+})
 
-  // Ensure selectedClass is valid when exam type changes
-  $effect(() => {
-    if (!availableClasses.includes(selectedClass) && availableClasses.length > 0) {
-      selectedClass = availableClasses[0];
-    }
-  });
+// Ensure selectedClass is valid when exam type changes
+$effect(() => {
+	if (!availableClasses.includes(selectedClass) && availableClasses.length > 0) {
+		selectedClass = availableClasses[0]
+	}
+})
 
-  // ── Convex: load school hierarchy + subjects + tests on mount ─────────────────
-  $effect(() => {
-    if (!isConvexConfigured()) return;
-    const schoolId = getSchool()?.id;
-    if (!schoolId) return;
+// ── Convex: load school hierarchy + subjects + tests on mount ─────────────────
+$effect(() => {
+	if (!isConvexConfigured()) return
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
 
-    (async () => {
-      // 1. Load school hierarchy to get real class/section IDs
-      const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId }, null as any);
-      if (hierarchy?.schoolId) convexSchoolId = hierarchy.schoolId;
+	;(async () => {
+		// 1. Load school hierarchy to get real class/section IDs
+		const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId }, null as any)
+		if (hierarchy?.schoolId) convexSchoolId = hierarchy.schoolId
 
-      // 2. Load classes
-      const convexClasses = await convexQuery(api.schools.listClasses, { schoolId: hierarchy?.schoolId ?? schoolId }, [] as any[]);
+		// 2. Load classes
+		const convexClasses = await convexQuery(
+			api.schools.listClasses,
+			{ schoolId: hierarchy?.schoolId ?? schoolId },
+			[] as any[],
+		)
 
-      // 3. For each class, load subjects and tests, map into ExamEntry[]
-      const convexEntries: ExamEntry[] = [];
-      const newSubjectIds: Record<string, string> = {};
+		// 3. For each class, load subjects and tests, map into ExamEntry[]
+		const convexEntries: ExamEntry[] = []
+		const newSubjectIds: Record<string, string> = {}
 
-      for (const cls of (convexClasses ?? [])) {
-        const subjects = await convexQuery(
-          api.academics.listSubjectsByClass,
-          { classId: cls._id },
-          [] as any[]
-        );
+		for (const cls of convexClasses ?? []) {
+			const subjects = await convexQuery(
+				api.academics.listSubjectsByClass,
+				{ classId: cls._id },
+				[] as any[],
+			)
 
-        for (const subject of (subjects ?? [])) {
-          const tests = await convexQuery(
-            api.tests.listTestsBySubject,
-            { subjectId: subject._id },
-            [] as any[]
-          );
+			for (const subject of subjects ?? []) {
+				const tests = await convexQuery(
+					api.tests.listTestsBySubject,
+					{ subjectId: subject._id },
+					[] as any[],
+				)
 
-          newSubjectIds[subject.name] = subject._id;
+				newSubjectIds[subject.name] = subject._id
 
-          for (const test of (tests ?? [])) {
-            convexEntries.push({
-              id: test._id,
-              examType: test.title?.includes('Mid') ? 'Mid Term' : test.title?.includes('Final') ? 'Final' : 'First Term',
-              className: cls.name,
-              subject: subject.name,
-              date: test.scheduledDate ?? '',
-              startTime: test.startTime ?? '10:00',
-              endTime: test.endTime ?? '13:00',
-              totalMarks: test.totalMarks ?? 100,
-              subjectColor: '',
-            });
-          }
-        }
+				for (const test of tests ?? []) {
+					convexEntries.push({
+						id: test._id,
+						examType: test.title?.includes('Mid')
+							? 'Mid Term'
+							: test.title?.includes('Final')
+								? 'Final'
+								: 'First Term',
+						className: cls.name,
+						subject: subject.name,
+						date: test.scheduledDate ?? '',
+						startTime: test.startTime ?? '10:00',
+						endTime: test.endTime ?? '13:00',
+						totalMarks: test.totalMarks ?? 100,
+						subjectColor: '',
+					})
+				}
+			}
 
-        // Track the convex class ID for the currently selected class
-        if (cls.name === selectedClass) {
-          convexClassId = cls._id;
-        }
-      }
+			// Track the convex class ID for the currently selected class
+			if (cls.name === selectedClass) {
+				convexClassId = cls._id
+			}
+		}
 
-      if (convexEntries.length > 0) {
-        exams = convexEntries;
-      }
-      convexSubjectIds = newSubjectIds;
-    })();
-  });
+		if (convexEntries.length > 0) {
+			exams = convexEntries
+		}
+		convexSubjectIds = newSubjectIds
+	})()
+})
 </script>
 
 <div class="min-h-screen bg-background p-6">

@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { cn } from "$lib/utils";
+import { cn } from '$lib/utils'
 
-  let {
-    class: className,
-    for: htmlFor,
-    children,
-    ...rest
-  }: {
-    class?: string;
-    for?: string;
-    children?: import("svelte").Snippet;
-    [key: string]: any;
-  } = $props();
+const {
+	class: className,
+	for: htmlFor,
+	children,
+	...rest
+}: {
+	class?: string
+	for?: string
+	children?: import('svelte').Snippet
+	[key: string]: any
+} = $props()
 </script>
 
 <label

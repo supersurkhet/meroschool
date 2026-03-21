@@ -1,139 +1,199 @@
 <script lang="ts">
-  import { t } from '$lib/i18n/index.svelte';
-  import { getUser } from '$lib/stores/auth.svelte';
-  import { getSchool } from '$lib/stores/school.svelte';
-  import { convexQuery, api } from '$lib/convex';
-  import { Button } from '$lib/components/ui/button';
-  import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Progress } from '$lib/components/ui/progress';
-  import { goto } from '$app/navigation';
-  import {
-    Users,
-    GraduationCap,
-    CheckCircle,
-    DollarSign,
-    UserPlus,
-    FileText,
-    QrCode,
-    BookOpen,
-    Calendar,
-    Clock,
-    TrendingUp,
-    ArrowRight,
-    ArrowUpRight,
-    Sparkles,
-    Activity,
-  } from 'lucide-svelte';
+import { goto } from '$app/navigation'
+import { Badge } from '$lib/components/ui/badge'
+import { Button } from '$lib/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card'
+import { Progress } from '$lib/components/ui/progress'
+import { api, convexQuery } from '$lib/convex'
+import { t } from '$lib/i18n/index.svelte'
+import { getUser } from '$lib/stores/auth.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
+import {
+	Activity,
+	ArrowRight,
+	ArrowUpRight,
+	BookOpen,
+	Calendar,
+	CheckCircle,
+	Clock,
+	DollarSign,
+	FileText,
+	GraduationCap,
+	QrCode,
+	Sparkles,
+	TrendingUp,
+	UserPlus,
+	Users,
+} from 'lucide-svelte'
 
-  const user = $derived(getUser());
-  const school = $derived(getSchool());
-  const adminName = $derived(user?.name ?? 'Admin');
-  const schoolName = $derived(school?.name ?? 'MeroSchool');
+const user = $derived(getUser())
+const school = $derived(getSchool())
+const adminName = $derived(user?.name ?? 'Admin')
+const schoolName = $derived(school?.name ?? 'MeroSchool')
 
-  const now = new Date();
-  const greeting = $derived.by(() => {
-    const h = now.getHours();
-    if (h < 12) return t('dashboard.goodMorning');
-    if (h < 17) return t('dashboard.goodAfternoon');
-    return t('dashboard.goodEvening');
-  });
+const now = new Date()
+const greeting = $derived.by(() => {
+	const h = now.getHours()
+	if (h < 12) return t('dashboard.goodMorning')
+	if (h < 17) return t('dashboard.goodAfternoon')
+	return t('dashboard.goodEvening')
+})
 
-  const dateStr = now.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+const dateStr = now.toLocaleDateString('en-US', {
+	weekday: 'long',
+	month: 'long',
+	day: 'numeric',
+	year: 'numeric',
+})
 
-  // ─── Convex live stats ────────────────────────────────────────────────────
-  let liveStudents = $state('—');
-  let liveTeachers = $state('—');
-  let liveAttendance = $state('—');
-  let liveSalaryPending = $state('—');
+// ─── Convex live stats ────────────────────────────────────────────────────
+let liveStudents = $state('—')
+let liveTeachers = $state('—')
+let liveAttendance = $state('—')
+let liveSalaryPending = $state('—')
 
-  $effect(() => {
-    const schoolId = getSchool()?.id;
-    if (!schoolId) return;
-    convexQuery(
-      api.reports.getSchoolDashboardStats,
-      { schoolId },
-      null,
-    ).then((data) => {
-      if (!data) return;
-      liveStudents = String(data.totalStudents ?? liveStudents);
-      liveTeachers = String(data.totalTeachers ?? liveTeachers);
-      liveAttendance = data.todayAttendance?.percent != null
-        ? `${data.todayAttendance.percent}%`
-        : liveAttendance;
-      liveSalaryPending = String(data.pendingSalaries ?? liveSalaryPending);
-    });
-  });
+$effect(() => {
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
+	convexQuery(api.reports.getSchoolDashboardStats, { schoolId }, null).then((data) => {
+		if (!data) return
+		liveStudents = String(data.totalStudents ?? liveStudents)
+		liveTeachers = String(data.totalTeachers ?? liveTeachers)
+		liveAttendance =
+			data.todayAttendance?.percent != null ? `${data.todayAttendance.percent}%` : liveAttendance
+		liveSalaryPending = String(data.pendingSalaries ?? liveSalaryPending)
+	})
+})
 
-  // Stats
-  const stats = $derived([
-    { labelKey: 'dashboard.totalStudents', value: liveStudents, change: '+12', icon: Users, accent: 'from-indigo-500 to-violet-600', iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
-    { labelKey: 'nav.teachers', value: liveTeachers, change: '+1', icon: GraduationCap, accent: 'from-amber-500 to-orange-600', iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
-    { labelKey: 'dashboard.todaysAttendance', value: liveAttendance, change: '+3%', icon: CheckCircle, accent: 'from-emerald-500 to-teal-600', iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-    { labelKey: 'dashboard.salaryPending', value: liveSalaryPending, change: 'NPR 1.65L', icon: DollarSign, accent: 'from-rose-500 to-pink-600', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
-  ]);
+// Stats
+const stats = $derived([
+	{
+		labelKey: 'dashboard.totalStudents',
+		value: liveStudents,
+		change: '+12',
+		icon: Users,
+		accent: 'from-indigo-500 to-violet-600',
+		iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+	},
+	{
+		labelKey: 'nav.teachers',
+		value: liveTeachers,
+		change: '+1',
+		icon: GraduationCap,
+		accent: 'from-amber-500 to-orange-600',
+		iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+	},
+	{
+		labelKey: 'dashboard.todaysAttendance',
+		value: liveAttendance,
+		change: '+3%',
+		icon: CheckCircle,
+		accent: 'from-emerald-500 to-teal-600',
+		iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+	},
+	{
+		labelKey: 'dashboard.salaryPending',
+		value: liveSalaryPending,
+		change: 'NPR 1.65L',
+		icon: DollarSign,
+		accent: 'from-rose-500 to-pink-600',
+		iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+	},
+])
 
-  // Loaded from Convex when available
-  const activities: { icon: typeof UserPlus; msg: string; time: string; dot: string }[] = [];
+// Loaded from Convex when available
+const activities: { icon: typeof UserPlus; msg: string; time: string; dot: string }[] = []
 
-  // Quick actions — labels use i18n keys
-  const actions = $derived([
-    { label: t('dashboard.addStudent'), desc: t('dashboard.newEnrollment'), icon: UserPlus, href: '/students', color: 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400' },
-    { label: t('dashboard.createExam'), desc: t('dashboard.scheduleExam'), icon: BookOpen, href: '/exams', color: 'group-hover:text-violet-600 dark:group-hover:text-violet-400' },
-    { label: t('dashboard.generateQr'), desc: t('dashboard.classCodes'), icon: QrCode, href: '/qr', color: 'group-hover:text-cyan-600 dark:group-hover:text-cyan-400' },
-    { label: t('dashboard.viewReports'), desc: t('dashboard.analytics'), icon: FileText, href: '/reports', color: 'group-hover:text-teal-600 dark:group-hover:text-teal-400' },
-    { label: t('dashboard.manageSalary'), desc: t('dashboard.payStaff'), icon: DollarSign, href: '/salary', color: 'group-hover:text-amber-600 dark:group-hover:text-amber-400' },
-    { label: t('dashboard.addTeacher'), desc: t('dashboard.newHire'), icon: GraduationCap, href: '/teachers', color: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400' },
-  ]);
+// Quick actions — labels use i18n keys
+const actions = $derived([
+	{
+		label: t('dashboard.addStudent'),
+		desc: t('dashboard.newEnrollment'),
+		icon: UserPlus,
+		href: '/students',
+		color: 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400',
+	},
+	{
+		label: t('dashboard.createExam'),
+		desc: t('dashboard.scheduleExam'),
+		icon: BookOpen,
+		href: '/exams',
+		color: 'group-hover:text-violet-600 dark:group-hover:text-violet-400',
+	},
+	{
+		label: t('dashboard.generateQr'),
+		desc: t('dashboard.classCodes'),
+		icon: QrCode,
+		href: '/qr',
+		color: 'group-hover:text-cyan-600 dark:group-hover:text-cyan-400',
+	},
+	{
+		label: t('dashboard.viewReports'),
+		desc: t('dashboard.analytics'),
+		icon: FileText,
+		href: '/reports',
+		color: 'group-hover:text-teal-600 dark:group-hover:text-teal-400',
+	},
+	{
+		label: t('dashboard.manageSalary'),
+		desc: t('dashboard.payStaff'),
+		icon: DollarSign,
+		href: '/salary',
+		color: 'group-hover:text-amber-600 dark:group-hover:text-amber-400',
+	},
+	{
+		label: t('dashboard.addTeacher'),
+		desc: t('dashboard.newHire'),
+		icon: GraduationCap,
+		href: '/teachers',
+		color: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400',
+	},
+])
 
-  // Loaded from Convex when available
-  const schedule: { title: string; time: string; who: string; type: 'exam' | 'meeting' | 'event' }[] = [];
+// Loaded from Convex when available
+const schedule: { title: string; time: string; who: string; type: 'exam' | 'meeting' | 'event' }[] =
+	[]
 
-  const typeColors = {
-    exam: 'bg-rose-500',
-    meeting: 'bg-amber-500',
-    event: 'bg-indigo-500',
-  };
+const typeColors = {
+	exam: 'bg-rose-500',
+	meeting: 'bg-amber-500',
+	event: 'bg-indigo-500',
+}
 
-  // Attendance sparkline — loaded from Convex when available
-  let sparkline = $state<number[]>([]);
-  const sparkMax = $derived(sparkline.length > 0 ? Math.max(...sparkline) : 1);
+// Attendance sparkline — loaded from Convex when available
+let sparkline = $state<number[]>([])
+const sparkMax = $derived(sparkline.length > 0 ? Math.max(...sparkline) : 1)
 
-  // Class distribution — loaded from school hierarchy
-  type ClassDist = { name: string; pct: number };
-  let classDistribution = $state<ClassDist[]>([]);
+// Class distribution — loaded from school hierarchy
+type ClassDist = { name: string; pct: number }
+let classDistribution = $state<ClassDist[]>([])
 
-  $effect(() => {
-    const schoolId = getSchool()?.id;
-    if (!schoolId) return;
-    (async () => {
-      try {
-        const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId });
-        if (hierarchy?.classes && hierarchy.classes.length > 0) {
-          // Compute attendance % per class from student counts (proxy: capacity fill rate)
-          const dist: ClassDist[] = [];
-          for (const cls of hierarchy.classes.slice(0, 6)) {
-            const totalStudents = (cls.sections ?? []).reduce(
-              (sum: number, sec: { students?: unknown[] }) => sum + (sec.students?.length ?? 0),
-              0,
-            );
-            const capacity = (cls.sections ?? []).reduce(
-              (sum: number, sec: { capacity?: number }) => sum + (sec.capacity ?? 40),
-              0,
-            );
-            const pct = capacity > 0 ? Math.round((totalStudents / capacity) * 100) : 0;
-            dist.push({ name: cls.name, pct });
-          }
-          if (dist.length > 0) classDistribution = dist;
-        }
-      } catch {}
-    })();
-  });
+$effect(() => {
+	const schoolId = getSchool()?.id
+	if (!schoolId) return
+	;(async () => {
+		try {
+			const hierarchy = await convexQuery(api.schools.getSchoolHierarchy, { schoolId })
+			if (hierarchy?.classes && hierarchy.classes.length > 0) {
+				// Compute attendance % per class from student counts (proxy: capacity fill rate)
+				const dist: ClassDist[] = []
+				for (const cls of hierarchy.classes.slice(0, 6)) {
+					const totalStudents = (cls.sections ?? []).reduce(
+						(sum: number, sec: { students?: unknown[] }) => sum + (sec.students?.length ?? 0),
+						0,
+					)
+					const capacity = (cls.sections ?? []).reduce(
+						(sum: number, sec: { capacity?: number }) => sum + (sec.capacity ?? 40),
+						0,
+					)
+					const pct = capacity > 0 ? Math.round((totalStudents / capacity) * 100) : 0
+					dist.push({ name: cls.name, pct })
+				}
+				if (dist.length > 0) classDistribution = dist
+			}
+		} catch {}
+	})()
+})
 </script>
 
 <div class="space-y-6">

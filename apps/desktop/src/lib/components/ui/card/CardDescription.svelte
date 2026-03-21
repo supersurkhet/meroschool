@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { cn } from "$lib/utils";
+import { cn } from '$lib/utils'
 
-  let {
-    class: className,
-    children,
-    ...rest
-  }: {
-    class?: string;
-    children?: import("svelte").Snippet;
-    [key: string]: any;
-  } = $props();
+const {
+	class: className,
+	children,
+	...rest
+}: {
+	class?: string
+	children?: import('svelte').Snippet
+	[key: string]: any
+} = $props()
 </script>
 
 <p

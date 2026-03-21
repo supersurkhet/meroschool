@@ -1,26 +1,26 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import * as WebBrowser from "expo-web-browser"
-import * as Crypto from "expo-crypto"
-import { useMutation } from "convex/react"
-import { api } from "@/lib/convex/api"
-import { convex } from "@/lib/convex"
-import { AuthContext, type User, type UserRole } from "./index"
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useMutation } from 'convex/react'
+import * as Crypto from 'expo-crypto'
+import * as WebBrowser from 'expo-web-browser'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { convex } from '@/lib/convex'
+import { api } from '@/lib/convex/api'
+import { AuthContext, type User, type UserRole } from './index'
 import {
-	getAuthorizationUrl,
-	exchangeCodeForTokens,
-	storeTokens,
-	getStoredToken,
-	getStoredRefreshToken,
-	refreshAccessToken,
 	clearTokens,
 	detectRoleFromWorkOS,
+	exchangeCodeForTokens,
+	getAuthorizationUrl,
+	getStoredRefreshToken,
+	getStoredToken,
 	REDIRECT_URI,
-} from "./workos"
+	refreshAccessToken,
+	storeTokens,
+} from './workos'
 
 WebBrowser.maybeCompleteAuthSession()
 
-const USER_KEY = "@meroschool/user"
+const USER_KEY = '@meroschool/user'
 const TOKEN_REFRESH_INTERVAL = 45 * 60 * 1000 // 45 minutes
 
 interface AuthProviderProps {
@@ -34,14 +34,18 @@ interface AuthProviderProps {
 async function resolveRoleIds(convexUserId: string, role: UserRole): Promise<Partial<User>> {
 	const ids: Partial<User> = {}
 	try {
-		if (role === "student") {
-			const student = await convex.query(api.people.getStudentByUser, { userId: convexUserId as any })
+		if (role === 'student') {
+			const student = await convex.query(api.people.getStudentByUser, {
+				userId: convexUserId as any,
+			})
 			if (student) {
 				ids.studentId = student._id as string
 				ids.sectionId = student.sectionId as string
 			}
-		} else if (role === "teacher") {
-			const teacher = await convex.query(api.people.getTeacherByUser, { userId: convexUserId as any })
+		} else if (role === 'teacher') {
+			const teacher = await convex.query(api.people.getTeacherByUser, {
+				userId: convexUserId as any,
+			})
 			if (teacher) {
 				ids.teacherId = teacher._id as string
 				ids.schoolId = teacher.schoolId as string
@@ -51,15 +55,17 @@ async function resolveRoleIds(convexUserId: string, role: UserRole): Promise<Par
 					if (school) ids.schoolName = school.name
 				} catch {}
 			}
-		} else if (role === "parent") {
+		} else if (role === 'parent') {
 			const parent = await convex.query(api.people.getParentByUser, { userId: convexUserId as any })
 			if (parent) {
 				ids.parentId = parent._id as string
-				const children = await convex.query(api.people.getParentChildren, { parentId: parent._id as any })
+				const children = await convex.query(api.people.getParentChildren, {
+					parentId: parent._id as any,
+				})
 				if (children) {
 					ids.children = children.map((c: any) => ({
 						id: c._id,
-						name: c.user?.name ?? "Unknown",
+						name: c.user?.name ?? 'Unknown',
 						classId: c.sectionId,
 					}))
 				}
@@ -170,64 +176,73 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		}
 	}
 
-	const login = useCallback(async (_email: string, _password: string) => {
-		// Generate PKCE verifier + challenge
-		const randomBytes = await Crypto.getRandomBytesAsync(32)
-		const codeVerifier = Array.from(randomBytes, (b) => b.toString(16).padStart(2, "0")).join("")
-		const digest = await Crypto.digestStringAsync(
-			Crypto.CryptoDigestAlgorithm.SHA256,
-			codeVerifier,
-			{ encoding: Crypto.CryptoEncoding.BASE64 }
-		)
-		const codeChallenge = digest.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+	const login = useCallback(
+		async (_email: string, _password: string) => {
+			// Generate PKCE verifier + challenge
+			const randomBytes = await Crypto.getRandomBytesAsync(32)
+			const codeVerifier = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('')
+			const digest = await Crypto.digestStringAsync(
+				Crypto.CryptoDigestAlgorithm.SHA256,
+				codeVerifier,
+				{ encoding: Crypto.CryptoEncoding.BASE64 },
+			)
+			const codeChallenge = digest.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
-		const authUrl = getAuthorizationUrl(codeChallenge)
-		const result = await WebBrowser.openAuthSessionAsync(authUrl, REDIRECT_URI)
+			const authUrl = getAuthorizationUrl(codeChallenge)
+			const result = await WebBrowser.openAuthSessionAsync(authUrl, REDIRECT_URI)
 
-		if (result.type === "cancel" || result.type === "dismiss") return
-		if (result.type !== "success" || !result.url) {
-			throw new Error("Authentication was not completed")
-		}
+			if (result.type === 'cancel' || result.type === 'dismiss') return
+			if (result.type !== 'success' || !result.url) {
+				throw new Error('Authentication was not completed')
+			}
 
-		const url = new URL(result.url)
-		const code = url.searchParams.get("code")
-		if (!code) throw new Error("No authorization code received")
+			const url = new URL(result.url)
+			const code = url.searchParams.get('code')
+			if (!code) throw new Error('No authorization code received')
 
-		// Exchange code for tokens + WorkOS user profile
-		const { accessToken, refreshToken, user: workosUser } = await exchangeCodeForTokens(code, codeVerifier)
-		await storeTokens({ accessToken, refreshToken })
-		convex.setAuth(async () => accessToken)
+			// Exchange code for tokens + WorkOS user profile
+			const {
+				accessToken,
+				refreshToken,
+				user: workosUser,
+			} = await exchangeCodeForTokens(code, codeVerifier)
+			await storeTokens({ accessToken, refreshToken })
+			convex.setAuth(async () => accessToken)
 
-		// Detect role from WorkOS metadata
-		const role = detectRoleFromWorkOS(workosUser)
+			// Detect role from WorkOS metadata
+			const role = detectRoleFromWorkOS(workosUser)
 
-		// Upsert into Convex users table
-		const convexUserId = await upsertUser({
-			name: [workosUser.firstName, workosUser.lastName].filter(Boolean).join(" ") || workosUser.email,
-			email: workosUser.email,
-			workosUserId: workosUser.id,
-			role,
-			avatarUrl: workosUser.profilePictureUrl ?? undefined,
-		})
+			// Upsert into Convex users table
+			const convexUserId = await upsertUser({
+				name:
+					[workosUser.firstName, workosUser.lastName].filter(Boolean).join(' ') || workosUser.email,
+				email: workosUser.email,
+				workosUserId: workosUser.id,
+				role,
+				avatarUrl: workosUser.profilePictureUrl ?? undefined,
+			})
 
-		// Resolve role-specific IDs from Convex
-		const roleIds = await resolveRoleIds(convexUserId as string, role)
+			// Resolve role-specific IDs from Convex
+			const roleIds = await resolveRoleIds(convexUserId as string, role)
 
-		const fullUser: User = {
-			id: workosUser.id,
-			convexId: convexUserId as string,
-			email: workosUser.email,
-			name: [workosUser.firstName, workosUser.lastName].filter(Boolean).join(" ") || workosUser.email,
-			role,
-			avatarUrl: workosUser.profilePictureUrl ?? undefined,
-			schoolName: roleIds.schoolName,
-			...roleIds,
-		}
+			const fullUser: User = {
+				id: workosUser.id,
+				convexId: convexUserId as string,
+				email: workosUser.email,
+				name:
+					[workosUser.firstName, workosUser.lastName].filter(Boolean).join(' ') || workosUser.email,
+				role,
+				avatarUrl: workosUser.profilePictureUrl ?? undefined,
+				schoolName: roleIds.schoolName,
+				...roleIds,
+			}
 
-		await AsyncStorage.setItem(USER_KEY, JSON.stringify(fullUser))
-		setUser(fullUser)
-		startTokenRefreshTimer()
-	}, [upsertUser])
+			await AsyncStorage.setItem(USER_KEY, JSON.stringify(fullUser))
+			setUser(fullUser)
+			startTokenRefreshTimer()
+		},
+		[upsertUser],
+	)
 
 	const logout = useCallback(async () => {
 		if (refreshTimerRef.current) clearInterval(refreshTimerRef.current)

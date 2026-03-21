@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { t } from "$lib/i18n/index.js";
-	import Button from "$lib/components/ui/button.svelte";
-	import Input from "$lib/components/ui/input.svelte";
-	import Textarea from "$lib/components/ui/textarea.svelte";
-	import Card from "$lib/components/ui/card.svelte";
-	import Badge from "$lib/components/ui/badge.svelte";
+import Badge from '$lib/components/ui/badge.svelte'
+import Button from '$lib/components/ui/button.svelte'
+import Card from '$lib/components/ui/card.svelte'
+import Input from '$lib/components/ui/input.svelte'
+import Textarea from '$lib/components/ui/textarea.svelte'
+import { t } from '$lib/i18n/index.js'
 </script>
 
 <svelte:head>

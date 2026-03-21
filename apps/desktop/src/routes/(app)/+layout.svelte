@@ -1,89 +1,94 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
-  import { getIsAuthenticated, getUser, isAdmin, logout } from '$lib/stores/auth.svelte';
-  import { getSchool } from '$lib/stores/school.svelte';
-  import { toggleTheme, getResolvedTheme } from '$lib/stores/theme.svelte';
-  import { t, setLocale, getLocale } from '$lib/i18n/index.svelte';
-  import { Button } from '$lib/components/ui/button';
-  import {
-    LayoutDashboard,
-    Settings2,
-    Users,
-    GraduationCap,
-    Heart,
-    FileText,
-    Wallet,
-    BarChart3,
-    QrCode,
-    Sun,
-    Moon,
-    LogOut,
-    PanelLeftClose,
-    PanelLeft,
-    School,
-    Layers,
-    ShieldAlert,
-  } from 'lucide-svelte';
+import { goto } from '$app/navigation'
+import { page } from '$app/stores'
+import { Button } from '$lib/components/ui/button'
+import { getLocale, setLocale, t } from '$lib/i18n/index.svelte'
+import { getIsAuthenticated, getUser, isAdmin, logout } from '$lib/stores/auth.svelte'
+import { getSchool } from '$lib/stores/school.svelte'
+import { getResolvedTheme, toggleTheme } from '$lib/stores/theme.svelte'
+import {
+	BarChart3,
+	FileText,
+	GraduationCap,
+	Heart,
+	Layers,
+	LayoutDashboard,
+	LogOut,
+	Moon,
+	PanelLeft,
+	PanelLeftClose,
+	QrCode,
+	School,
+	Settings2,
+	ShieldAlert,
+	Sun,
+	Users,
+	Wallet,
+} from 'lucide-svelte'
 
-  let { children } = $props();
+const { children } = $props()
 
-  let accessDenied = $state(false);
+let accessDenied = $state(false)
 
-  $effect(() => {
-    if (!getIsAuthenticated()) {
-      goto('/auth', { replaceState: true });
-    } else if (!isAdmin()) {
-      accessDenied = true;
-    }
-  });
+$effect(() => {
+	if (!getIsAuthenticated()) {
+		goto('/auth', { replaceState: true })
+	} else if (!isAdmin()) {
+		accessDenied = true
+	}
+})
 
-  let collapsed = $state(false);
-  let isDark = $derived(getResolvedTheme() === 'dark');
-  let locale = $derived(getLocale());
-  let currentPath = $derived($page.url.pathname as string);
-  let user = $derived(getUser());
+let collapsed = $state(false)
+const isDark = $derived(getResolvedTheme() === 'dark')
+const locale = $derived(getLocale())
+const currentPath = $derived($page.url.pathname as string)
+const user = $derived(getUser())
 
-  let userInitials = $derived(
-    user?.name
-      ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
-      : 'SA'
-  );
+const userInitials = $derived(
+	user?.name
+		? user.name
+				.split(' ')
+				.map((n) => n[0])
+				.join('')
+				.toUpperCase()
+				.slice(0, 2)
+		: 'SA',
+)
 
-  const navItems = [
-    { href: '/dashboard', labelKey: 'nav.dashboard',       icon: LayoutDashboard },
-    { href: '/schools',   labelKey: 'nav.schools',          icon: School },
-    { href: '/classes',   labelKey: 'nav.classesSections',  icon: Layers },
-    { href: '/setup',     labelKey: 'nav.setup',            icon: Settings2 },
-    { href: '/students',  labelKey: 'nav.students',         icon: Users },
-    { href: '/teachers',  labelKey: 'nav.teachers',         icon: GraduationCap },
-    { href: '/parents',   labelKey: 'nav.parents',          icon: Heart },
-    { href: '/exams',     labelKey: 'nav.exams',            icon: FileText },
-    { href: '/salary',    labelKey: 'nav.salary',           icon: Wallet },
-    { href: '/reports',   labelKey: 'nav.reports',          icon: BarChart3 },
-    { href: '/qr',        labelKey: 'nav.qr',              icon: QrCode },
-  ] as const;
+const navItems = [
+	{ href: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+	{ href: '/schools', labelKey: 'nav.schools', icon: School },
+	{ href: '/classes', labelKey: 'nav.classesSections', icon: Layers },
+	{ href: '/setup', labelKey: 'nav.setup', icon: Settings2 },
+	{ href: '/students', labelKey: 'nav.students', icon: Users },
+	{ href: '/teachers', labelKey: 'nav.teachers', icon: GraduationCap },
+	{ href: '/parents', labelKey: 'nav.parents', icon: Heart },
+	{ href: '/exams', labelKey: 'nav.exams', icon: FileText },
+	{ href: '/salary', labelKey: 'nav.salary', icon: Wallet },
+	{ href: '/reports', labelKey: 'nav.reports', icon: BarChart3 },
+	{ href: '/qr', labelKey: 'nav.qr', icon: QrCode },
+] as const
 
-  function isActive(href: string): boolean {
-    if (href === '/dashboard') return currentPath === '/dashboard' || currentPath === '/';
-    return currentPath.startsWith(href);
-  }
+function isActive(href: string): boolean {
+	if (href === '/dashboard') return currentPath === '/dashboard' || currentPath === '/'
+	return currentPath.startsWith(href)
+}
 
-  let pageTitle = $derived.by(() => {
-    for (const item of navItems) {
-      if (isActive(item.href)) return t(item.labelKey);
-    }
-    return t('common.appName');
-  });
+const pageTitle = $derived.by(() => {
+	for (const item of navItems) {
+		if (isActive(item.href)) return t(item.labelKey)
+	}
+	return t('common.appName')
+})
 
-  function handleLogout() {
-    logout();
-    goto('/auth', { replaceState: true });
-  }
+function handleLogout() {
+	logout()
+	goto('/auth', { replaceState: true })
+}
 
-  function toggleLocale() {
-    setLocale(locale === 'en' ? 'ne' : 'en');
-  }
+function toggleLocale() {
+	setLocale(locale === 'en' ? 'ne' : 'en')
+}
 </script>
 
 <svelte:head>

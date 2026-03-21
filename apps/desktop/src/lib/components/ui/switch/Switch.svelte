@@ -1,28 +1,28 @@
 <script lang="ts">
-  import { Switch } from "bits-ui";
-  import { cn } from "$lib/utils";
+import { cn } from '$lib/utils'
+import { Switch } from 'bits-ui'
 
-  let {
-    class: className,
-    checked = $bindable(false),
-    disabled = false,
-    required = false,
-    name,
-    value = "on",
-    id,
-    onCheckedChange,
-    ...rest
-  }: {
-    class?: string;
-    checked?: boolean;
-    disabled?: boolean;
-    required?: boolean;
-    name?: string;
-    value?: string;
-    id?: string;
-    onCheckedChange?: (checked: boolean) => void;
-    [key: string]: any;
-  } = $props();
+let {
+	class: className,
+	checked = $bindable(false),
+	disabled = false,
+	required = false,
+	name,
+	value = 'on',
+	id,
+	onCheckedChange,
+	...rest
+}: {
+	class?: string
+	checked?: boolean
+	disabled?: boolean
+	required?: boolean
+	name?: string
+	value?: string
+	id?: string
+	onCheckedChange?: (checked: boolean) => void
+	[key: string]: any
+} = $props()
 </script>
 
 <Switch.Root

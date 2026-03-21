@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
-	import type { Snippet } from "svelte";
+import { cn } from '$lib/utils.js'
+import type { Snippet } from 'svelte'
 
-	interface Props {
-		children: Snippet;
-		class?: string;
-	}
+interface Props {
+	children: Snippet
+	class?: string
+}
 
-	let { children, class: className }: Props = $props();
+const { children, class: className }: Props = $props()
 </script>
 
 <div class={cn("rounded-xl border bg-card text-card-foreground shadow-sm", className)}>
